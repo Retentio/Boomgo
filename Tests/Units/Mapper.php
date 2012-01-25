@@ -14,6 +14,44 @@ class Mapper extends \mageekguy\atoum\test
         
     }
 
+    public function testNormalize()
+    {
+        $mapper = new Boomgo\Mapper();
+
+        // Should not alter scalar and null value
+        $output = $mapper->normalize(1);
+        $this->assert
+            ->variable($output)
+            ->isEqualTo(1);
+
+        $output = $mapper->normalize(null);
+        $this->assert
+            ->variable($output)
+            ->isNull();
+
+        // Should return an empty array when providing an empty object
+        $output = $mapper->normalize(new Mock\Document());
+        $this->assert
+            ->array($output)
+            ->isEmpty();
+
+        // Should return the exact same array when providing an array
+        $output = $mapper->normalize(array('yet' => 'another', 'array', 17 => 13));
+        $this->assert
+            ->array($output)
+            ->isIdenticalTo(array('yet' => 'another', 'array', 17 => 13));
+
+        // Should throw an exception when dealing with non-normalizable value
+        $file = fopen(__FILE__, 'r');
+        $this->assert
+            ->exception(function() use ($mapper, $file) {
+                    $mapper->normalize($mapper->normalize($file));
+                })
+            ->isInstanceOf('RuntimeException');
+
+        fclose($file);
+    }
+
     public function testToArray()
     {
         $mapper = new Boomgo\Mapper();
@@ -59,7 +97,44 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->array($array)
             ->isNotEmpty()
+            ->hasKeys(array('_id', 
+                'mongo_string',
+                'mongo_number',
+                'mongo_document',
+                'mongo_array'))
+            ->notHasKey('attribute');
+
+        // Should recursively normalize single embedded object
+        $embed = new Mock\EmbedDocument();
+        $embed->setMongoString('a embed stored string');
+        $embed->setAttribute('an embed excluded value');
+        
+        $document = new Mock\Document();
+        $document->setMongoDocument($embed);
+        $array = $mapper->toArray($document);
+
+        $this->assert
+            ->array($array)
+            ->isNotEmpty()
+            ->hasKey('mongo_document');
+            
+        $this->assert
+            ->array($array['mongo_document'])
             ->hasKeys(array('_id', 'mongo_string', 'mongo_number'));
+
+        // Should recursively include array
+        $document = new Mock\Document();
+        $document->setMongoArray(array('an' => 'embedded', 'array', 6 => 2));
+        $array = $mapper->toArray($document);
+
+        $this->assert
+            ->array($array)
+            ->isNotEmpty()
+            ->hasKey('mongo_array');
+            
+        $this->assert
+            ->array($array['mongo_array'])
+            ->isIdenticalTo(array('an' => 'embedded', 'array', 6 => 2));
     }
 
     public function testHydrate()
@@ -126,10 +201,10 @@ class Mapper extends \mageekguy\atoum\test
         $mapper = new Boomgo\Mapper();
 
         // Should camelize an underscored string
-        $camelCase = $mapper->camelize('hello_world');
+        $camelCase = $mapper->camelize('hello_world_pol');
         $this->assert
             ->string($camelCase)
-            ->isEqualTo('HelloWorld');
+            ->isEqualTo('HelloWorldPol');
 
         // Should handle prefixed or suffixed string with underscore
         $camelCase = $mapper->camelize('_world_');
@@ -149,10 +224,10 @@ class Mapper extends \mageekguy\atoum\test
         $mapper = new Boomgo\Mapper();
 
         // Should underscore a CamelCase string
-        $underscore = $mapper->uncamelize('HelloWorld');
+        $underscore = $mapper->uncamelize('HelloWorldPol');
         $this->assert
             ->string($underscore)
-            ->isEqualTo('hello_world');
+            ->isEqualTo('hello_world_pol');
 
         // Should also manage lower camelCase
         $underscore = $mapper->uncamelize('helloWorld');
@@ -184,6 +259,104 @@ class Document
      */
     private $mongoNumber;
 
+    /**
+     * An single embedded document 
+     * @Mongo
+     */
+    private $mongoDocument;
+
+    /**
+     * An embedded array 
+     * @Mongo
+     */
+    private $mongoArray;
+
+
+    private $attribute;
+
+    public function getId()
+    {
+        return $this->id;
+    }
+
+    public function setId($id)
+    {
+        $this->id =$id;
+    }
+
+    public function setMongoString($value)
+    {
+        $this->mongoString = $value;
+    }
+      
+    public function getMongoString()
+    {
+        return $this->mongoString;
+    }        
+
+    public function setMongoNumber($value)
+    {
+        $this->mongoNumber = $value;
+    }
+
+    public function getMongoNumber()
+    {
+        return $this->mongoNumber;
+    }
+
+    public function setAttribute($value)
+    {
+        $this->attribute = $value;
+    }
+
+    public function getAttribute()
+    {
+        return $this->attribute;
+    }
+
+    public function setMongoDocument($value) 
+    {
+        $this->mongoDocument = $value;
+    }
+
+    public function getMongoDocument() 
+    {
+        return $this->mongoDocument;
+    }
+    public function setMongoArray($value)
+    {
+        $this->mongoArray = $value;
+    }
+    public function getMongoArray()
+    {
+        return $this->mongoArray;
+    }
+}
+
+class EmbedDocument
+{
+    /**
+     * Identifier
+     * @Mongo
+     */
+    private $id;
+
+    /**
+     * A mongo stored string
+     * @Mongo
+     */
+    private $mongoString;
+
+    /**
+     * A mongo number
+     * @Mongo
+     */
+    private $mongoNumber;
+
+    /**
+     * A pure php attribute
+     * non persisted into mongo
+     */
     private $attribute;
 
     public function getId()

@@ -13,7 +13,41 @@ class Mapper
     }
 
     /**
+     * Normalize data for mongo
+     * 
+     * This code chunk was extract from the Symfony framework
+     * and is subject to the MIT license. Please see the LICENCE
+     * at https://github.com/symfony/symfony
+     * 
+     * (c) Fabien Potencier <fabien@symfony.com>
+     * @author Nils Adermann <naderman@naderman.de>
+     * 
+     * @param  mixed $data
+     * @return array
+     */
+    public function normalize($data)
+    {
+        if (null === $data || is_scalar($data)) {
+            return $data;
+        }
+        if (is_object($data)) {
+            return $this->toArray($data);
+        }
+        if (is_array($data)) {
+            foreach ($data as $key => $val) {
+                $data[$key] = $this->normalize($val);
+            }
+
+            return $data;
+        }
+        throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
+    }
+
+    /**
      * Convert this object to array
+     * 
+     * @param  object  $object  An object to convert.
+     * @param  Boolean $embedId True to force _id in embedded document
      * @return Array
      */
     public function toArray($object)
@@ -25,7 +59,7 @@ class Mapper
         }
 
         $reflectedObject = new \ReflectionObject($object);
-
+        
         // Assert that a stand alone document must have an id field
         if (!$reflectedObject->hasProperty('id') || 
             !$reflectedObject->hasMethod('getId') ||
@@ -48,6 +82,12 @@ class Mapper
                     if ($this->isValidAccessor($reflectedMethod)) {
                         $key = $this->uncamelize($reflectedProperty->getName());
                         $value = $reflectedMethod->invoke($object);
+
+                        // Recursively normalize nested non-scalar data
+                        if (null !== $value && !is_scalar($value)) {
+                            $value = $this->normalize($value);
+                        }
+
                         $array[$key] = $value;
                     }
                 }
