@@ -208,9 +208,9 @@ class Mapper
         if ($object->hasProperty('id') && $object->hasMethod('getId') && $object->hasMethod('setId')) {
 
             if ($this->isMongoProperty($object->getProperty('id')))
-            { 
-                if(!$this->isValidAccessor($object->getMethod('getId')) ||
-                   !$this->isValidMutator($object->getMethod('setId'))) {
+            {
+                if(!($this->isValidAccessor($object->getMethod('getId'))) ||
+                   !($this->isValidMutator($object->getMethod('setId')))) {
 
                     throw new \RuntimeException('Object expect an id but do not expose valid accessor/mutator');
                 }

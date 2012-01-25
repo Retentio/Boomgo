@@ -196,7 +196,6 @@ class Mapper extends \mageekguy\atoum\test
                 ->hasKeys(array('mongo_string', 'mongo_number'))
                 ->strictlyContainsValues(array('a embed stored string'));
         }
-
     }
 
     public function testHydrate()
@@ -303,7 +302,7 @@ class Mapper extends \mageekguy\atoum\test
             ->boolean($bool)
             ->isTrue();
 
-        // Should return false when an object provide an invalid identifier implementation (getter)
+        // Should return false when an object provide an uncomplete identifier implementation (getter)
         $object = new Mock\DocumentMissGetter();
         $reflection = new \ReflectionObject($object);
         $bool = $mapper->hasValidIdentifier($reflection);
@@ -312,7 +311,7 @@ class Mapper extends \mageekguy\atoum\test
             ->boolean($bool)
             ->isFalse();
 
-        // Should return false when an object provide an invalid identifier implementation (setter)
+        // Should return false when an object provide an uncomplete identifier implementation (setter)
         $object = new Mock\DocumentMissSetter();
         $reflection = new \ReflectionObject($object);
         $bool = $mapper->hasValidIdentifier($reflection);
@@ -321,10 +320,74 @@ class Mapper extends \mageekguy\atoum\test
             ->boolean($bool)
             ->isFalse();
 
-         // Should return false when an object provide an valid identifier implementation without mongo annotation
+         // Should return false when an object provide a valid identifier implementation without mongo annotation
         $object = new Mock\DocumentExcludedId();
         $reflection = new \ReflectionObject($object);
         $bool = $mapper->hasValidIdentifier($reflection);
+
+        $this->assert
+            ->boolean($bool)
+            ->isFalse();
+
+        // Should throw exception when an bject provide a complete yet invalid identifier implem (getter)
+        $object = new Mock\DocumentInvalidGetter();
+        $reflection = new \ReflectionObject($object);
+
+        $this->assert
+            ->exception(function() use ($mapper, $reflection) {
+                    $mapper->hasValidIdentifier($reflection);
+                })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Object expect an id but do not expose valid accessor/mutator');
+
+        // Should throw exception when an object provide a complete yet invalid identifier implem (setter)
+        $object = new Mock\DocumentInvalidSetter();
+        $reflection = new \ReflectionObject($object);
+
+        $this->assert
+            ->exception(function() use ($mapper, $reflection) {
+                    $mapper->hasValidIdentifier($reflection);
+                })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Object expect an id but do not expose valid accessor/mutator'); 
+    }
+
+    public function TestIsValidAccessor()
+    {
+        // Should return true when getter is public and do not required argument
+        $object = new Mock\Document();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->isValidAccessor($reflection->getMethod('getId'));
+
+        $this->assert
+            ->boolean($bool)
+            ->isTrue();
+        
+        // Should return false when getter is invalid
+        $object = new Mock\DocumentInvalidGetter();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->isValidAccessor($reflection->getMethod('getId'));
+
+        $this->assert
+            ->boolean($bool)
+            ->isFalse();
+    }
+
+    public function TestIsValidMutator()
+    {
+        // Should return true when setter is public and require only one argument
+        $object = new Mock\Document();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->isValidAccessor($reflection->getMethod('setId'));
+
+        $this->assert
+            ->boolean($bool)
+            ->isTrue();
+        
+        // Should return false when setter is invalid
+        $object = new Mock\DocumentInvalidSetter();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->isValidAccessor($reflection->getMethod('setId'));
 
         $this->assert
             ->boolean($bool)
@@ -334,6 +397,10 @@ class Mapper extends \mageekguy\atoum\test
 
 namespace Boomgo\tests\units\Mock;
 
+/**
+ * A valid Boomgo document class
+ * fully exposing mapper capabilities with identifier
+ */
 class Document
 {
     /**
@@ -445,6 +512,11 @@ class Document
     }    
 }
 
+/**
+ * A valid Boomgo document class
+ * exposing mapper capabilities without identifier
+ * (embed document or capped collection)
+ */
 class EmbedDocument
 {
     /**
@@ -496,6 +568,10 @@ class EmbedDocument
     }
 }
 
+/**
+ * A invalid Boomgo document class
+ * using identifier with a missing mutator (setId)
+ */
 class DocumentMissSetter
 {
     /**
@@ -510,6 +586,10 @@ class DocumentMissSetter
     }
 }
 
+/**
+ * A invalid Boomgo document class
+ * using identifier with a missing accessor (getId)
+ */
 class DocumentMissGetter
 {
     /**
@@ -524,6 +604,11 @@ class DocumentMissGetter
     }
 }
 
+/**
+ * A valid Boomgo document class
+ * Appear using identifier yet do not defined @Mongo
+ * (the document class must not use mongo identifier)
+ */
 class DocumentExcludedId
 {
     /**
@@ -542,12 +627,65 @@ class DocumentExcludedId
     }
 }
 
+/**
+ * A invalid Boomgo document class
+ * using identifier with an invalid mutator (setId)
+ */
+class DocumentInvalidSetter
+{
+    /**
+     * Identifier private, non persisted
+     * @Mongo
+     */
+    private $id;
 
+    public function setId()
+    {
+        $this->id = $id;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+}
+
+/**
+ * A invalid Boomgo document class
+ * using identifier with an invalid accessor (getId)
+ */
+class DocumentInvalidGetter
+{
+    /**
+     * Identifier private, non persisted
+     * @Mongo
+     */
+    private $id;
+
+    public function setId()
+    {
+        $this->id = $id;
+    }
+
+    public function getId($id)
+    {
+        return $this->id;
+    }
+}
+
+/**
+ * A valid Boomgo document class
+ * with a constructor using optionnal param
+ */
 class DocummentConstruct
 {
     public function __construct($options = array()) {}
 }
 
+/**
+ * A invalid Boomgo document class
+ * with a constructor using mandatory param
+ */
 class DocummentConstructRequired
 {
     public function __construct($options) {}
