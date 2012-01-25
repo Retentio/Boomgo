@@ -64,22 +64,51 @@ class Mapper extends \mageekguy\atoum\test
             ->isInstanceOf('InvalidArgumentException')
             ->hasMessage('Argument must be an object');
         
-        // Should throw exception if object don't have/expose identifer (id, getId)
-        $this->assert
-            ->exception(function() use ($mapper) {
-                    $mapper->toArray(new \stdClass());
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Invalid identifier prerequisite');
-
         // Should return an empty array when providing an empty object
+        $array = $mapper->toArray(new \stdClass()); 
+        
+        $this->assert
+            ->array($array)
+            ->isEmpty();
+
+        // Should return an empty array when providing object without value
         $document = new Mock\Document();
         $array = $mapper->toArray($document);
 
         $this->assert
             ->array($array)
             ->isEmpty();
-        
+
+        // Should return an array with data defined mongo
+        $document = new Mock\EmbedDocument();
+        $document->setMongoString('a string');
+        $document->setMongoNumber(5);
+
+        $array = $mapper->toArray($document);
+
+        $this->assert
+            ->array($array)
+            ->isNotEmpty()
+            ->isIdenticalTo(array('mongo_string' => 'a string',
+                'mongo_number' => 5));
+
+        // Should return an array with normalized key _id when object has identifier
+        $document = new Mock\Document();
+        $document->setId('an id');
+        $document->setMongoString('a string');
+        $document->setMongoNumber(5);
+
+        $array = $mapper->toArray($document);
+        $this->assert
+            ->array($array)
+            ->isNotEmpty()
+            ->hasKey('_id')
+            ->notHasKey('id');
+
+        $this->assert
+            ->variable($array['_id'])
+            ->isIdenticalTo('an id');
+
         // Should return an empty array when all mongo keys are null
         $document = new Mock\Document();
         $document->setAttribute('an excluded value');
@@ -120,7 +149,7 @@ class Mapper extends \mageekguy\atoum\test
             
         $this->assert
             ->array($array['mongo_document'])
-            ->hasKeys(array('_id', 'mongo_string', 'mongo_number'))
+            ->hasKeys(array('mongo_string', 'mongo_number'))
             ->strictlyContainsValues(array('a embed stored string'));
 
         // Should recursively include array
@@ -164,7 +193,7 @@ class Mapper extends \mageekguy\atoum\test
             $this->assert
                 ->array($array['mongo_collection'][$i])
                 ->isNotEmpty()
-                ->hasKeys(array('_id', 'mongo_string', 'mongo_number'))
+                ->hasKeys(array('mongo_string', 'mongo_number'))
                 ->strictlyContainsValues(array('a embed stored string'));
         }
 
@@ -175,14 +204,6 @@ class Mapper extends \mageekguy\atoum\test
         $ns = 'Boomgo\\tests\\units\\Mock\\';
 
         $mapper = new Boomgo\Mapper();
-
-        // Should throw exception if array has no _id
-        $this->assert
-            ->exception(function() use ($mapper) {
-                    $mapper->hydrate('\\stdClass',array());
-                })
-            ->isInstanceOf('InvalidArgumentException')
-            ->hasMessage('Data without _id are not yet supported');
         
         // Sould throw exception if constructor has mandatory prerequesite
         $this->assert
@@ -198,7 +219,7 @@ class Mapper extends \mageekguy\atoum\test
                     $mapper->hydrate($ns.'DocummentConstruct', array('_id' => 1));
                 })
             ->isInstanceOf('RuntimeException')
-            ->hasMessage('Invalid identifier prerequisite');
+            ->hasMessage('Object do not handle identifier');
 
         // Should hydrate correctly an object
         $array = array('_id' => 'identifier',
@@ -267,6 +288,47 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->string($underscore)
             ->isEqualTo('hello_world');
+    }
+
+    public function testHasValidIdentifier()
+    {
+        $mapper = new Boomgo\Mapper();
+
+        // Should return true when object provide a valid identifier implementation
+        $object = new Mock\Document();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->hasValidIdentifier($reflection);
+
+        $this->assert
+            ->boolean($bool)
+            ->isTrue();
+
+        // Should return false when an object provide an invalid identifier implementation (getter)
+        $object = new Mock\DocumentMissGetter();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->hasValidIdentifier($reflection);
+
+        $this->assert
+            ->boolean($bool)
+            ->isFalse();
+
+        // Should return false when an object provide an invalid identifier implementation (setter)
+        $object = new Mock\DocumentMissSetter();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->hasValidIdentifier($reflection);
+
+        $this->assert
+            ->boolean($bool)
+            ->isFalse();
+
+         // Should return false when an object provide an valid identifier implementation without mongo annotation
+        $object = new Mock\DocumentExcludedId();
+        $reflection = new \ReflectionObject($object);
+        $bool = $mapper->hasValidIdentifier($reflection);
+
+        $this->assert
+            ->boolean($bool)
+            ->isFalse();
     }
 }
 
@@ -386,12 +448,6 @@ class Document
 class EmbedDocument
 {
     /**
-     * Identifier
-     * @Mongo
-     */
-    private $id;
-
-    /**
      * A mongo stored string
      * @Mongo
      */
@@ -408,16 +464,6 @@ class EmbedDocument
      * non persisted into mongo
      */
     private $attribute;
-
-    public function getId()
-    {
-        return $this->id;
-    }
-
-    public function setId($id)
-    {
-        $this->id =$id;
-    }
 
     public function setMongoString($value)
     {
@@ -449,6 +495,53 @@ class EmbedDocument
         return $this->attribute;
     }
 }
+
+class DocumentMissSetter
+{
+    /**
+     * Identifier
+     * @Mongo
+     */
+    private $id;
+
+    public function getId()
+    {
+        return $this->id;
+    }
+}
+
+class DocumentMissGetter
+{
+    /**
+     * Identifier
+     * @Mongo
+     */
+    private $id;
+
+    public function setId($id)
+    {
+        return $this->id;
+    }
+}
+
+class DocumentExcludedId
+{
+    /**
+     * Identifier private, non persisted
+     */
+    private $id;
+
+    public function setId($id)
+    {
+        $this->id = $id;
+    }
+
+    public function getId()
+    {
+        return $this->id;
+    }
+}
+
 
 class DocummentConstruct
 {

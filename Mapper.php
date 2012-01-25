@@ -52,23 +52,20 @@ class Mapper
      */
     public function toArray($object)
     {
-        $array = array();
-
         if (!is_object($object)) {
             throw new \InvalidArgumentException('Argument must be an object');
         }
 
         $reflectedObject = new \ReflectionObject($object);
-        
-        // Assert that a stand alone document must have an id field
-        if (!$reflectedObject->hasProperty('id') || 
-            !$reflectedObject->hasMethod('getId') ||
-            !$this->isValidAccessor($reflectedObject->getMethod('getId'))) {
-            throw new \RuntimeException('Invalid identifier prerequisite');
-        }
+        $array = array();
 
+        // Assert that a stand alone document must have an id field
+        $hasIdKey = $this->hasValidIdentifier($reflectedObject);
+        
         // Fetch mandatory _id first
-        $array['_id'] = $object->getId();
+        if ($hasIdKey) {
+            $array['_id'] = $object->getId();
+        }
 
         $reflectedProperties = $reflectedObject->getProperties();
 
@@ -94,8 +91,10 @@ class Mapper
             }
         }
 
-        // Unset id field since we already have _id and it's non sens for mongo 
-        unset($array['id']);
+        // Unset potential id field since we firstly processed _id
+        if ($hasIdKey) {
+            unset($array['id']);
+        }
 
         // If all keys has a null value, we should return an empy array.
         // PHP suck balls (isset, empty, array_value)
@@ -115,13 +114,6 @@ class Mapper
      */
     public function hydrate($className, array $array)
     {
-        if (!isset($array['_id'])) {
-            throw new \InvalidArgumentException('Data without _id are not yet supported');
-        }
-
-        $array['id'] = $array['_id'];
-        unset($array['_id']);
-
         $reflectedClass = new \ReflectionClass($className);
         $constructor = $reflectedClass->getConstructor();
 
@@ -130,14 +122,15 @@ class Mapper
         }
 
         $object = new $className;
-
         $reflectedObject = new \ReflectionObject($object);
 
-        // Assert that a stand alone document must have an id field
-        if (!$reflectedObject->hasProperty('id') || 
-            !$reflectedObject->hasMethod('setId') ||
-            !$this->isValidMutator($reflectedObject->getMethod('setId'))) {
-            throw new \RuntimeException('Invalid identifier prerequisite');
+        if (isset($array['_id'])) {
+            if (!$this->hasValidIdentifier($reflectedObject)) {
+                throw new \RuntimeException('Object do not handle identifier');
+            }
+            // Php Document identifier convention is "id" not "_id" 
+            $array['id'] = $array['_id'];
+            unset($array['_id']);
         }
 
         foreach ($array as $key => $value) {
@@ -199,9 +192,32 @@ class Mapper
      * @param  ReflectionProperty $property the property to check
      * @return Boolean True if the property should be stored
      */
-    private function isMongoProperty(\ReflectionProperty $property)
+    public function isMongoProperty(\ReflectionProperty $property)
     {
         return (0 < strpos($property->getDocComment(), '@Mongo'));
+    }
+
+    /**
+     * Check if a php document handle an identifier
+     *  
+     * @param  ReflectionObject  $object
+     * @return boolean
+     */
+    public function hasValidIdentifier(\ReflectionObject $object)
+    {
+        if ($object->hasProperty('id') && $object->hasMethod('getId') && $object->hasMethod('setId')) {
+
+            if ($this->isMongoProperty($object->getProperty('id')))
+            { 
+                if(!$this->isValidAccessor($object->getMethod('getId')) ||
+                   !$this->isValidMutator($object->getMethod('setId'))) {
+
+                    throw new \RuntimeException('Object expect an id but do not expose valid accessor/mutator');
+                }
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -210,7 +226,7 @@ class Mapper
      * @param  ReflectionMethod $method the method to check
      * @return Boolean True if the getter is valid
      */
-    private function isValidAccessor(\ReflectionMethod $method)
+    public function isValidAccessor(\ReflectionMethod $method)
     {
         return ($method->isPublic() && 
                 0 === $method->getNumberOfRequiredParameters());
@@ -222,7 +238,7 @@ class Mapper
      * @param  ReflectionMethod $method the method to check
      * @return Boolean True if the setter is valid
      */
-    private function isValidMutator(\ReflectionMethod $method)
+    public function isValidMutator(\ReflectionMethod $method)
     {
         return ($method->isPublic() && 
                 1 === $method->getNumberOfRequiredParameters());
