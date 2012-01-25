@@ -120,7 +120,8 @@ class Mapper extends \mageekguy\atoum\test
             
         $this->assert
             ->array($array['mongo_document'])
-            ->hasKeys(array('_id', 'mongo_string', 'mongo_number'));
+            ->hasKeys(array('_id', 'mongo_string', 'mongo_number'))
+            ->strictlyContainsValues(array('a embed stored string'));
 
         // Should recursively include array
         $document = new Mock\Document();
@@ -135,6 +136,38 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->array($array['mongo_array'])
             ->isIdenticalTo(array('an' => 'embedded', 'array', 6 => 2));
+
+        // Should recursively normalize embedded collection
+        $embedCollection = array();
+        for ($i = 0; $i < 10; $i ++) {
+            $embedDocument = new Mock\EmbedDocument();
+            $embedDocument->setMongoString('a embed stored string');
+            $embedDocument->setAttribute('an embed excluded value');
+            $embedCollection[] = $embedDocument;
+        }
+
+        $document = new Mock\Document();
+        $document->setMongoCollection($embedCollection);
+        $array = $mapper->toArray($document);
+
+        $this->assert
+            ->array($array)
+            ->isNotEmpty()
+            ->hasKey('mongo_collection');
+
+        $this->assert
+            ->array($array['mongo_collection'])
+            ->isNotEmpty()
+            ->hasSize(10);
+
+        for ($i = 0; $i < 10; $i ++) {
+            $this->assert
+                ->array($array['mongo_collection'][$i])
+                ->isNotEmpty()
+                ->hasKeys(array('_id', 'mongo_string', 'mongo_number'))
+                ->strictlyContainsValues(array('a embed stored string'));
+        }
+
     }
 
     public function testHydrate()
@@ -266,6 +299,12 @@ class Document
     private $mongoDocument;
 
     /**
+     * A embedded collection 
+     * @Mongo
+     */
+    private $mongoCollection;
+
+    /**
      * An embedded array 
      * @Mongo
      */
@@ -323,14 +362,25 @@ class Document
     {
         return $this->mongoDocument;
     }
+
     public function setMongoArray($value)
     {
         $this->mongoArray = $value;
     }
+
     public function getMongoArray()
     {
         return $this->mongoArray;
     }
+
+    public function setMongoCollection($value)
+    {
+        $this->mongoCollection = $value;
+    }
+    public function getMongoCollection()
+    {
+        return $this->mongoCollection;
+    }    
 }
 
 class EmbedDocument

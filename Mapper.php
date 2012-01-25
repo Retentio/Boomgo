@@ -98,7 +98,7 @@ class Mapper
         unset($array['id']);
 
         // If all keys has a null value, we should return an empy array.
-        // Since PHP suck balls (isset, empty, array_value) implode is the hack.
+        // PHP suck balls (isset, empty, array_value)
         if (!array_filter($array)) {
             $array = array();
         }
