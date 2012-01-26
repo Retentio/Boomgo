@@ -23,7 +23,7 @@ class Mapper
      * @author Nils Adermann <naderman@naderman.de>
      * 
      * @param  mixed $data
-     * @return array
+     * @return mixed
      */
     public function normalize($data)
     {
@@ -70,7 +70,7 @@ class Mapper
         $reflectedProperties = $reflectedObject->getProperties();
 
         foreach ($reflectedProperties as $reflectedProperty) {
-            if ($this->isMongoProperty($reflectedProperty)) {
+            if ($this->isBoomgoProperty($reflectedProperty)) {
                 $accessorName = 'get'.ucfirst($reflectedProperty->getName());
                 
                 if ($reflectedObject->hasMethod($accessorName)) {
@@ -103,6 +103,33 @@ class Mapper
         }
 
         return $array;
+    }
+
+    /**
+     * Denormalize mongo data for php
+     * 
+     * @param  mixed $data
+     * @return mixed
+     */
+    public function denormalize($data , $className = null)
+    {
+        if (null === $data || is_scalar($data)) {
+            return $data;
+        }
+        if (is_array($data)) {
+
+            // Dealing with associative array
+            if (array_keys($data) !== range(0, sizeof($arr) - 1)) {
+                return $this->hydrate($className, $data);
+            }
+
+            foreach ($data as $key => $val) {
+                $data[$key] = $this->denormalize($val);
+            }
+            return $data;
+        }
+        
+        throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
     }
 
     /**
@@ -141,10 +168,11 @@ class Mapper
             if ($reflectedObject->hasProperty($attributeName) && $reflectedObject->hasMethod($mutatorName)) {
                 $reflectedProperty = $reflectedObject->getProperty($attributeName);
 
-                if ($this->isMongoProperty($reflectedProperty)) {
+                if ($this->isBoomgoProperty($reflectedProperty)) {
                     $reflectedMethod = $reflectedObject->getMethod($mutatorName);
 
                     if ($this->isValidMutator($reflectedMethod)) {
+                        //array_keys($arr) !== range(0, sizeof($arr) - 1);
                         $reflectedMethod->invoke($object, $value);
                     }
                 }
@@ -190,11 +218,43 @@ class Mapper
      * Check if an object property should be persisted.
      *
      * @param  ReflectionProperty $property the property to check
+     * @throws RuntimeException If annotation is malformed
      * @return Boolean True if the property should be stored
      */
-    public function isMongoProperty(\ReflectionProperty $property)
+    public function isBoomgoProperty(\ReflectionProperty $property)
     {
-        return (0 < strpos($property->getDocComment(), '@Mongo'));
+        $boomgoAnnot = substr_count($property->getDocComment(), '@Mongo');
+
+        if (0 < $boomgoAnnot) {
+            if (1 === $boomgoAnnot) {
+                return true;
+            }
+            throw new \RuntimeException('Boomgo annotation should occur only once');
+        }
+
+        return false;
+    }
+
+    /**
+     * Parse Boomgo metadata
+     * 
+     * @param  \ReflectionProperty $property
+     * @return array
+     */
+    public function parseMetadata(\ReflectionProperty $property)
+    {
+        $metadata = array();
+
+        preg_match('#@Mongo\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
+
+        if (empty($metadata) || sizeof($metadata) > 3 || 
+            (!empty($metadata[1]) && empty($metadata[2]))) {
+            throw new \RuntimeException('Malformed metadata');
+        }
+
+        array_shift($metadata);
+
+        return $metadata;
     }
 
     /**
@@ -207,7 +267,7 @@ class Mapper
     {
         if ($object->hasProperty('id') && $object->hasMethod('getId') && $object->hasMethod('setId')) {
 
-            if ($this->isMongoProperty($object->getProperty('id')))
+            if ($this->isBoomgoProperty($object->getProperty('id')))
             {
                 if(!($this->isValidAccessor($object->getMethod('getId'))) ||
                    !($this->isValidMutator($object->getMethod('setId')))) {

@@ -352,8 +352,10 @@ class Mapper extends \mageekguy\atoum\test
             ->hasMessage('Object expect an id but do not expose valid accessor/mutator'); 
     }
 
-    public function TestIsValidAccessor()
+    public function testIsValidAccessor()
     {
+        $mapper = new Boomgo\Mapper();
+
         // Should return true when getter is public and do not required argument
         $object = new Mock\Document();
         $reflection = new \ReflectionObject($object);
@@ -373,12 +375,14 @@ class Mapper extends \mageekguy\atoum\test
             ->isFalse();
     }
 
-    public function TestIsValidMutator()
+    public function testIsValidMutator()
     {
+        $mapper = new Boomgo\Mapper();
+
         // Should return true when setter is public and require only one argument
         $object = new Mock\Document();
         $reflection = new \ReflectionObject($object);
-        $bool = $mapper->isValidAccessor($reflection->getMethod('setId'));
+        $bool = $mapper->isValidMutator($reflection->getMethod('setId'));
 
         $this->assert
             ->boolean($bool)
@@ -387,11 +391,99 @@ class Mapper extends \mageekguy\atoum\test
         // Should return false when setter is invalid
         $object = new Mock\DocumentInvalidSetter();
         $reflection = new \ReflectionObject($object);
-        $bool = $mapper->isValidAccessor($reflection->getMethod('setId'));
+        $bool = $mapper->isValidMutator($reflection->getMethod('setId'));
 
         $this->assert
             ->boolean($bool)
             ->isFalse();
+    }
+
+    public function testIsBoomgoProperty()
+    {
+        $mapper = new Boomgo\Mapper();
+
+         // Should return false if proprerty don't have annotation
+        $document = new Mock\DocumentExcludedId();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('id');
+
+        $bool = $mapper->isBoomgoProperty($reflectedProperty);
+        $this->assert
+            ->boolean($bool)
+            ->isFalse();
+
+        // Should return true if proprerty has annotation
+        $document = new Mock\Document();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('id');
+
+        $bool = $mapper->isBoomgoProperty($reflectedProperty);
+        $this->assert
+            ->boolean($bool)
+            ->isTrue();
+
+        // Should throws exception if property has 2 inline annotations
+        $document = new Mock\DocumentInvalidAnnotation();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('inline');
+        $this->assert
+            ->exception(function() use ($mapper, $reflectedProperty) {
+                    $mapper->isBoomgoProperty($reflectedProperty);
+                })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Boomgo annotation should occur only once');
+
+        // Should throws exception if property has 2 multi-line annotations
+        $document = new Mock\DocumentInvalidAnnotation();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('multiline');
+        $this->assert
+            ->exception(function() use ($mapper, $reflectedProperty) {
+                    $mapper->isBoomgoProperty($reflectedProperty);
+                })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Boomgo annotation should occur only once');
+    }
+
+    public function testParseMetadata()
+    {
+        $mapper = new Boomgo\Mapper();
+
+        // Should throw exception if annotation is missing
+        $document = new Mock\DocumentExcludedId();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('id');
+
+        $this->assert
+            ->exception(function() use ($mapper, $reflectedProperty) {
+                    $mapper->parseMetadata($reflectedProperty);
+                })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Malformed metadata');
+
+        // Should throw exception if annotation is incomplete
+        $document = new Mock\DocumentInvalidAnnotation();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('incomplete');
+
+        $this->assert
+            ->exception(function() use ($mapper, $reflectedProperty) {
+                    $mapper->parseMetadata($reflectedProperty);
+                })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Malformed metadata');
+
+        // Should return an array of metadata
+        $document = new Mock\Document();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('mongoDocument');
+
+        $metadata = $mapper->parseMetadata($reflectedProperty);
+        $this->assert
+            ->array($metadata)
+            ->isNotEmpty()
+            ->hasSize(2)
+            ->strictlyContainsValues(array('Document', 'Boomgo\tests\units\Mock\EmbedDocument'));
     }
 }
 
@@ -423,13 +515,13 @@ class Document
 
     /**
      * An single embedded document 
-     * @Mongo
+     * @Mongo Document Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoDocument;
 
     /**
      * A embedded collection 
-     * @Mongo
+     * @Mongo Collection Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoCollection;
 
@@ -671,6 +763,32 @@ class DocumentInvalidGetter
     {
         return $this->id;
     }
+}
+
+/**
+ * A invalid Boomgo document class
+ * defining wrong annotation
+ */
+class DocumentInvalidAnnotation
+{
+    /**
+     * Invalid annotation inline
+     * @Mongo @Mongo
+     */
+    private $inline;
+
+    /**
+     * Invalid annotation multi lines
+     * @Mongo 
+     * @Mongo
+     */
+    private $multiline;
+
+    /**
+     * Incomplete annotation
+     * @Mongo document
+     */
+    private $incomplete
 }
 
 /**
