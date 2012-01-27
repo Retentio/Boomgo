@@ -85,12 +85,15 @@ class Mapper extends \mageekguy\atoum\test
         $document->setMongoNumber(5);
 
         $array = $mapper->toArray($document);
-
+        
         $this->assert
             ->array($array)
             ->isNotEmpty()
             ->isIdenticalTo(array('mongo_string' => 'a string',
-                'mongo_number' => 5));
+                'mongo_number' => 5,
+                'mongo_array' => null));
+
+        
 
         // Should return an array with normalized key _id when object has identifier
         $document = new Mock\Document();
@@ -169,7 +172,7 @@ class Mapper extends \mageekguy\atoum\test
         // Should recursively normalize embedded collection
         $embedCollection = array();
         for ($i = 0; $i < 10; $i ++) {
-            $embedDocument = new Mock\EmbedDocument();
+            $embedDocument = new Mock\Document();
             $embedDocument->setMongoString('a embed stored string');
             $embedDocument->setAttribute('an embed excluded value');
             $embedCollection[] = $embedDocument;
@@ -247,6 +250,177 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->variable($object->getAttribute())
             ->isNull();
+
+        // Should hydrate correctly a document containing multiple levels of nested documents, collections and arrays
+        // This test emulate a complexe document embedding
+        // {
+        //      _id:
+        //      mongo_string: 
+        //      mongo_document:
+        //      mongo_collection: 10 x Mock\Document which embed 3 x Mock\EmbedDocument (and mutliples arrays / assoc arrays);
+        //      mongo_collection_embed: 3 x Mock\EmbedDocument (and 1 array nested in 1 assoc array)
+        //      mongo_array: 1 assoc array which embed 1 array
+        // }
+        $array = array('yet', 'another', 'embed', 'array'); 
+
+        $assocArray = array('an' => 'associative', 8 => 'array', 'containing' => $array);
+        
+        $collectionEmbedDocument = array();
+        for ($j = 0; $j < 3; $j ++) {
+            $document = array('mongo_string' => 'a EMBED DOCUMENT collection-embed stored string',
+                'mongo_array' => $assocArray,
+                'attribute' => 'a EMBED DOCUMENT collection-embed excluded value');
+            
+            $collectionEmbedDocument[] = $document;
+        } 
+        
+        $collectionDocument = array();
+        for ($i = 0; $i < 10; $i ++) {
+            $document = array('id' => 'identifier'.$i,
+                'mongo_string' => 'a DOCUMENT collection-embed stored string',
+                'attribute' => 'a DOCUMENT collection-embed excluded value',
+                'mongo_array' => $assocArray,
+                'mongo_collection_embed' => $collectionEmbedDocument);
+            $collectionDocument[] = $document;
+        }
+        
+        $document = array('mongo_string' => 'embed mongo string',
+            'mongo_number' => 1337); 
+        
+        $data = array('_id' => 'identifier',
+            'mongo_string' => 'a mongo string',
+            'mongo_number' => 1664,
+            'mongo_document' => $document,
+            'mongo_collection' => $collectionDocument,
+            'mongo_collection_embed' => $collectionEmbedDocument,
+            'mongo_array' => $array);
+
+        $object = $mapper->hydrate($ns.'Document', $data);
+
+        $this->assert
+            ->object($object)
+            ->isInstanceOf('Boomgo\tests\units\Mock\Document');
+
+        $this->assert
+            ->string($object->getMongoString())
+            ->isEqualTo('a mongo string');
+
+        $this->assert
+            ->integer($object->getMongoNumber())
+            ->isEqualTo(1664);
+        
+        // check single embedded document (1 x Mock\Document)
+        $embedObject = $object->getMongoDocument();
+
+        $this->assert
+            ->object($embedObject)
+            ->isInstanceOf('Boomgo\tests\units\Mock\EmbedDocument');
+
+        $this->assert
+            ->string($embedObject->getMongoString())
+            ->isEqualTo('embed mongo string');
+
+        $this->assert
+            ->integer($embedObject->getMongoNumber())
+            ->isEqualTo(1337);
+        
+        // Check the first embedded collection level (10 x Mock\Document)
+        $embedCollection = $object->getMongoCollection();
+
+        $this->assert
+            ->array($embedCollection)
+            ->isNotEmpty()
+            ->hasSize(10);
+        
+        foreach($embedCollection as $embedDocument) {
+            $this->assert
+                ->object($embedDocument)
+                ->isInstanceOf('Boomgo\tests\units\Mock\Document');
+
+            $this->assert
+                ->string($embedDocument->getMongoString())
+                ->isEqualTo('a DOCUMENT collection-embed stored string');
+
+            $this->assert
+                ->variable($embedDocument->getAttribute())
+                ->isNull();
+
+            $embedArray = $embedDocument->getMongoArray();
+            $this->assert
+                    ->array($embedArray)
+                    ->hasSize(3)
+                    ->isIdenticalTo($assocArray);
+
+            $this->assert
+                    ->array($embedArray['containing'])
+                    ->hasSize(4)
+                    ->isIdenticalTo($array);
+
+            // check the second nested collection level (3 x Mock\EmbedDocument)
+            $nestedEmbedCollection = $embedDocument->getMongoCollectionEmbed();
+            $this->assert
+                ->array($nestedEmbedCollection)
+                ->isNotEmpty()
+                ->hasSize(3);
+
+            foreach($nestedEmbedCollection as $nestedEmbedDocument) {
+                $this->assert
+                    ->object($nestedEmbedDocument)
+                    ->isInstanceOf('Boomgo\tests\units\Mock\EmbedDocument');
+
+                $this->assert
+                    ->string($nestedEmbedDocument->getMongoString())
+                    ->isEqualTo('a EMBED DOCUMENT collection-embed stored string');
+
+                $this->assert
+                    ->variable($nestedEmbedDocument->getAttribute())
+                    ->isNull();
+                
+                $nestedAssocArray = $nestedEmbedDocument->getMongoArray();
+                $this->assert
+                    ->array($nestedAssocArray)
+                    ->hasSize(3)
+                    ->isIdenticalTo($assocArray);
+
+                $this->assert
+                    ->array($nestedAssocArray['containing'])
+                    ->hasSize(4)
+                    ->isIdenticalTo($array);
+            }
+        }
+
+        // Finally check the embedded collection of EmbedDocument at the root document (3 x Mock\EmbedDocument)
+        $embedCollectionEmbed = $object->getMongoCollectionEmbed();
+        $this->assert
+                ->array($embedCollectionEmbed)
+                ->isNotEmpty()
+                ->hasSize(3);
+
+        foreach ($embedCollectionEmbed as $embedDocumentEmbed)
+        {
+            $this->assert
+                    ->object($embedDocumentEmbed)
+                    ->isInstanceOf('Boomgo\tests\units\Mock\EmbedDocument');
+
+            $this->assert
+                ->string($embedDocumentEmbed->getMongoString())
+                ->isEqualTo('a EMBED DOCUMENT collection-embed stored string');
+
+            $this->assert
+                ->variable($embedDocumentEmbed->getAttribute())
+                ->isNull();
+            
+            $embedAssocArray = $embedDocumentEmbed->getMongoArray();
+            $this->assert
+                ->array($embedAssocArray)
+                ->hasSize(3)
+                ->isIdenticalTo($assocArray);
+
+            $this->assert
+                ->array($embedAssocArray['containing'])
+                ->hasSize(4)
+                ->isIdenticalTo($array);
+        }
     }
 
     public function testCamelize()
@@ -520,10 +694,16 @@ class Document
     private $mongoDocument;
 
     /**
-     * A embedded collection 
-     * @Mongo Collection Boomgo\tests\units\Mock\EmbedDocument
+     * A embedded collection of Document
+     * @Mongo Collection Boomgo\tests\units\Mock\Document
      */
     private $mongoCollection;
+
+    /**
+     * A embedded collection of Embed Document
+     * @Mongo Collection Boomgo\tests\units\Mock\EmbedDocument
+     */
+    private $mongoCollectionEmbed;
 
     /**
      * An embedded array 
@@ -601,7 +781,15 @@ class Document
     public function getMongoCollection()
     {
         return $this->mongoCollection;
-    }    
+    }
+    public function setMongoCollectionEmbed($value)
+    {
+        $this->mongoCollectionEmbed = $value;
+    }
+    public function getMongoCollectionEmbed()
+    {
+        return $this->mongoCollectionEmbed;
+    }
 }
 
 /**
@@ -622,6 +810,12 @@ class EmbedDocument
      * @Mongo
      */
     private $mongoNumber;
+
+    /**
+     * An embedded array 
+     * @Mongo
+     */
+    private $mongoArray;
 
     /**
      * A pure php attribute
@@ -647,6 +841,16 @@ class EmbedDocument
     public function getMongoNumber()
     {
         return $this->mongoNumber;
+    }
+
+    public function setMongoArray($value)
+    {
+        $this->mongoArray = $value;
+    }
+
+    public function getMongoArray()
+    {
+        return $this->mongoArray;
     }
 
     public function setAttribute($value)
@@ -788,7 +992,7 @@ class DocumentInvalidAnnotation
      * Incomplete annotation
      * @Mongo document
      */
-    private $incomplete
+    private $incomplete;
 }
 
 /**

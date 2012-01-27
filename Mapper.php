@@ -7,9 +7,35 @@ namespace Boomgo;
  */
 class Mapper
 {
-    public function __construct()
+    private $annotation;
+
+    /**
+     * Constructor
+     * @param string $annotation
+     */
+    public function __construct($annotation = '@Boomgo')
     {
-        
+        $this->setAnnotation('@Boomgo');
+    }
+
+    /**
+     * Define the annotation for the mapper
+     * 
+     * @param string $annotation
+     */
+    public function setAnnotation($annotation)
+    {
+        $this->annotation = $annotation;
+    }
+
+    /**
+     * Return the annotation defined for the mapper
+     * 
+     * @return string
+     */
+    public function getAnnotation()
+    {
+        return $this->annotation;
     }
 
     /**
@@ -118,17 +144,16 @@ class Mapper
         }
         if (is_array($data)) {
 
-            // Dealing with associative array
-            if (array_keys($data) !== range(0, sizeof($arr) - 1)) {
-                return $this->hydrate($className, $data);
+            if (array_keys($data) !== range(0, sizeof($data) - 1) && $className) {
+                $data = $this->hydrate($className, $data);
             }
 
             foreach ($data as $key => $val) {
-                $data[$key] = $this->denormalize($val);
+                $data[$key] = $this->denormalize($val, $className);
             }
             return $data;
         }
-        
+        echo 'called with classname : '.$className;
         throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
     }
 
@@ -161,19 +186,33 @@ class Mapper
         }
 
         foreach ($array as $key => $value) {
-            $camelized = $this->camelize($key);
-            $attributeName = lcfirst($camelized);
-            $mutatorName = 'set' . $camelized;
+            if (null !== $value) {
+                $camelized = $this->camelize($key);
+                $attributeName = lcfirst($camelized);
+                $mutatorName = 'set' . $camelized;
 
-            if ($reflectedObject->hasProperty($attributeName) && $reflectedObject->hasMethod($mutatorName)) {
-                $reflectedProperty = $reflectedObject->getProperty($attributeName);
+                if ($reflectedObject->hasProperty($attributeName) && $reflectedObject->hasMethod($mutatorName)) {
+                    $reflectedProperty = $reflectedObject->getProperty($attributeName);
 
-                if ($this->isBoomgoProperty($reflectedProperty)) {
-                    $reflectedMethod = $reflectedObject->getMethod($mutatorName);
+                    if ($this->isBoomgoProperty($reflectedProperty)) {
+                        $reflectedMethod = $reflectedObject->getMethod($mutatorName);
 
-                    if ($this->isValidMutator($reflectedMethod)) {
-                        //array_keys($arr) !== range(0, sizeof($arr) - 1);
-                        $reflectedMethod->invoke($object, $value);
+                        if ($this->isValidMutator($reflectedMethod)) {
+
+                            // Recursively normalize nested non-scalar data
+                            if (!is_scalar($value)) {
+
+                                $metadata = array();
+
+                                if (is_array($value)) {
+                                    $metadata = $this->parseMetadata($reflectedProperty);
+                                }
+
+                                $value = $this->denormalize($value, !empty($metadata) ? $metadata[1] : null);
+                            }
+
+                            $reflectedMethod->invoke($object, $value);
+                        }
                     }
                 }
             }
@@ -254,7 +293,7 @@ class Mapper
 
         array_shift($metadata);
 
-        return $metadata;
+        return $metadata[1] ? $metadata : array();
     }
 
     /**
