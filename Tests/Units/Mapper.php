@@ -323,14 +323,14 @@ class Mapper extends \mageekguy\atoum\test
             $collectionDocument[] = $document;
         }
         
-        $document = array('mongo_string' => 'embed mongo string',
+        $embedDocument = array('mongo_string' => 'embed mongo string',
             'mongo_number' => 1337,
             'mongo_array' => $assocArray); 
         
         $data = array('_id' => 'identifier',
             'mongo_string' => 'a mongo string',
             'mongo_number' => 1664,
-            'mongo_document' => $document,
+            'mongo_document' => $embedDocument,
             'mongo_collection' => $collectionDocument,
             'mongo_collection_embed' => $collectionEmbedDocument,
             'mongo_array' => $array);

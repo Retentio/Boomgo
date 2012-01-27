@@ -27,7 +27,7 @@ class Document
     private $mongoNumber;
 
     /**
-     * An single embedded document 
+     * An single embedded EmbedDocument 
      * @Mongo Document Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoDocument;
@@ -39,7 +39,7 @@ class Document
     private $mongoCollection;
 
     /**
-     * A embedded collection of Embed Document
+     * A embedded collection of EmbedDocument
      * @Mongo Collection Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoCollectionEmbed;
