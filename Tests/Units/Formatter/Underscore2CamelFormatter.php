@@ -6,17 +6,17 @@ use Boomgo\Formatter;
 
 require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 include __DIR__.'/../../../Formatter/FormatterInterface.php';
-include __DIR__.'/../../../Formatter/Underscore2CamelCase.php';
+include __DIR__.'/../../../Formatter/Underscore2CamelFormatter.php';
 
-class Underscore2CamelCase extends \mageekguy\atoum\test
+class Underscore2CamelFormatter extends \mageekguy\atoum\test
 {
     public function test__construct()
     {
         // Should implements FormatterInterface 
-        $formatter = new Formatter\Underscore2CamelCase();
+        $formatter = new Formatter\Underscore2CamelFormatter();
 
         $this->assert
-            ->class('Boomgo\Formatter\Underscore2CamelCase')
+            ->class('Boomgo\Formatter\Underscore2CamelFormatter')
             ->hasInterface('Boomgo\Formatter\FormatterInterface');
 
         $this->assert
@@ -26,7 +26,7 @@ class Underscore2CamelCase extends \mageekguy\atoum\test
 
     public function testToPhpAttribute()
     {
-        $formatter = new Formatter\Underscore2CamelCase();
+        $formatter = new Formatter\Underscore2CamelFormatter();
 
         // Should (lower) camelize an underscored string
         $camelCase = $formatter->toPhpAttribute('hello_world_pol');
@@ -49,7 +49,7 @@ class Underscore2CamelCase extends \mageekguy\atoum\test
 
     public function testToMongoAttribute()
     {
-        $formatter = new Formatter\Underscore2CamelCase();
+        $formatter = new Formatter\Underscore2CamelFormatter();
 
         // Should underscore an upper CamelCase string
         $underscore = $formatter->toMongoKey('HelloWorldPol');
