@@ -304,24 +304,27 @@ class Mapper extends \mageekguy\atoum\test
         $collectionEmbedDocument = array();
         for ($j = 0; $j < 3; $j ++) {
             $document = array('mongo_string' => 'a EMBED DOCUMENT collection-embed stored string',
-                'mongo_array' => $assocArray,
-                'attribute' => 'a EMBED DOCUMENT collection-embed excluded value');
+                'mongo_number' => null,
+                'mongo_array' => $assocArray);
             
             $collectionEmbedDocument[] = $document;
         } 
         
         $collectionDocument = array();
         for ($i = 0; $i < 10; $i ++) {
-            $document = array('id' => 'identifier'.$i,
+            $document = array('_id' => 'identifier'.$i,
                 'mongo_string' => 'a DOCUMENT collection-embed stored string',
-                'attribute' => 'a DOCUMENT collection-embed excluded value',
-                'mongo_array' => $assocArray,
-                'mongo_collection_embed' => $collectionEmbedDocument);
+                'mongo_number' => null,
+                'mongo_document' => null,
+                'mongo_collection' => null,
+                'mongo_collection_embed' => $collectionEmbedDocument,
+                'mongo_array' => $assocArray);
             $collectionDocument[] = $document;
         }
         
         $document = array('mongo_string' => 'embed mongo string',
-            'mongo_number' => 1337); 
+            'mongo_number' => 1337,
+            'mongo_array' => $assocArray); 
         
         $data = array('_id' => 'identifier',
             'mongo_string' => 'a mongo string',
@@ -457,6 +460,12 @@ class Mapper extends \mageekguy\atoum\test
                 ->hasSize(4)
                 ->isIdenticalTo($array);
         }
+
+        // Ultimate non-so-unit test to check consistency between hydrate & toArray 
+        $reverse = $mapper->toArray($object);
+        $this->assert
+            ->array($reverse)
+            ->isIdenticalTo($data);
     }
 
     public function testCamelize()
