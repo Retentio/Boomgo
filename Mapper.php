@@ -2,6 +2,8 @@
 
 namespace Boomgo;
 
+use Boomgo\Formatter\FormatterInterface;
+
 /**
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
@@ -9,18 +11,42 @@ class Mapper
 {
     private $annotation;
 
+    private $formatter;
+
     /**
      * Constructor
      * 
      * @param string $annotation
      */
-    public function __construct($annotation = '@Boomgo')
+    public function __construct(FormatterInterface $formatter, $annotation = '@Boomgo')
     {
+        $this->setFormatter($formatter);
         $this->setAnnotation($annotation);
     }
 
     /**
-     * Define the annotation for the mapper
+     * Define the key/attribute formatter
+     * 
+     * @param FormatterInterface $formatter
+     */
+    public function setFormatter(FormatterInterface $formatter)
+    {
+        $this->formatter = $formatter;    
+    }
+
+    /**
+     * Return the key/attribute formatter
+     * 
+     * @return FormatterInterface
+     */
+    public function getFormatter()
+    {
+        return $this->formatter;
+    }
+
+
+    /**
+     * Define the annotation for the mapper instance
      * 
      * @param string $annotation
      */
@@ -34,7 +60,7 @@ class Mapper
     }
 
     /**
-     * Return the annotation defined for the mapper
+     * Return the annotation defined for the mapper instance
      * 
      * @return string
      */
@@ -108,7 +134,7 @@ class Mapper
                     $reflectedMethod = $reflectedObject->getMethod($accessorName);
 
                     if ($this->isValidAccessor($reflectedMethod)) {
-                        $key = $this->uncamelize($reflectedProperty->getName());
+                        $key = $this->formatter->toMongoKey($reflectedProperty->getName());
                         $value = $reflectedMethod->invoke($object);
 
                         // Recursively normalize nested non-scalar data
@@ -192,9 +218,8 @@ class Mapper
 
         foreach ($array as $key => $value) {
             if (null !== $value) {
-                $camelized = $this->camelize($key);
-                $attributeName = lcfirst($camelized);
-                $mutatorName = 'set' . $camelized;
+                $attributeName = $this->formatter->toPhpAttribute($key);
+                $mutatorName = 'set' . ucfirst($attributeName);
 
                 if ($reflectedObject->hasProperty($attributeName) && $reflectedObject->hasMethod($mutatorName)) {
                     $reflectedProperty = $reflectedObject->getProperty($attributeName);
@@ -231,38 +256,6 @@ class Mapper
         }
 
         return $object;
-    }
-
-    /**
-     * Convert underscored string to camelCase
-     * 
-     * @param  string $string 
-     * @return string
-     */
-    public function camelize($string)
-    {
-        $words = explode('_', strtolower($string));
-        
-        $camelized = '';
-        
-        foreach ($words as $word) {
-            if (strpos($word,'_') === false) {
-                $camelized .= ucfirst(trim($word));
-            }
-        }
-
-        return $camelized;
-    }
-
-    /**
-     * Convert camelCase string to underscore
-     * 
-     * @param  string $string a camelCase string
-     * @return string
-     */
-    public function uncamelize($string)
-    {
-        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $string));
     }
 
     /**

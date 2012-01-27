@@ -5,14 +5,18 @@ namespace Boomgo\tests\units;
 use Boomgo;
 
 require_once __DIR__.'/../../vendor/mageekguy.atoum.phar';
+
 include __DIR__.'/../../Mapper.php';
+include __DIR__.'/../../Formatter/FormatterInterface.php';
+
 include __DIR__.'/Mock/Document.php';
+include __DIR__.'/Mock/Formatter.php';
 
 class Mapper extends \mageekguy\atoum\test
 {
     public function test__construct()
     {
-        $mapper = new Boomgo\Mapper('@MyHypeAnnot');
+        $mapper = new Boomgo\Mapper(new Mock\Formatter(),'@MyHypeAnnot');
 
         $this->assert
             ->string($mapper->getAnnotation())
@@ -21,7 +25,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testSetGetAnnotation()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should set and get annotation
         $mapper->setAnnotation('@MyHypeAnnot');
@@ -48,7 +52,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testNormalize()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should not alter scalar and null value
         $output = $mapper->normalize(1);
@@ -86,7 +90,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testToArray()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should throw exception if argument is not an object
         $this->assert
@@ -121,9 +125,9 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->array($array)
             ->isNotEmpty()
-            ->isIdenticalTo(array('mongo_string' => 'a string',
-                'mongo_number' => 5,
-                'mongo_array' => null));
+            ->isIdenticalTo(array('mongoString' => 'a string',
+                'mongoNumber' => 5,
+                'mongoArray' => null));
 
         
 
@@ -162,10 +166,10 @@ class Mapper extends \mageekguy\atoum\test
             ->array($array)
             ->isNotEmpty()
             ->hasKeys(array('_id', 
-                'mongo_string',
-                'mongo_number',
-                'mongo_document',
-                'mongo_array'))
+                'mongoString',
+                'mongoNumber',
+                'mongoDocument',
+                'mongoArray'))
             ->notHasKey('attribute');
 
         // Should recursively normalize single embedded object
@@ -180,11 +184,11 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->array($array)
             ->isNotEmpty()
-            ->hasKey('mongo_document');
+            ->hasKey('mongoDocument');
             
         $this->assert
-            ->array($array['mongo_document'])
-            ->hasKeys(array('mongo_string', 'mongo_number'))
+            ->array($array['mongoDocument'])
+            ->hasKeys(array('mongoString', 'mongoNumber'))
             ->strictlyContainsValues(array('a embed stored string'));
 
         // Should recursively include array
@@ -195,10 +199,10 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->array($array)
             ->isNotEmpty()
-            ->hasKey('mongo_array');
+            ->hasKey('mongoArray');
             
         $this->assert
-            ->array($array['mongo_array'])
+            ->array($array['mongoArray'])
             ->isIdenticalTo(array('an' => 'embedded', 'array', 6 => 2));
 
         // Should recursively normalize embedded collection
@@ -211,24 +215,24 @@ class Mapper extends \mageekguy\atoum\test
         }
 
         $document = new Mock\Document();
-        $document->setMongoCollection($embedCollection);
+        $document->setmongoCollection($embedCollection);
         $array = $mapper->toArray($document);
 
         $this->assert
             ->array($array)
             ->isNotEmpty()
-            ->hasKey('mongo_collection');
+            ->hasKey('mongoCollection');
 
         $this->assert
-            ->array($array['mongo_collection'])
+            ->array($array['mongoCollection'])
             ->isNotEmpty()
             ->hasSize(10);
 
         for ($i = 0; $i < 10; $i ++) {
             $this->assert
-                ->array($array['mongo_collection'][$i])
+                ->array($array['mongoCollection'][$i])
                 ->isNotEmpty()
-                ->hasKeys(array('mongo_string', 'mongo_number'))
+                ->hasKeys(array('mongoString', 'mongoNumber'))
                 ->strictlyContainsValues(array('a embed stored string'));
         }
     }
@@ -237,7 +241,7 @@ class Mapper extends \mageekguy\atoum\test
     {
         $ns = 'Boomgo\\tests\\units\\Mock\\';
 
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
         
         // Sould throw exception if constructor has mandatory prerequesite
         $this->assert
@@ -257,8 +261,8 @@ class Mapper extends \mageekguy\atoum\test
 
         // Should hydrate correctly an object
         $array = array('_id' => 'identifier',
-            'mongo_string' => 'a mongo string',
-            'mongo_number' => 1664,
+            'mongoString' => 'a mongo string',
+            'mongoNumber' => 1664,
             'attribute' => 'a parasite attribute'); 
 
         $object = $mapper->hydrate($ns.'Document', $array);
@@ -287,11 +291,11 @@ class Mapper extends \mageekguy\atoum\test
         // This test emulate a complexe document embedding
         // {
         //      _id:
-        //      mongo_string: 
-        //      mongo_document:
-        //      mongo_collection: 10 x Mock\Document which embed 3 x Mock\EmbedDocument (and mutliples arrays / assoc arrays);
-        //      mongo_collection_embed: 3 x Mock\EmbedDocument (and 1 array nested in 1 assoc array)
-        //      mongo_array: 1 assoc array which embed 1 array
+        //      mongoString: 
+        //      mongoDocument:
+        //      mongoCollection: 10 x Mock\Document which embed 3 x Mock\EmbedDocument (and mutliples arrays / assoc arrays);
+        //      mongoCollectionEmbed: 3 x Mock\EmbedDocument (and 1 array nested in 1 assoc array)
+        //      mongoArray: 1 assoc array which embed 1 array
         // }
         $array = array('yet', 'another', 'embed', 'array'); 
 
@@ -299,9 +303,9 @@ class Mapper extends \mageekguy\atoum\test
         
         $collectionEmbedDocument = array();
         for ($j = 0; $j < 3; $j ++) {
-            $document = array('mongo_string' => 'a EMBED DOCUMENT collection-embed stored string',
-                'mongo_number' => null,
-                'mongo_array' => $assocArray);
+            $document = array('mongoString' => 'a EMBED DOCUMENT collection-embed stored string',
+                'mongoNumber' => null,
+                'mongoArray' => $assocArray);
             
             $collectionEmbedDocument[] = $document;
         } 
@@ -309,26 +313,26 @@ class Mapper extends \mageekguy\atoum\test
         $collectionDocument = array();
         for ($i = 0; $i < 10; $i ++) {
             $document = array('_id' => 'identifier'.$i,
-                'mongo_string' => 'a DOCUMENT collection-embed stored string',
-                'mongo_number' => null,
-                'mongo_document' => null,
-                'mongo_collection' => null,
-                'mongo_collection_embed' => $collectionEmbedDocument,
-                'mongo_array' => $assocArray);
+                'mongoString' => 'a DOCUMENT collection-embed stored string',
+                'mongoNumber' => null,
+                'mongoDocument' => null,
+                'mongoCollection' => null,
+                'mongoCollectionEmbed' => $collectionEmbedDocument,
+                'mongoArray' => $assocArray);
             $collectionDocument[] = $document;
         }
         
-        $embedDocument = array('mongo_string' => 'embed mongo string',
-            'mongo_number' => 1337,
-            'mongo_array' => $assocArray); 
+        $embedDocument = array('mongoString' => 'embed mongo string',
+            'mongoNumber' => 1337,
+            'mongoArray' => $assocArray); 
         
         $data = array('_id' => 'identifier',
-            'mongo_string' => 'a mongo string',
-            'mongo_number' => 1664,
-            'mongo_document' => $embedDocument,
-            'mongo_collection' => $collectionDocument,
-            'mongo_collection_embed' => $collectionEmbedDocument,
-            'mongo_array' => $array);
+            'mongoString' => 'a mongo string',
+            'mongoNumber' => 1664,
+            'mongoDocument' => $embedDocument,
+            'mongoCollection' => $collectionDocument,
+            'mongoCollectionEmbed' => $collectionEmbedDocument,
+            'mongoArray' => $array);
 
         $object = $mapper->hydrate($ns.'Document', $data);
 
@@ -360,7 +364,7 @@ class Mapper extends \mageekguy\atoum\test
             ->isEqualTo(1337);
         
         // Check the first embedded collection level (10 x Mock\Document)
-        $embedCollection = $object->getMongoCollection();
+        $embedCollection = $object->getmongoCollection();
 
         $this->assert
             ->array($embedCollection)
@@ -392,7 +396,7 @@ class Mapper extends \mageekguy\atoum\test
                     ->isIdenticalTo($array);
 
             // check the second nested collection level (3 x Mock\EmbedDocument)
-            $nestedEmbedCollection = $embedDocument->getMongoCollectionEmbed();
+            $nestedEmbedCollection = $embedDocument->getmongoCollectionEmbed();
             $this->assert
                 ->array($nestedEmbedCollection)
                 ->isNotEmpty()
@@ -425,7 +429,7 @@ class Mapper extends \mageekguy\atoum\test
         }
 
         // Finally check the embedded collection of EmbedDocument at the root document (3 x Mock\EmbedDocument)
-        $embedCollectionEmbed = $object->getMongoCollectionEmbed();
+        $embedCollectionEmbed = $object->getmongoCollectionEmbed();
         $this->assert
                 ->array($embedCollectionEmbed)
                 ->isNotEmpty()
@@ -464,49 +468,9 @@ class Mapper extends \mageekguy\atoum\test
             ->isIdenticalTo($data);
     }
 
-    public function testCamelize()
-    {
-        $mapper = new Boomgo\Mapper();
-
-        // Should camelize an underscored string
-        $camelCase = $mapper->camelize('hello_world_pol');
-        $this->assert
-            ->string($camelCase)
-            ->isEqualTo('HelloWorldPol');
-
-        // Should handle prefixed or suffixed string with underscore
-        $camelCase = $mapper->camelize('_world_');
-        $this->assert
-            ->string($camelCase)
-            ->isEqualTo('World');
-
-        // Should handle double underscored string
-        $camelCase = $mapper->camelize('hello__world_');
-        $this->assert
-            ->string($camelCase)
-            ->isEqualTo('HelloWorld');
-    }
-
-    public function testUncamelize()
-    {
-        $mapper = new Boomgo\Mapper();
-
-        // Should underscore a CamelCase string
-        $underscore = $mapper->uncamelize('HelloWorldPol');
-        $this->assert
-            ->string($underscore)
-            ->isEqualTo('hello_world_pol');
-
-        // Should also manage lower camelCase
-        $underscore = $mapper->uncamelize('helloWorld');
-        $this->assert
-            ->string($underscore)
-            ->isEqualTo('hello_world');
-    }
-
     public function testHasValidIdentifier()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should return true when object provide a valid identifier implementation
         $object = new Mock\Document();
@@ -569,7 +533,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testIsValidAccessor()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should return true when getter is public and do not required argument
         $object = new Mock\Document();
@@ -592,7 +556,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testIsValidMutator()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should return true when setter is public and require only one argument
         $object = new Mock\Document();
@@ -615,7 +579,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testIsBoomgoProperty()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
          // Should return false if proprerty don't have annotation
         $document = new Mock\DocumentExcludedId();
@@ -662,7 +626,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function testParseMetadata()
     {
-        $mapper = new Boomgo\Mapper();
+        $mapper = new Boomgo\Mapper(new Mock\Formatter());
 
         // Should throw exception if annotation is missing
         $document = new Mock\DocumentExcludedId();
