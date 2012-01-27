@@ -10,43 +10,43 @@ class Document
 {
     /**
      * Identifier
-     * @Mongo
+     * @Boomgo
      */
     private $id;
 
     /**
      * A mongo stored string
-     * @Mongo
+     * @Boomgo
      */
     private $mongoString;
 
     /**
      * A mongo number
-     * @Mongo
+     * @Boomgo
      */
     private $mongoNumber;
 
     /**
      * An single embedded EmbedDocument 
-     * @Mongo Document Boomgo\tests\units\Mock\EmbedDocument
+     * @Boomgo Document Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoDocument;
 
     /**
      * A embedded collection of Document
-     * @Mongo Collection Boomgo\tests\units\Mock\Document
+     * @Boomgo Collection Boomgo\tests\units\Mock\Document
      */
     private $mongoCollection;
 
     /**
      * A embedded collection of EmbedDocument
-     * @Mongo Collection Boomgo\tests\units\Mock\EmbedDocument
+     * @Boomgo Collection Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoCollectionEmbed;
 
     /**
      * An embedded array 
-     * @Mongo
+     * @Boomgo
      */
     private $mongoArray;
 
@@ -140,19 +140,19 @@ class EmbedDocument
 {
     /**
      * A mongo stored string
-     * @Mongo
+     * @Boomgo
      */
     private $mongoString;
 
     /**
      * A mongo number
-     * @Mongo
+     * @Boomgo
      */
     private $mongoNumber;
 
     /**
      * An embedded array 
-     * @Mongo
+     * @Boomgo
      */
     private $mongoArray;
 
@@ -211,7 +211,7 @@ class DocumentMissSetter
 {
     /**
      * Identifier
-     * @Mongo
+     * @Boomgo
      */
     private $id;
 
@@ -229,7 +229,7 @@ class DocumentMissGetter
 {
     /**
      * Identifier
-     * @Mongo
+     * @Boomgo
      */
     private $id;
 
@@ -241,7 +241,7 @@ class DocumentMissGetter
 
 /**
  * A valid Boomgo document class
- * Appear using identifier yet do not defined @Mongo
+ * Appear using identifier yet do not defined @Boomgo
  * (the document class must not use mongo identifier)
  */
 class DocumentExcludedId
@@ -270,7 +270,7 @@ class DocumentInvalidSetter
 {
     /**
      * Identifier private, non persisted
-     * @Mongo
+     * @Boomgo
      */
     private $id;
 
@@ -293,7 +293,7 @@ class DocumentInvalidGetter
 {
     /**
      * Identifier private, non persisted
-     * @Mongo
+     * @Boomgo
      */
     private $id;
 
@@ -316,20 +316,20 @@ class DocumentInvalidAnnotation
 {
     /**
      * Invalid annotation inline
-     * @Mongo @Mongo
+     * @Boomgo @Boomgo
      */
     private $inline;
 
     /**
      * Invalid annotation multi lines
-     * @Mongo 
-     * @Mongo
+     * @Boomgo 
+     * @Boomgo
      */
     private $multiline;
 
     /**
      * Incomplete annotation
-     * @Mongo document
+     * @Boomgo document
      */
     private $incomplete;
 }

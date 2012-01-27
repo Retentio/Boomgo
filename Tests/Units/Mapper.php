@@ -10,11 +10,6 @@ include __DIR__.'/Mock/Document.php';
 
 class Mapper extends \mageekguy\atoum\test
 {
-    public function documentProvider()
-    {
-        
-    }
-
     public function test__construct()
     {
         $mapper = new Boomgo\Mapper('@MyHypeAnnot');

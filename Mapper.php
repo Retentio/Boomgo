@@ -11,9 +11,10 @@ class Mapper
 
     /**
      * Constructor
+     * 
      * @param string $annotation
      */
-    public function __construct($annotation = '@Mongo')
+    public function __construct($annotation = '@Boomgo')
     {
         $this->setAnnotation($annotation);
     }
@@ -216,7 +217,14 @@ class Mapper
                             }
 
                             $reflectedMethod->invoke($object, $value);
+                        } else {
+                            if (!$reflectedProperty->isPublic()) {
+                                throw new \RuntimeException('Unable to hydrate a Boomgo private property without valid mutator');
+                            }
+                            $reflectedProperty->setValue($object, $value);
                         }
+                    } else {
+                        //throw new \RuntimeException('Key conflict with an non-boomgo attribute');
                     }
                 }
             }
