@@ -13,9 +13,9 @@ class Mapper
      * Constructor
      * @param string $annotation
      */
-    public function __construct($annotation = '@Boomgo')
+    public function __construct($annotation = '@Mongo')
     {
-        $this->setAnnotation('@Boomgo');
+        $this->setAnnotation($annotation);
     }
 
     /**
@@ -262,7 +262,7 @@ class Mapper
      */
     public function isBoomgoProperty(\ReflectionProperty $property)
     {
-        $boomgoAnnot = substr_count($property->getDocComment(), '@Mongo');
+        $boomgoAnnot = substr_count($property->getDocComment(), $this->getAnnotation());
 
         if (0 < $boomgoAnnot) {
             if (1 === $boomgoAnnot) {
@@ -284,7 +284,7 @@ class Mapper
     {
         $metadata = array();
 
-        preg_match('#@Mongo\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
+        preg_match('#'.$this->getAnnotation().'\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
 
         if (empty($metadata) || sizeof($metadata) > 3 || 
             (!empty($metadata[1]) && empty($metadata[2]))) {

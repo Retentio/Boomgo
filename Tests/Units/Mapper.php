@@ -14,6 +14,11 @@ class Mapper extends \mageekguy\atoum\test
         
     }
 
+    public function TestGetAnnotation()
+    {
+        $mapper = new Mapper();
+    }
+
     public function testNormalize()
     {
         $mapper = new Boomgo\Mapper();
