@@ -113,19 +113,19 @@ class Document
         return $this->mongoArray;
     }
 
-    public function setmongoCollection($value)
+    public function setMongoCollection($value)
     {
         $this->mongoCollection = $value;
     }
-    public function getmongoCollection()
+    public function getMongoCollection()
     {
         return $this->mongoCollection;
     }
-    public function setmongoCollectionEmbed($value)
+    public function setMongoCollectionEmbed($value)
     {
         $this->mongoCollectionEmbed = $value;
     }
-    public function getmongoCollectionEmbed()
+    public function getMongoCollectionEmbed()
     {
         return $this->mongoCollectionEmbed;
     }

@@ -215,7 +215,7 @@ class Mapper extends \mageekguy\atoum\test
         }
 
         $document = new Mock\Document();
-        $document->setmongoCollection($embedCollection);
+        $document->setMongoCollection($embedCollection);
         $array = $mapper->toArray($document);
 
         $this->assert
@@ -364,7 +364,7 @@ class Mapper extends \mageekguy\atoum\test
             ->isEqualTo(1337);
         
         // Check the first embedded collection level (10 x Mock\Document)
-        $embedCollection = $object->getmongoCollection();
+        $embedCollection = $object->getMongoCollection();
 
         $this->assert
             ->array($embedCollection)
@@ -396,7 +396,7 @@ class Mapper extends \mageekguy\atoum\test
                     ->isIdenticalTo($array);
 
             // check the second nested collection level (3 x Mock\EmbedDocument)
-            $nestedEmbedCollection = $embedDocument->getmongoCollectionEmbed();
+            $nestedEmbedCollection = $embedDocument->getMongoCollectionEmbed();
             $this->assert
                 ->array($nestedEmbedCollection)
                 ->isNotEmpty()
@@ -429,7 +429,7 @@ class Mapper extends \mageekguy\atoum\test
         }
 
         // Finally check the embedded collection of EmbedDocument at the root document (3 x Mock\EmbedDocument)
-        $embedCollectionEmbed = $object->getmongoCollectionEmbed();
+        $embedCollectionEmbed = $object->getMongoCollectionEmbed();
         $this->assert
                 ->array($embedCollectionEmbed)
                 ->isNotEmpty()
