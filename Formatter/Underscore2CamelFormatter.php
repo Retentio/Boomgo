@@ -5,7 +5,7 @@ namespace Boomgo\Formatter;
 /**
  * Formatter for PHP CamelCase attribute to Mongo key underscore   
  */
-class Underscore2CamelCase implements FormatterInterface
+class Underscore2CamelFormatter implements FormatterInterface
 {
     /**
      * Convert underscored string to (lower) camelCase
