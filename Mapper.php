@@ -2,6 +2,7 @@
 
 namespace Boomgo;
 
+use Boomgo\Parser\ParserInterface;
 use Boomgo\Formatter\FormatterInterface;
 
 /**
@@ -9,21 +10,42 @@ use Boomgo\Formatter\FormatterInterface;
  */
 class Mapper
 {
-    private $annotation;
+    private $parser;
 
     private $formatter;
 
+    private $annotation;
     /**
      * Constructor
      * 
-     * @param string $annotation
+     * @param FormatterInterface An key/attribute formatter
+     * @param string $annotation The annotation used for mapping
      */
-    public function __construct(FormatterInterface $formatter, $annotation = '@Boomgo')
+    public function __construct(ParserInterface $parser, FormatterInterface $formatter)
     {
+        $this->setParser($parser);
         $this->setFormatter($formatter);
-        $this->setAnnotation($annotation);
     }
 
+    /**
+     * Define the parser to use
+     * 
+     * @param ParserInterface $parser
+     */
+    public function setParser(ParserInterface $parser)
+    {
+        $this->parser = $parser;
+    }
+
+    /**
+     * Return the parser used
+     * 
+     * @return ParserInterface
+     */
+    public function getParser()
+    {
+        return $this->parser;
+    }
     /**
      * Define the key/attribute formatter
      * 
@@ -42,31 +64,6 @@ class Mapper
     public function getFormatter()
     {
         return $this->formatter;
-    }
-
-
-    /**
-     * Define the annotation for the mapper instance
-     * 
-     * @param string $annotation
-     */
-    public function setAnnotation($annotation)
-    {
-        if (!preg_match('#^@[a-zA-Z]+$#', $annotation)) {
-             throw new \InvalidArgumentException('Annotation should start with @ char');
-        }
-        
-        $this->annotation = $annotation;
-    }
-
-    /**
-     * Return the annotation defined for the mapper instance
-     * 
-     * @return string
-     */
-    public function getAnnotation()
-    {
-        return $this->annotation;
     }
 
     /**
@@ -117,7 +114,7 @@ class Mapper
         $array = array();
 
         // Assert that a stand alone document must have an id field
-        $hasIdKey = $this->hasValidIdentifier($reflectedObject);
+        $hasIdKey = $this->parser->hasValidIdentifier($reflectedObject);
         
         // Fetch mandatory _id first
         if ($hasIdKey) {
@@ -127,13 +124,13 @@ class Mapper
         $reflectedProperties = $reflectedObject->getProperties();
 
         foreach ($reflectedProperties as $reflectedProperty) {
-            if ($this->isBoomgoProperty($reflectedProperty)) {
+            if ($this->parser->isBoomgoProperty($reflectedProperty)) {
                 $accessorName = 'get'.ucfirst($reflectedProperty->getName());
                 
                 if ($reflectedObject->hasMethod($accessorName)) {
                     $reflectedMethod = $reflectedObject->getMethod($accessorName);
 
-                    if ($this->isValidAccessor($reflectedMethod)) {
+                    if ($this->parser->isValidAccessor($reflectedMethod)) {
                         $key = $this->formatter->toMongoKey($reflectedProperty->getName());
                         $value = $reflectedMethod->invoke($object);
 
@@ -208,7 +205,7 @@ class Mapper
         $reflectedObject = new \ReflectionObject($object);
 
         if (isset($array['_id'])) {
-            if (!$this->hasValidIdentifier($reflectedObject)) {
+            if (!$this->parser->hasValidIdentifier($reflectedObject)) {
                 throw new \RuntimeException('Object do not handle identifier');
             }
             // Php Document identifier convention is "id" not "_id" 
@@ -224,10 +221,10 @@ class Mapper
                 if ($reflectedObject->hasProperty($attributeName) && $reflectedObject->hasMethod($mutatorName)) {
                     $reflectedProperty = $reflectedObject->getProperty($attributeName);
 
-                    if ($this->isBoomgoProperty($reflectedProperty)) {
+                    if ($this->parser->isBoomgoProperty($reflectedProperty)) {
                         $reflectedMethod = $reflectedObject->getMethod($mutatorName);
 
-                        if ($this->isValidMutator($reflectedMethod)) {
+                        if ($this->parser->isValidMutator($reflectedMethod)) {
 
                             // Recursively normalize nested non-scalar data
                             if (!is_scalar($value)) {
@@ -235,7 +232,7 @@ class Mapper
                                 $metadata = array();
 
                                 if (is_array($value)) {
-                                    $metadata = $this->parseMetadata($reflectedProperty);
+                                    $metadata = $this->parser->parseMetadata($reflectedProperty);
                                 }
 
                                 $value = $this->denormalize($value, !empty($metadata) ? $metadata[1] : null);
@@ -256,95 +253,5 @@ class Mapper
         }
 
         return $object;
-    }
-
-    /**
-     * Check if an object property should be persisted.
-     *
-     * @param  ReflectionProperty $property the property to check
-     * @throws RuntimeException If annotation is malformed
-     * @return Boolean True if the property should be stored
-     */
-    public function isBoomgoProperty(\ReflectionProperty $property)
-    {
-        $boomgoAnnot = substr_count($property->getDocComment(), $this->getAnnotation());
-
-        if (0 < $boomgoAnnot) {
-            if (1 === $boomgoAnnot) {
-                return true;
-            }
-            throw new \RuntimeException('Boomgo annotation should occur only once');
-        }
-
-        return false;
-    }
-
-    /**
-     * Parse Boomgo metadata
-     * 
-     * @param  \ReflectionProperty $property
-     * @return array
-     */
-    public function parseMetadata(\ReflectionProperty $property)
-    {
-        $metadata = array();
-
-        preg_match('#'.$this->getAnnotation().'\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
-
-        if (empty($metadata) || sizeof($metadata) > 3 || 
-            (!empty($metadata[1]) && empty($metadata[2]))) {
-            throw new \RuntimeException('Malformed metadata');
-        }
-
-        array_shift($metadata);
-
-        return $metadata[1] ? $metadata : array();
-    }
-
-    /**
-     * Check if a php document handle an identifier
-     *  
-     * @param  ReflectionObject  $object
-     * @return boolean
-     */
-    public function hasValidIdentifier(\ReflectionObject $object)
-    {
-        if ($object->hasProperty('id') && $object->hasMethod('getId') && $object->hasMethod('setId')) {
-
-            if ($this->isBoomgoProperty($object->getProperty('id')))
-            {
-                if(!($this->isValidAccessor($object->getMethod('getId'))) ||
-                   !($this->isValidMutator($object->getMethod('setId')))) {
-
-                    throw new \RuntimeException('Object expect an id but do not expose valid accessor/mutator');
-                }
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Check if the getter is public and has no required argument.
-     * 
-     * @param  ReflectionMethod $method the method to check
-     * @return Boolean True if the getter is valid
-     */
-    public function isValidAccessor(\ReflectionMethod $method)
-    {
-        return ($method->isPublic() && 
-                0 === $method->getNumberOfRequiredParameters());
-    }
-
-    /**
-     * Check if the setter is public and has one required argument.
-     * 
-     * @param  ReflectionMethod $method the method to check
-     * @return Boolean True if the setter is valid
-     */
-    public function isValidMutator(\ReflectionMethod $method)
-    {
-        return ($method->isPublic() && 
-                1 === $method->getNumberOfRequiredParameters());
     }
 }
