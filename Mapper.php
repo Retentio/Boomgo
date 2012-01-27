@@ -125,23 +125,36 @@ class Mapper
 
         foreach ($reflectedProperties as $reflectedProperty) {
             if ($this->parser->isBoomgoProperty($reflectedProperty)) {
-                $accessorName = 'get'.ucfirst($reflectedProperty->getName());
-                
-                if ($reflectedObject->hasMethod($accessorName)) {
-                    $reflectedMethod = $reflectedObject->getMethod($accessorName);
 
-                    if ($this->parser->isValidAccessor($reflectedMethod)) {
-                        $key = $this->formatter->toMongoKey($reflectedProperty->getName());
-                        $value = $reflectedMethod->invoke($object);
+                $attributeName = $reflectedProperty->getName();
+                $keyName = $this->formatter->toMongoKey($attributeName);
 
-                        // Recursively normalize nested non-scalar data
-                        if (null !== $value && !is_scalar($value)) {
-                            $value = $this->normalize($value);
-                        }
+                if (!$reflectedProperty->isPublic()) {
+                    $accessorName = 'get'.ucfirst($attributeName);
+                    $mutatorName = 'set'.ucfirst($attributeName);
 
-                        $array[$key] = $value;
+                    if (!$reflectedObject->hasMethod($accessorName) ||
+                        !$reflectedObject->hasMethod($mutatorName)) {
+                        throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
+                    }
+                        
+                    $reflectedAccessor = $reflectedObject->getMethod($accessorName);
+                    $reflectedMutator = $reflectedObject->getMethod($mutatorName);
+
+                    if (!$this->parser->isValidAccessor($reflectedAccessor) ||
+                        !$this->parser->isValidMutator($reflectedMutator)) {
+                        throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
                     }
                 }
+
+                $value = $reflectedAccessor->invoke($object);
+
+                // Recursively normalize nested non-scalar data
+                if (null !== $value && !is_scalar($value)) {
+                    $value = $this->normalize($value);
+                }
+
+                $array[$keyName] = $value;
             }
         }
 

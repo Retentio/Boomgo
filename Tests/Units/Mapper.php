@@ -101,9 +101,7 @@ class Mapper extends \mageekguy\atoum\test
             ->isNotEmpty()
             ->isIdenticalTo(array('mongoString' => 'a string',
                 'mongoNumber' => 5,
-                'mongoArray' => null));
-
-        
+                'mongoArray' => null)); 
 
         // Should return an array with normalized key _id when object has identifier
         $document = new Mock\Document();

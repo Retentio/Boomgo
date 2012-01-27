@@ -40,6 +40,54 @@ class AnnotationParser implements ParserInterface
     }
 
     /**
+     * Return the data map
+     * @param  ReflectionClass $class
+     * @return array
+     */
+    public function getMap(\ReflectionClass $reflectedClass)
+    {
+        $map = array();
+
+        $reflectedProperties = $reflectedClass->getProperties();
+
+        foreach ($reflectedProperties as $reflectedProperty) {
+            if ($this->parser->isBoomgoProperty($reflectedProperty)) {
+
+                $attributeName = $reflectedProperty->getName();
+                $keyName = $this->formatter->toMongoKey($attributeName);
+
+                if (!$reflectedProperty->isPublic()) {
+                    $accessorName = 'get'.ucfirst($attributeName);
+                    $mutatorName = 'set'.ucfirst($attributeName);
+
+                    if (!$reflectedObject->hasMethod($accessorName) ||
+                        !$reflectedObject->hasMethod($mutatorName)) {
+                        throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
+                    }
+                        
+                    $reflectedAccessor = $reflectedObject->getMethod($accessorName);
+                    $reflectedMutator = $reflectedObject->getMethod($mutatorName);
+
+                    if (!$this->parser->isValidAccessor($reflectedAccessor) ||
+                        !$this->parser->isValidMutator($reflectedMutator)) {
+                        throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
+                    }
+                }
+
+                $map[$keyName] = null;
+
+                $metadata = $this->parseMetadata($reflectedProperty);
+
+                if (!empty($metadata)) {
+                    $map[$keyName] = array('FQDN' => $metadata[1], $this->getMap($metadata[1]));
+                }
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * Check if an object property should be persisted.
      *
      * @param  ReflectionProperty $property the property to check
