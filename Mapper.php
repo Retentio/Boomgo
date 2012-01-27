@@ -25,6 +25,10 @@ class Mapper
      */
     public function setAnnotation($annotation)
     {
+        if (!preg_match('#^@[a-zA-Z]+$#', $annotation)) {
+             throw new \InvalidArgumentException('Annotation should start with @ char');
+        }
+        
         $this->annotation = $annotation;
     }
 

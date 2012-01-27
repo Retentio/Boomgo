@@ -14,9 +14,40 @@ class Mapper extends \mageekguy\atoum\test
         
     }
 
-    public function TestGetAnnotation()
+    public function test__construct()
     {
-        $mapper = new Mapper();
+        $mapper = new Boomgo\Mapper('@MyHypeAnnot');
+
+        $this->assert
+            ->string($mapper->getAnnotation())
+            ->isIdenticalTo('@MyHypeAnnot');
+    }
+
+    public function testSetGetAnnotation()
+    {
+        $mapper = new Boomgo\Mapper();
+
+        // Should set and get annotation
+        $mapper->setAnnotation('@MyHypeAnnot');
+
+        $this->assert
+            ->string($mapper->getAnnotation())
+            ->isIdenticalTo('@MyHypeAnnot');
+        
+        // Should throw exception on invalid annotation
+        $this->assert
+            ->exception(function() use ($mapper) {
+                $mapper->setAnnotation('invalid');
+            })
+            ->isInstanceOf('\InvalidArgumentException')
+            ->hasMessage('Annotation should start with @ char');
+
+        $this->assert
+            ->exception(function() use ($mapper) {
+                $mapper->setAnnotation('@12');
+            })
+            ->isInstanceOf('\InvalidArgumentException')
+            ->hasMessage('Annotation should start with @ char');
     }
 
     public function testNormalize()
