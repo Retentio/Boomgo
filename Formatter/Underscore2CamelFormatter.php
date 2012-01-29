@@ -17,17 +17,12 @@ class Underscore2CamelFormatter implements FormatterInterface
      */
     public function toPhpAttribute($mongoKey)
     {
-        $words = explode('_', strtolower($mongoKey));
-        
-        $camelized = '';
-        
-        foreach ($words as $word) {
-            if (strpos($word,'_') === false) {
-                $camelized .= ucfirst(trim($word));
-            }
-        }
+        return $this->camelize($mongoKey, true);
+    }
 
-        return lcfirst($camelized);
+    public function toPhpMutator($mongoKey)
+    {
+        return 'set'.$this->camelize($string, false);
     }
 
     /**
@@ -40,6 +35,26 @@ class Underscore2CamelFormatter implements FormatterInterface
      */
     public function toMongoKey($phpAttribute)
     {
-        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $phpAttribute));
+        return $this->underscore($phpAttribute);
+    }
+
+    private function camelize($string, $lower = false)
+    {
+        $words = explode('_', strtolower($mongoKey));
+        
+        $camelized = '';
+        
+        foreach ($words as $word) {
+            if (strpos($word,'_') === false) {
+                $camelized .= ucfirst(trim($word));
+            }
+        }
+
+        return ($lower) ? lcfirst($camelized) : $camelized;
+    }
+
+    private function underscore($string)
+    {
+        return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $string));
     }
 }

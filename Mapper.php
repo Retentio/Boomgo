@@ -2,6 +2,7 @@
 
 namespace Boomgo;
 
+use Boomgo\Mapper\Map;
 use Boomgo\Parser\ParserInterface;
 use Boomgo\Formatter\FormatterInterface;
 
@@ -178,23 +179,17 @@ class Mapper
      * @param  mixed $data
      * @return mixed
      */
-    public function denormalize($data , $className = null)
+    public function denormalize($data)
     {
         if (null === $data || is_scalar($data)) {
             return $data;
         }
         if (is_array($data)) {
-
-            if (array_keys($data) !== range(0, sizeof($data) - 1) && $className) {
-                $data = $this->hydrate($className, $data);
-            }
-
             foreach ($data as $key => $val) {
-                $data[$key] = $this->denormalize($val, $className);
+                $data[$key] = $this->denormalize($val);
             }
             return $data;
         }
-        echo 'called with classname : '.$className;
         throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
     }
 
@@ -205,62 +200,68 @@ class Mapper
      * @param  string $className A full qualified domain name
      * @return object
      */
-    public function hydrate($className, array $array)
+    public function hydrate($className, $type, array $array)
     {
-        $reflectedClass = new \ReflectionClass($className);
-        $constructor = $reflectedClass->getConstructor();
+        // $reflectedClass = new \ReflectionClass($className);
+        // $constructor = $reflectedClass->getConstructor();
 
-        if ($constructor && $constructor->getNumberOfRequiredParameters() > 0) {
-            throw new \RuntimeException('Unable to hydrate object requiring constructor param');
-        }
+        // if ($constructor && $constructor->getNumberOfRequiredParameters() > 0) {
+        //     throw new \RuntimeException('Unable to hydrate object requiring constructor param');
+        // }
 
         $object = new $className;
-        $reflectedObject = new \ReflectionObject($object);
 
-        if (isset($array['_id'])) {
-            if (!$this->parser->hasValidIdentifier($reflectedObject)) {
-                throw new \RuntimeException('Object do not handle identifier');
-            }
-            // Php Document identifier convention is "id" not "_id" 
-            $array['id'] = $array['_id'];
-            unset($array['_id']);
-        }
+        // if (isset($array['_id'])) {
+        //     if (!$this->parser->hasValidIdentifier($reflectedObject)) {
+        //         throw new \RuntimeException('Object do not handle identifier');
+        //     }
+        //     // Php Document identifier convention is "id" not "_id" 
+        //     $array['id'] = $array['_id'];
+        //     unset($array['_id']);
+        // }
+
+        $map = $this->parser->getMap($className, $type);
 
         foreach ($array as $key => $value) {
             if (null !== $value) {
-                $attributeName = $this->formatter->toPhpAttribute($key);
-                $mutatorName = 'set' . ucfirst($attributeName);
 
-                if ($reflectedObject->hasProperty($attributeName) && $reflectedObject->hasMethod($mutatorName)) {
-                    $reflectedProperty = $reflectedObject->getProperty($attributeName);
+                $attribute = $map->getAttributeFor($key);
 
-                    if ($this->parser->isBoomgoProperty($reflectedProperty)) {
-                        $reflectedMethod = $reflectedObject->getMethod($mutatorName);
+                // Recursively normalize nested non-scalar data
+                if (!is_scalar($value)) {
 
-                        if ($this->parser->isValidMutator($reflectedMethod)) {
+                    // Associative array could be object
+                    if (is_array($value) && array_keys($value) !== range(0, sizeof($value) - 1)) {
 
-                            // Recursively normalize nested non-scalar data
-                            if (!is_scalar($value)) {
+                        $subMap = $map->getEmbedMapFor($key);
 
-                                $metadata = array();
+                        if ($subMap) {
 
-                                if (is_array($value)) {
-                                    $metadata = $this->parser->parseMetadata($reflectedProperty);
+                            if ($subMap->getType() == Map::DOCUMENT) {
+
+                                $value = $this->hydrate($subMap->getClass(), $subMap->getType(), $value);
+
+                            } elseif ($subMap->getType() == Map::COLLECTION) {
+
+                                $collection = array();
+
+                                foreach($value as $embedValue) {
+                                   $collection[] = $this->hydrate($subMap->getClass(), $subMap->getType(), $embedValue);
                                 }
 
-                                $value = $this->denormalize($value, !empty($metadata) ? $metadata[1] : null);
+                                $value = $collection;
                             }
-
-                            $reflectedMethod->invoke($object, $value);
                         } else {
-                            if (!$reflectedProperty->isPublic()) {
-                                throw new \RuntimeException('Unable to hydrate a Boomgo private property without valid mutator');
-                            }
-                            $reflectedProperty->setValue($object, $value);
+                            $value = $this->denormalize($value);
                         }
-                    } else {
-                        //throw new \RuntimeException('Key conflict with an non-boomgo attribute');
                     }
+                }
+
+                if ($map->hasMutatorFor($key)) {
+                    $mutator = $map->getMutatorFor($key);
+                    $object->$mutator($value);
+                } else {
+                    $object->$attribute = $value;
                 }
             }
         }

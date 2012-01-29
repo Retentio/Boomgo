@@ -8,6 +8,7 @@ use Boomgo\Parser;
 require_once __DIR__.'/../../vendor/mageekguy.atoum.phar';
 
 include __DIR__.'/../../Mapper.php';
+include __DIR__.'/../../Mapper/Map.php';
 
 include __DIR__.'/../../Parser/ParserInterface.php';
 include __DIR__.'/../../Parser/AnnotationParser.php';
@@ -21,9 +22,9 @@ class Mapper extends \mageekguy\atoum\test
 {
     public function test__construct()
     {
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(),new Mock\Formatter());
+        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()),new Mock\Formatter());
     }
-
+/*
     public function testNormalize()
     {
         $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(),new Mock\Formatter());
@@ -208,13 +209,75 @@ class Mapper extends \mageekguy\atoum\test
                 ->strictlyContainsValues(array('a embed stored string'));
         }
     }
-
+*/
     public function testHydrate()
     {
         $ns = 'Boomgo\\tests\\units\\Mock\\';
 
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(),new Mock\Formatter());
+        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()),new Mock\Formatter());
+
+        $embedData = array('mongoString' => 'an embed string', 'mongoNumber' => 2, 'mongoArray' => array('an' => 'embed array', 7 => 2));
+
+        $embedCollectionData = array();
+        for ($i = 0; $i < 3; $i ++) {
+            $embedCollectionData[] = $embedData;
+        }
+
+        $data =  array('id' => 'an identifier',
+            'mongoString' => 'a string',
+            'mongoNumber' => 1,
+            'mongoDocument' => $embedData,
+            'mongoCollection' => $embedCollectionData,
+            'mongoArray' => array('an' => 'array', 8 => 1));
+
+        $object = $mapper->hydrate($ns.'Document', 'Document', $data);
+
+        $this->assert
+            ->object($object)
+            ->isInstanceOf($ns.'Document');
+
+        $this->assert
+            ->string($object->getId())
+            ->isEqualTo('an identifier');
         
+        $this->assert
+            ->string($object->getMongoString())
+            ->isEqualTo('a string');
+
+        $this->assert
+            ->integer($object->getMongoNumber())
+            ->isEqualTo(1);
+
+        $embedObject = $object->getMongoDocument();
+        $this->assert
+            ->object($embedObject)
+            ->isInstanceOf($ns.'EmbedDocument');
+
+        $this->assert
+            ->string($embedObject->getMongoString())
+            ->isEqualTo('an embed string');
+
+        $this->assert
+            ->integer($embedObject->getMongoNumber())
+            ->isEqualTo(2);
+
+        $this->assert
+            ->array($embedObject->getMongoArray())
+            ->isEqualTo(array('an' => 'embed array', 7 => 2));
+
+        $embedCollection = $object->getMongoCollection();
+        $this->assert
+            ->array($embedCollection)
+            ->hasSize(3);
+
+        var_dump($embedCollection);
+        
+        $embedObjectCollected = $embedCollection[0];
+        $this->assert
+            ->object($embedObjectCollected)
+            ->isInstanceOf($ns.'EmbedDocument');
+        
+/*
         // Sould throw exception if constructor has mandatory prerequesite
         $this->assert
             ->exception(function() use ($mapper,$ns) {
@@ -438,5 +501,6 @@ class Mapper extends \mageekguy\atoum\test
         $this->assert
             ->array($reverse)
             ->isIdenticalTo($data);
+*/
     }
 }

@@ -2,17 +2,45 @@
 
 namespace Boomgo\Parser;
 
+use Boomgo\Mapper\Map;
+use Boomgo\Formatter\FormatterInterface;
+
 class AnnotationParser implements ParserInterface
 {
+    private $formatter;
+
     private $annotation;
 
     /**
      * Initialize
-     * @param string $annotation [description]
+     * 
+     * @param FormmatterInterface $formatter
+     * @param string $annotation
      */
-    public function __construct($annotation = '@Boomgo')
+    public function __construct(FormatterInterface $formatter, $annotation = '@Boomgo')
     {
+        $this->setFormatter($formatter);
         $this->setAnnotation($annotation);
+    }
+
+    /**
+     * Define the key/attribute formatter
+     * 
+     * @param FormatterInterface $formatter
+     */
+    public function setFormatter(FormatterInterface $formatter)
+    {
+        $this->formatter = $formatter;    
+    }
+
+    /**
+     * Return the key/attribute formatter
+     * 
+     * @return FormatterInterface
+     */
+    public function getFormatter()
+    {
+        return $this->formatter;
     }
 
     /**
@@ -44,43 +72,57 @@ class AnnotationParser implements ParserInterface
      * @param  ReflectionClass $class
      * @return array
      */
-    public function getMap(\ReflectionClass $reflectedClass)
+    public function getMap($class, $type, $index = null)
     {
-        $map = array();
+        $reflectedClass = new \ReflectionClass($class);
+
+        if (null === $index) { 
+            $dependenciesGraph = array();
+        }
+
+        if (isset($dependenciesGraph[$reflectedClass->getName()])) {
+            throw new \RuntimeException('Cyclic dependency, a document cannot embed (directly/indirectly) itself');
+        }
+
+        $dependenciesGraph[$reflectedClass->getName()] = true;
+
+        $map = new Map($class, $type);
 
         $reflectedProperties = $reflectedClass->getProperties();
 
         foreach ($reflectedProperties as $reflectedProperty) {
-            if ($this->parser->isBoomgoProperty($reflectedProperty)) {
+            if ($this->isBoomgoProperty($reflectedProperty)) {
 
                 $attributeName = $reflectedProperty->getName();
+                $attributePublic = $reflectedProperty->isPublic();
                 $keyName = $this->formatter->toMongoKey($attributeName);
 
                 if (!$reflectedProperty->isPublic()) {
                     $accessorName = 'get'.ucfirst($attributeName);
                     $mutatorName = 'set'.ucfirst($attributeName);
 
-                    if (!$reflectedObject->hasMethod($accessorName) ||
-                        !$reflectedObject->hasMethod($mutatorName)) {
+                    if (!$reflectedClass->hasMethod($accessorName) ||
+                        !$reflectedClass->hasMethod($mutatorName)) {
                         throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
                     }
                         
-                    $reflectedAccessor = $reflectedObject->getMethod($accessorName);
-                    $reflectedMutator = $reflectedObject->getMethod($mutatorName);
+                    $reflectedAccessor = $reflectedClass->getMethod($accessorName);
+                    $reflectedMutator = $reflectedClass->getMethod($mutatorName);
 
-                    if (!$this->parser->isValidAccessor($reflectedAccessor) ||
-                        !$this->parser->isValidMutator($reflectedMutator)) {
+                    if (!$this->isValidAccessor($reflectedAccessor) ||
+                        !$this->isValidMutator($reflectedMutator)) {
                         throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
                     }
                 }
 
-                $map[$keyName] = null;
-
                 $metadata = $this->parseMetadata($reflectedProperty);
-
+                
+                $subMap = null;
                 if (!empty($metadata)) {
-                    $map[$keyName] = array('FQDN' => $metadata[1], $this->getMap($metadata[1]));
+                    $subMap = $this->getMap($metadata[1], $metadata[0], $dependenciesGraph);
                 }
+                // @ Todo mutatorName is not mandatory for public
+                $map->add($keyName, $attributeName, $mutatorName, $subMap);
             }
         }
 

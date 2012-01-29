@@ -3,8 +3,9 @@
 namespace Boomgo\tests\units\Mock;
 
 /**
- * A valid Boomgo document class
+ * An invalid Boomgo document class
  * fully exposing mapper capabilities with identifier
+ * yet with cyclic dependency
  */
 class Document
 {
@@ -33,16 +34,10 @@ class Document
     private $mongoDocument;
 
     /**
-     * A embedded collection of Document
-     * @Boomgo Collection Boomgo\tests\units\Mock\Document
-     */
-    private $mongoCollection;
-
-    /**
      * A embedded collection of EmbedDocument
      * @Boomgo Collection Boomgo\tests\units\Mock\EmbedDocument
      */
-    private $mongoCollectionEmbed;
+    private $mongoCollection;
 
     /**
      * An embedded array 
@@ -115,17 +110,10 @@ class Document
 
     public function setMongoCollection($value)
     {
-        $this->mongoCollection = $value;
-    }
-    public function getMongoCollection()
-    {
-        return $this->mongoCollection;
-    }
-    public function setMongoCollectionEmbed($value)
-    {
         $this->mongoCollectionEmbed = $value;
     }
-    public function getMongoCollectionEmbed()
+
+    public function getMongoCollection()
     {
         return $this->mongoCollectionEmbed;
     }
@@ -350,4 +338,76 @@ class DocummentConstruct
 class DocummentConstructRequired
 {
     public function __construct($options) {}
+}
+
+/**
+ * An invalid Boomgo document class
+ * fully exposing mapper capabilities with identifier
+ * yet with cyclic dependency
+ */
+class DocumentCyclic
+{
+    /**
+     * Identifier
+     * @Boomgo
+     */
+    private $id;
+
+    /**
+     * A mongo stored string
+     * @Boomgo
+     */
+    private $mongoString;
+
+    /**
+     * A mongo number
+     * @Boomgo
+     */
+    private $mongoNumber;
+
+    /**
+     * An single embedded EmbedDocument 
+     * @Boomgo Document Boomgo\tests\units\Mock\Document
+     */
+    private $mongoDocument;
+
+     public function getId()
+    {
+        return $this->id;
+    }
+
+    public function setId($id)
+    {
+        $this->id =$id;
+    }
+
+    public function setMongoString($value)
+    {
+        $this->mongoString = $value;
+    }
+      
+    public function getMongoString()
+    {
+        return $this->mongoString;
+    }        
+
+    public function setMongoNumber($value)
+    {
+        $this->mongoNumber = $value;
+    }
+
+    public function getMongoNumber()
+    {
+        return $this->mongoNumber;
+    }
+
+    public function setMongoDocument($value) 
+    {
+        $this->mongoDocument = $value;
+    }
+
+    public function getMongoDocument() 
+    {
+        return $this->mongoDocument;
+    }
 }
