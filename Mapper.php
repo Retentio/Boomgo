@@ -13,19 +13,15 @@ class Mapper
 {
     private $parser;
 
-    private $formatter;
-
-    private $annotation;
     /**
      * Constructor
      * 
      * @param FormatterInterface An key/attribute formatter
      * @param string $annotation The annotation used for mapping
      */
-    public function __construct(ParserInterface $parser, FormatterInterface $formatter)
+    public function __construct(ParserInterface $parser)
     {
         $this->setParser($parser);
-        $this->setFormatter($formatter);
     }
 
     /**
@@ -46,25 +42,6 @@ class Mapper
     public function getParser()
     {
         return $this->parser;
-    }
-    /**
-     * Define the key/attribute formatter
-     * 
-     * @param FormatterInterface $formatter
-     */
-    public function setFormatter(FormatterInterface $formatter)
-    {
-        $this->formatter = $formatter;    
-    }
-
-    /**
-     * Return the key/attribute formatter
-     * 
-     * @return FormatterInterface
-     */
-    public function getFormatter()
-    {
-        return $this->formatter;
     }
 
     /**
@@ -102,7 +79,6 @@ class Mapper
      * Convert this object to array
      * 
      * @param  object  $object  An object to convert.
-     * @param  Boolean $embedId True to force _id in embedded document
      * @return Array
      */
     public function toArray($object)
@@ -112,57 +88,43 @@ class Mapper
         }
 
         $reflectedObject = new \ReflectionObject($object);
+
+        $map = $this->parser->getMap($reflectedObject->getName());
+
         $array = array();
 
         // Assert that a stand alone document must have an id field
-        $hasIdKey = $this->parser->hasValidIdentifier($reflectedObject);
+        // $hasIdKey = $this->parser->hasValidIdentifier($reflectedObject);
         
-        // Fetch mandatory _id first
-        if ($hasIdKey) {
-            $array['_id'] = $object->getId();
-        }
+        // // Fetch mandatory _id first
+        // if ($hasIdKey) {
+        //     $array['_id'] = $object->getId();
+        // }
+        
+        $attributes = $map->getIndex(); 
+        
 
-        $reflectedProperties = $reflectedObject->getProperties();
+        foreach ($attributes as $key => $attribute) {
 
-        foreach ($reflectedProperties as $reflectedProperty) {
-            if ($this->parser->isBoomgoProperty($reflectedProperty)) {
-
-                $attributeName = $reflectedProperty->getName();
-                $keyName = $this->formatter->toMongoKey($attributeName);
-
-                if (!$reflectedProperty->isPublic()) {
-                    $accessorName = 'get'.ucfirst($attributeName);
-                    $mutatorName = 'set'.ucfirst($attributeName);
-
-                    if (!$reflectedObject->hasMethod($accessorName) ||
-                        !$reflectedObject->hasMethod($mutatorName)) {
-                        throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
-                    }
-                        
-                    $reflectedAccessor = $reflectedObject->getMethod($accessorName);
-                    $reflectedMutator = $reflectedObject->getMethod($mutatorName);
-
-                    if (!$this->parser->isValidAccessor($reflectedAccessor) ||
-                        !$this->parser->isValidMutator($reflectedMutator)) {
-                        throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
-                    }
-                }
-
-                $value = $reflectedAccessor->invoke($object);
-
-                // Recursively normalize nested non-scalar data
-                if (null !== $value && !is_scalar($value)) {
-                    $value = $this->normalize($value);
-                }
-
-                $array[$keyName] = $value;
+            if ($map->hasAccessorFor($key)) {
+                $accessor = $map->getAccessorFor($key);
+                $value = $object->$accessor();
+            } else {
+                $value = $object->$attribute;
             }
+
+            // Recursively normalize nested non-scalar data
+            if (null !== $value && !is_scalar($value)) {
+                $value = $this->normalize($value);
+            }
+
+            $array[$key] = $value;
         }
 
         // Unset potential id field since we firstly processed _id
-        if ($hasIdKey) {
-            unset($array['id']);
-        }
+        // if ($hasIdKey) {
+        //     unset($array['id']);
+        // }
 
         // If all keys has a null value, we should return an empy array.
         // PHP suck balls (isset, empty, array_value)
@@ -200,7 +162,7 @@ class Mapper
      * @param  string $className A full qualified domain name
      * @return object
      */
-    public function hydrate($className, $type, array $array)
+    public function hydrate($className, array $array)
     {
         // $reflectedClass = new \ReflectionClass($className);
         // $constructor = $reflectedClass->getConstructor();
@@ -220,40 +182,53 @@ class Mapper
         //     unset($array['_id']);
         // }
 
-        $map = $this->parser->getMap($className, $type);
+        $map = $this->parser->getMap($className);
 
         foreach ($array as $key => $value) {
             if (null !== $value) {
 
                 $attribute = $map->getAttributeFor($key);
 
-                // Recursively normalize nested non-scalar data
-                if (!is_scalar($value)) {
+                if ($map->hasEmbedMapFor($key)) {
+                    // Embed declaration
+                    $embedType = $map->getEmbedTypeFor($key);
+                    $embedMap = $map->getEmbedMapFor($key);
 
-                    // Associative array could be object
-                    if (is_array($value) && array_keys($value) !== range(0, sizeof($value) - 1)) {
+                    if (!is_array($value)) {
+                        throw new \RuntimeException('Embedded document or collection expect an array');
+                    }
 
-                        $subMap = $map->getEmbedMapFor($key);
-
-                        if ($subMap) {
-
-                            if ($subMap->getType() == Map::DOCUMENT) {
-
-                                $value = $this->hydrate($subMap->getClass(), $subMap->getType(), $value);
-
-                            } elseif ($subMap->getType() == Map::COLLECTION) {
-
-                                $collection = array();
-
-                                foreach($value as $embedValue) {
-                                   $collection[] = $this->hydrate($subMap->getClass(), $subMap->getType(), $embedValue);
-                                }
-
-                                $value = $collection;
-                            }
-                        } else {
-                            $value = $this->denormalize($value);
+                    if ($embedType == Map::DOCUMENT) {
+                        // Embed document
+                        
+                        // Expect an hash (associative array), @todo maybe remove this check ?
+                        if (array_keys($value) === range(0, sizeof($value) - 1)) {
+                            throw new \RuntimeException('Embedded document expect an associative array');
                         }
+
+                        $value = $this->hydrate($embedMap->getClass(), $value);
+
+                    } elseif ($embedType == Map::COLLECTION) {
+                        // Embed collection
+                         
+                        // Expect an array (numeric array), @todo maybe remove this check ?
+                        if (array_keys($value) !== range(0, sizeof($value) - 1)) {
+                            throw new \RuntimeException('Embedded collection expect a numeric-indexed array');
+                        }
+
+                        $collection = array();
+
+                        // Recursively hydrate embed documents
+                        foreach ($value as $embedValue) {
+                           $collection[] = $this->hydrate($embedMap->getClass(), $embedValue);
+                        }
+
+                        $value = $collection;
+                    }
+                } else {
+                    if (!is_scalar($value)) {
+                        // No embed declaration (document/collection), process as a regular array
+                        $value = $this->denormalize($value);
                     }
                 }
 
@@ -265,7 +240,6 @@ class Mapper
                 }
             }
         }
-
         return $object;
     }
 }

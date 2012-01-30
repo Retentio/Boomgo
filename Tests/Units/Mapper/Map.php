@@ -15,21 +15,17 @@ class Map extends \mageekguy\atoum\test
     public function test__construct()
     {
         // Should set the class name and the type
-        $map = new Mapper\Map('FakeClassName', 'Document');
+        $map = new Mapper\Map('FakeClassName');
 
         $this->assert
             ->string($map->getClass())
             ->isEqualTo('FakeClassName');
-
-        $this->assert
-            ->string($map->getType())
-            ->isEqualTo('DOCUMENT');
     }
 
     public function testSetGetClass()
     {
         // Should set and get class
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
         $map->setClass('AnotherFakeClassName');
 
         $this->assert
@@ -37,21 +33,22 @@ class Map extends \mageekguy\atoum\test
             ->isEqualTo('AnotherFakeClassName');
     }
 
-    public function testSetGetType()
+    public function testAddEmbedType()
     {
-         $map = new Mapper\Map('FakeMap', 'Document');
+         $map = new Mapper\Map('FakeMap');
 
         // Should set and get type
-        $map->setType('Collection');
+        $map->addEmbedType('fakeKey','Collection');
 
         $this->assert
-            ->string($map->getType())
-            ->isEqualTo('COLLECTION');
+            ->array($map->getEmbedTypes())
+            ->hasSize(1)
+            ->isIdenticalTo(array('fakeKey' => 'COLLECTION'));
         
         // Should throw exception on invalid type
         $this->assert
             ->exception(function() use ($map) {
-                $map->setType('AnUnknownType');
+                $map->addEmbedType('fakeKey','AnUnknownType');
             })
             ->isInstanceOf('InvalidArgumentException')
             ->hasMessage('Unknown map type "AnUnknownType"');
@@ -59,7 +56,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetMutators()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         $this->assert
             ->array($map->getMutators())
@@ -68,7 +65,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetEmbedMaps()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         $this->assert
             ->array($map->getEmbedMaps())
@@ -77,7 +74,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testAddMutator()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should add a mutator to the related key
         $map->addMutator('fakeKey', 'fakeMutator');
@@ -92,15 +89,15 @@ class Map extends \mageekguy\atoum\test
                 $map->addMutator('fakeKey', 'invalid Mutator');  
             })
             ->isInstanceOf('InvalidArgumentException')  
-            ->hasMessage('Invalid key or mutator');
+            ->hasMessage('Invalid php method name "invalid Mutator"');
     }
 
     public function testAddEmbedMap()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should add a mutator to the related key
-        $map->addEmbedMap('fakeKey', new Mapper\Map('FakeMap', 'Document'));
+        $map->addEmbedMap('fakeKey', new Mapper\Map('FakeMap'));
 
         $this->assert
             ->array($map->getEmbedMaps())
@@ -109,7 +106,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testAdd()
     {
-         $map = new Mapper\Map('FakeMap', 'Document');
+         $map = new Mapper\Map('FakeMap');
 
          // Should add a basic key/attribute
          $map->add('fakeKey', 'fakeAttribute');
@@ -121,8 +118,21 @@ class Map extends \mageekguy\atoum\test
             ->hasSize(1)
             ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'));
 
+        // Should add a accessor
+        $map->add('fakeKey', 'fakeAttribute', 'fakeAccessor');
+
+        $this->assert
+            ->array($index)
+            ->hasSize(1)
+            ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'));
+
+        $this->assert
+            ->array($map->getAccessors())
+            ->hasSize(1)
+            ->isIdenticalTo(array('fakeKey' => 'fakeAccessor'));
+
         // Should add a mutator
-        $map->add('fakeKey', 'fakeAttribute', 'fakeMutator');
+        $map->add('fakeKey', 'fakeAttribute', null, 'fakeMutator');
 
         $this->assert
             ->array($index)
@@ -135,7 +145,7 @@ class Map extends \mageekguy\atoum\test
             ->isIdenticalTo(array('fakeKey' => 'fakeMutator'));
 
         // Should add a Map
-        $map->add('fakeKey', 'fakeAttribute', 'fakeMutator', new Mapper\Map('FakeMap', 'Document'));
+        $map->add('fakeKey', 'fakeAttribute', 'fakeMutator', 'fakeAccessor', 'Document', new Mapper\Map('FakeMap'));
 
         $this->assert
             ->array($index)
@@ -149,7 +159,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetKeys()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should get an array of keys
         $map->add('fakeKey', 'fakeAttribute');
@@ -162,7 +172,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetAttributes()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should get an array of attributes
         $map->add('fakeKey', 'fakeAttribute');
@@ -175,7 +185,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetAttributeFor()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should get an attribute for a key
         $map->add('fakeKey', 'fakeAttribute');
@@ -187,10 +197,10 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetEmbedMapFor()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Shouldget an embedded map for a key
-        $map->addEmbedMap('fakeKey', new Mapper\Map('FakeMap', 'Document'));
+        $map->addEmbedMap('fakeKey', new Mapper\Map('FakeMap'));
 
         $this->assert
             ->object($map->getEmbedMapFor('fakeKey'))
@@ -199,7 +209,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testHasMutator()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should return true if a mutator is binded to the key
         $map->addMutator('fakeKey', 'fakeMutator');
@@ -216,7 +226,7 @@ class Map extends \mageekguy\atoum\test
 
     public function testGetMutatorFor()
     {
-        $map = new Mapper\Map('FakeMap', 'Document');
+        $map = new Mapper\Map('FakeMap');
 
         // Should return true if a mutator is binded to the key
         $map->addMutator('fakeKey', 'fakeMutator');

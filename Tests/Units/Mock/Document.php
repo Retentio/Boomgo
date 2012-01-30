@@ -110,12 +110,12 @@ class Document
 
     public function setMongoCollection($value)
     {
-        $this->mongoCollectionEmbed = $value;
+        $this->mongoCollection = $value;
     }
 
     public function getMongoCollection()
     {
-        return $this->mongoCollectionEmbed;
+        return $this->mongoCollection;
     }
 }
 

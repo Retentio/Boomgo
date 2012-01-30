@@ -7,28 +7,9 @@ namespace Boomgo\Formatter;
  */
 class Underscore2CamelFormatter implements FormatterInterface
 {
-    /**
-     * Convert underscored string to (lower) camelCase
-     * 
-     * @example my_great_key -> myGreatKey
-     * 
-     * @param  string $mongoKey An underscored string
-     * @return string
-     */
-    public function toPhpAttribute($mongoKey)
-    {
-        return $this->camelize($mongoKey, true);
-    }
-
-    public function toPhpMutator($mongoKey)
-    {
-        return 'set'.$this->camelize($string, false);
-    }
 
     /**
-     * Convert camelCase string to underscore
-     * 
-     * @example myGreatKey|MyGreatKey -> my_great_key
+     * Return an underscored mongo key
      * 
      * @param  string $phpAttribute A camelCase string
      * @return string
@@ -38,9 +19,40 @@ class Underscore2CamelFormatter implements FormatterInterface
         return $this->underscore($phpAttribute);
     }
 
+    /**
+     * Return a camelCase php attribute 
+     * 
+     * @param  string $mongoKey An underscored string
+     * @return string
+     */
+    public function toPhpAttribute($mongoKey)
+    {
+        return $this->camelize($mongoKey, true);
+    }
+
+    /**
+     * Return a php mutator
+     * 
+     * @param  string $mongoKey
+     * @return string
+     */
+    public function toPhpMutator($mongoKey)
+    {
+        return 'set'.$this->camelize($string, false);
+    }
+
+    /**
+     * Convert underscored string to lower|upper camelCase
+     * 
+     * @example my_great_key -> myGreatKey|MyGreatKey
+     * 
+     * @param  string $mongoKey An underscored string
+     * @param  bool   $lower
+     * @return string
+     */
     private function camelize($string, $lower = false)
     {
-        $words = explode('_', strtolower($mongoKey));
+        $words = explode('_', strtolower($string));
         
         $camelized = '';
         
@@ -53,6 +65,14 @@ class Underscore2CamelFormatter implements FormatterInterface
         return ($lower) ? lcfirst($camelized) : $camelized;
     }
 
+    /**
+     * Convert a camelCase string to an underscore string
+     * 
+     * @example my_great_key -> myGreatKey
+     * 
+     * @param  string $string A camelCase string
+     * @return string
+     */
     private function underscore($string)
     {
         return strtolower(preg_replace('/([a-z])([A-Z])/', '$1_$2', $string));

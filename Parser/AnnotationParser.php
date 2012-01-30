@@ -69,33 +69,31 @@ class AnnotationParser implements ParserInterface
 
     /**
      * Return the data map
+     * 
      * @param  ReflectionClass $class
+     * @param  array $dependenciesGraph
      * @return array
      */
-    public function getMap($class, $type, $index = null)
+    public function getMap($class, $dependenciesGraph = null)
     {
+        $dependenciesGraph = $this->updateDependencies($dependenciesGraph, $class);
+
         $reflectedClass = new \ReflectionClass($class);
 
-        if (null === $index) { 
-            $dependenciesGraph = array();
-        }
-
-        if (isset($dependenciesGraph[$reflectedClass->getName()])) {
-            throw new \RuntimeException('Cyclic dependency, a document cannot embed (directly/indirectly) itself');
-        }
-
-        $dependenciesGraph[$reflectedClass->getName()] = true;
-
-        $map = new Map($class, $type);
+        $map = new Map($class);
 
         $reflectedProperties = $reflectedClass->getProperties();
 
         foreach ($reflectedProperties as $reflectedProperty) {
+
             if ($this->isBoomgoProperty($reflectedProperty)) {
 
                 $attributeName = $reflectedProperty->getName();
-                $attributePublic = $reflectedProperty->isPublic();
                 $keyName = $this->formatter->toMongoKey($attributeName);
+                $accessorName = null;
+                $mutatorName = null;
+                $embedType = null;
+                $embedMap = null;
 
                 if (!$reflectedProperty->isPublic()) {
                     $accessorName = 'get'.ucfirst($attributeName);
@@ -116,16 +114,15 @@ class AnnotationParser implements ParserInterface
                 }
 
                 $metadata = $this->parseMetadata($reflectedProperty);
-                
-                $subMap = null;
+
                 if (!empty($metadata)) {
-                    $subMap = $this->getMap($metadata[1], $metadata[0], $dependenciesGraph);
+                    list($embedType,$embedClass) = $metadata;
+                    $embedMap = $this->getMap($embedClass, $dependenciesGraph);
                 }
-                // @ Todo mutatorName is not mandatory for public
-                $map->add($keyName, $attributeName, $mutatorName, $subMap);
+
+                $map->add($keyName, $attributeName, $accessorName, $mutatorName, $embedType, $embedMap);
             }
         }
-
         return $map;
     }
 
@@ -175,25 +172,19 @@ class AnnotationParser implements ParserInterface
     /**
      * Check if a php document handle an identifier
      *  
-     * @param  ReflectionObject  $object
+     * @param  ReflectionClass  $class
      * @return boolean
      */
-    public function hasValidIdentifier(\ReflectionObject $object)
-    {
-        if ($object->hasProperty('id') && $object->hasMethod('getId') && $object->hasMethod('setId')) {
-
-            if ($this->isBoomgoProperty($object->getProperty('id')))
-            {
-                if(!($this->isValidAccessor($object->getMethod('getId'))) ||
-                   !($this->isValidMutator($object->getMethod('setId')))) {
-
-                    throw new \RuntimeException('Object expect an id but do not expose valid accessor/mutator');
-                }
-                return true;
-            }
-        }
-        return false;
-    }
+    // public function hasValidIdentifier(\ReflectionClass $class)
+    // {
+    //     if ($class->hasProperty('id') && $class->hasMethod('getId') && $class->hasMethod('setId')) {
+    //         if(($this->isValidAccessor($object->getMethod('getId'))) ||
+    //            ($this->isValidMutator($object->getMethod('setId')))) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
     /**
      * Check if the getter is public and has no required argument.
@@ -217,5 +208,27 @@ class AnnotationParser implements ParserInterface
     {
         return ($method->isPublic() && 
                 1 === $method->getNumberOfRequiredParameters());
+    }
+
+    /**
+     * Manage and update map dependencies
+     * 
+     * @param  array  $dependeciesGraph 
+     * @param  string $class            
+     * @return array
+     */
+    protected function updateDependencies($dependenciesGraph, $class)
+    {
+        if (null === $dependenciesGraph) { 
+            $dependenciesGraph = array();
+        }
+
+        if (isset($dependenciesGraph[$class])) {
+            throw new \RuntimeException('Cyclic dependency, a document cannot directly/indirectly be embed in itself');
+        }
+
+        $dependenciesGraph[$class] = true;
+
+        return $dependenciesGraph;
     }
 }

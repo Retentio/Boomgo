@@ -7,13 +7,15 @@ class Map
     const DOCUMENT = 'DOCUMENT';
     const COLLECTION = 'COLLECTION';
 
-    private $type;
-
     private $class;
 
     private $index;
 
+    private $accessors;
+
     private $mutators;
+
+    private $embedTypes;
 
     private $embedMaps;
 
@@ -23,13 +25,14 @@ class Map
      * @param string $class
      * @param string $type
      */
-    public function __construct($class, $type)
+    public function __construct($class)
     {
         $this->setClass($class);
-        $this->setType($type);
 
         $this->index = array();
         $this->mutators = array();
+        $this->accessors = array();
+        $this->embedTypes = array();
         $this->embedMaps = array();
     }
 
@@ -43,7 +46,39 @@ class Map
         return $this->class;
     }
 
-    public function setType($type)
+    public function add($key, $attribute, $accessor = null, $mutator = null, $embedType = null, $embedMap = null)
+    {
+        $this->index[$key] = $attribute;
+
+        if (null !== $accessor) {
+            $this->addAccessor($key, $accessor);
+        }
+
+        if (null !== $mutator) {
+            $this->addMutator($key, $mutator);
+        }
+
+        if (null !== $embedType) {
+            $this->addEmbedType($key, $embedType);
+        }
+
+        if (null !== $embedMap) {
+            $this->addEmbedMap($key, $embedMap);
+        }
+    }
+
+
+    public function getIndex()
+    {
+        return $this->index;
+    }
+
+    public function getEmbedTypes()
+    {
+        return $this->embedTypes;
+    }
+
+    public function addEmbedType($key, $type)
     {
         $const = strtoupper($type);
 
@@ -51,17 +86,17 @@ class Map
             throw new \InvalidArgumentException('Unknown map type "'.$type.'"');
         }
 
-        $this->type = $const;
+        $this->embedTypes[$key] = $const;
     }
 
-    public function getType()
+    public function hasEmbedTypeFor($key)
     {
-        return $this->type;
+       return isset($this->embedTypes[$key]);
     }
 
-    public function getIndex()
+    public function getEmbedTypeFor($key)
     {
-        return $this->index;
+         return ($this->hasEmbedTypeFor($key)) ? $this->embedTypes[$key] : null;
     }
 
     public function getMutators()
@@ -69,22 +104,60 @@ class Map
         return $this->mutators;
     }
 
+    public function addMutator($key, $mutator)
+    {
+        $this->validatePhpMethodName($mutator);
+        $this->mutators[$key] = $mutator;
+    }
+
+    public function hasMutatorFor($key)
+    {
+        return isset($this->mutators[$key]);
+    }
+
+    public function getMutatorFor($key)
+    {
+        return $this->hasMutatorFor($key) ? $this->mutators[$key] : null;
+    }
+
+    public function getAccessors()
+    {
+        return $this->accessors;
+    }
+
+    public function addAccessor($key, $accessor)
+    {
+        $this->validatePhpMethodName($accessor);
+        $this->accessors[$key] = $accessor;
+    }
+  
+    public function hasAccessorFor($key)
+    {
+        return isset($this->accessors[$key]);
+    }
+    public function getAccessorFor($key)
+    {
+        return $this->hasAccessorFor($key) ? $this->accessors[$key] : null;
+    }
+
     public function getEmbedMaps()
     {
         return $this->embedMaps;
     }
 
-    public function add($key, $attribute, $mutator = null, $map = null)
+    public function addEmbedMap($key, Map $map)
     {
-        $this->index[$key] = $attribute;
+        $this->embedMaps[$key] = $map;
+    }
 
-        if (null !== $mutator) {
-            $this->addMutator($key, $mutator);
-        }
+    public function hasEmbedMapFor($key)
+    {
+        return isset($this->embedMaps[$key]);
+    }
 
-        if (null !== $map) {
-            $this->addEmbedMap($key, $map);
-        }
+    public function getEmbedMapFor($key)
+    {
+        return $this->hasEmbedMapFor($key) ? $this->embedMaps[$key] : null;
     }
 
     public function getKeys()
@@ -102,38 +175,17 @@ class Map
         return $this->index[$key];
     }
 
-    public function hasEmbedMapFor($key)
+    /**
+     * Validate a php method name
+     * 
+     * @param  string $method
+     * @throws InvalidArgumentException If method name is not valid
+     */
+    private function validatePhpMethodName($method)
     {
-        return isset($this->embedMaps[$key]);
-    }
-
-    public function getEmbedMapFor($key)
-    {
-        return $this->hasEmbedMapFor($key) ? $this->embedMaps[$key] : null;
-    }
-
-    public function addEmbedMap($key, Map $map)
-    {
-        $this->embedMaps[$key] = $map;
-    }
-
-    public function hasMutatorFor($key)
-    {
-        return isset($this->mutators[$key]);
-    }
-
-    public function addMutator($key, $mutator)
-    {
-        if (!is_string($key) ||
-            !is_string($mutator) ||
-            !preg_match('#^[a-zA-Z0-9_-]+$#', $mutator)) {
-            throw new \InvalidArgumentException('Invalid key or mutator');
+        if (!is_string($method) ||
+            !preg_match('#^[a-zA-Z0-9_-]+$#', $method)) {
+            throw new \InvalidArgumentException('Invalid php method name "'.$method.'"');
             }
-        $this->mutators[$key] = $mutator;
-    }
-
-    public function getMutatorFor($key)
-    {
-        return $this->hasMutatorFor($key) ? $this->mutators[$key] : null;
     }
 }
