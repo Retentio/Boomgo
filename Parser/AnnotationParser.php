@@ -96,8 +96,8 @@ class AnnotationParser implements ParserInterface
                 $embedMap = null;
 
                 if (!$reflectedProperty->isPublic()) {
-                    $accessorName = 'get'.ucfirst($attributeName);
-                    $mutatorName = 'set'.ucfirst($attributeName);
+                    $accessorName = $this->formatter->getPhpAccessor($attributeName, false);
+                    $mutatorName = $this->formatter->getPhpMutator($attributeName, false);
 
                     if (!$reflectedClass->hasMethod($accessorName) ||
                         !$reflectedClass->hasMethod($mutatorName)) {

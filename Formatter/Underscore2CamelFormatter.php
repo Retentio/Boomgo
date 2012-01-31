@@ -34,14 +34,28 @@ class Underscore2CamelFormatter implements FormatterInterface
     }
 
     /**
-     * Return a php mutator
+     * Return a php accessor for a mongo key
      * 
-     * @param  string $mongoKey
+     * @param  string  $string    A mongo key or a php attribute
+     * @param  boolean $fromMongo True: string from mongo, false: string from php
      * @return string
      */
-    public function toPhpMutator($mongoKey)
+    public function getPhpAccessor($string, $fromMongo = true)
     {
-        return 'set'.$this->camelize($string, false);
+
+        return 'get'.($fromMongo) ? $this->camelize($string, false) : ucfirst($string);
+    }
+
+    /**
+     * Return a php mutator for a mongo key
+     * 
+     * @param  string  $string    A mongo key or a php attribute
+     * @param  boolean $fromMongo True: string from mongo, false: string from php
+     * @return string
+     */
+    public function getPhpMutator($string, $fromMongo = true)
+    {
+        return 'set'.($fromMongo) ? $this->camelize($string, false) : ucfirst($string);
     }
 
     /**
