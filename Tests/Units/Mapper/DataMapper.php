@@ -1,24 +1,26 @@
 <?php
 
-namespace Boomgo\tests\units;
+namespace Boomgo\tests\units\Mapper;
 
-use Boomgo;
-use Boomgo\Parser;
+use Boomgo\Mapper;
+use Boomgo\Parser\AnnotationParser;
 
-require_once __DIR__.'/../../vendor/mageekguy.atoum.phar';
+use Boomgo\tests\units\Mock;
 
-include __DIR__.'/../../Mapper.php';
-include __DIR__.'/../../Mapper/Map.php';
+require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 
-include __DIR__.'/../../Parser/ParserInterface.php';
-include __DIR__.'/../../Parser/AnnotationParser.php';
+include __DIR__.'/../../../Mapper/DataMapper.php';
+include __DIR__.'/../../../Mapper/Map.php';
 
-include __DIR__.'/../../Formatter/FormatterInterface.php';
+include __DIR__.'/../../../Parser/ParserInterface.php';
+include __DIR__.'/../../../Parser/AnnotationParser.php';
 
-include __DIR__.'/Mock/Document.php';
-include __DIR__.'/Mock/Formatter.php';
+include __DIR__.'/../../../Formatter/FormatterInterface.php';
 
-class Mapper extends \mageekguy\atoum\test
+include __DIR__.'/../Mock/Document.php';
+include __DIR__.'/../Mock/Formatter.php';
+
+class DataMapper extends \mageekguy\atoum\test
 {
     public function documentProvider()
     {
@@ -66,7 +68,7 @@ class Mapper extends \mageekguy\atoum\test
 
     public function test__construct()
     {
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()),new Mock\Formatter());
+        $mapper = new Mapper\DataMapper(new AnnotationParser(new Mock\Formatter()),new Mock\Formatter());
     }
 /*
     public function testToArray()
@@ -97,7 +99,7 @@ class Mapper extends \mageekguy\atoum\test
 */
     public function testToArray()
     {
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()));
+        $mapper = new Mapper\DataMapper(new AnnotationParser(new Mock\Formatter()));
 
         // Should throw exception if argument is not an object
         $this->assert
@@ -138,7 +140,7 @@ class Mapper extends \mageekguy\atoum\test
     {
         $ns = 'Boomgo\\tests\\units\\Mock\\';
 
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()));
+        $mapper = new Mapper\DataMapper(new AnnotationParser(new Mock\Formatter()));
 
         $array = $this->arrayProvider();
         

@@ -1,15 +1,13 @@
 <?php
 
-namespace Boomgo;
+namespace Boomgo\Mapper;
 
-use Boomgo\Mapper\Map;
 use Boomgo\Parser\ParserInterface;
-use Boomgo\Formatter\FormatterInterface;
 
 /**
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class Mapper
+class DataMapper
 {
     private $parser;
 
@@ -112,7 +110,8 @@ class Mapper
 
             $object = new $object;
         } elseif (is_object($class)) {
-            $className = get_class($object);
+            $reflectedObject = new \ReflectionObject($object);
+            $className = $reflectedObject->getName();
         }
 
         $map = $this->parser->getMap($className);
