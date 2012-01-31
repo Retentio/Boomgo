@@ -83,13 +83,6 @@ class Map extends \mageekguy\atoum\test
             ->array($map->getMutators())
             ->hasSize(1)
             ->isIdenticalTo(array('fakeKey' => 'fakeMutator'));
-
-        $this->assert
-            ->exception(function() use ($map) {
-                $map->addMutator('fakeKey', 'invalid Mutator');  
-            })
-            ->isInstanceOf('InvalidArgumentException')  
-            ->hasMessage('Invalid php method name "invalid Mutator"');
     }
 
     public function testAddEmbedMap()

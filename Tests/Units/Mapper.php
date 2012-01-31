@@ -20,70 +20,57 @@ include __DIR__.'/Mock/Formatter.php';
 
 class Mapper extends \mageekguy\atoum\test
 {
+    public function documentProvider()
+    {
+        $embedDocument = new Mock\EmbedDocument();
+        $embedDocument->setMongoString('an embed string');
+        $embedDocument->setMongoNumber(2);
+        $embedDocument->setMongoArray(array('an' => 'embed array', 7 => 2));
+
+        $embedCollection = array();
+        for ($i = 0; $i < 3; $i ++) {
+            $embedCollection[] = $embedDocument;
+        }
+
+        $document = new Mock\Document();
+        $document->setId('an identifier');
+        $document->setMongoString('a string');
+        $document->setMongoNumber(1);
+        $document->setMongoDocument($embedDocument);
+        $document->setMongoCollection($embedCollection);
+        $document->setMongoArray(array('an' => 'array', 8 => 1));
+
+        return $document;
+    }
+
+    public function arrayProvider()
+    {
+        $embedArray = array('mongoString' => 'an embed string', 
+            'mongoNumber' => 2,
+            'mongoArray' => array('an' => 'embed array', 7 => 2));
+
+        $embedCollectionArray = array();
+        for ($i = 0; $i < 3; $i ++) {
+            $embedCollectionArray[] = $embedArray;
+        }
+
+        $array =  array('id' => 'an identifier',
+            'mongoString' => 'a string',
+            'mongoNumber' => 1,
+            'mongoDocument' => $embedArray,
+            'mongoCollection' => $embedCollectionArray,
+            'mongoArray' => array('an' => 'array', 8 => 1));
+        
+        return $array;
+    }
+
     public function test__construct()
     {
         $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()),new Mock\Formatter());
     }
 /*
-    public function testNormalize()
-    {
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(),new Mock\Formatter());
-
-        // Should not alter scalar and null value
-        $output = $mapper->normalize(1);
-        $this->assert
-            ->variable($output)
-            ->isEqualTo(1);
-
-        $output = $mapper->normalize(null);
-        $this->assert
-            ->variable($output)
-            ->isNull();
-
-        // Should return an empty array when providing an empty object
-        $output = $mapper->normalize(new Mock\Document());
-        $this->assert
-            ->array($output)
-            ->isEmpty();
-
-        // Should return the exact same array when providing an array
-        $output = $mapper->normalize(array('yet' => 'another', 'array', 17 => 13));
-        $this->assert
-            ->array($output)
-            ->isIdenticalTo(array('yet' => 'another', 'array', 17 => 13));
-
-        // Should throw an exception when dealing with non-normalizable value
-        $file = fopen(__FILE__, 'r');
-        $this->assert
-            ->exception(function() use ($mapper, $file) {
-                    $mapper->normalize($mapper->normalize($file));
-                })
-            ->isInstanceOf('RuntimeException');
-
-        fclose($file);
-    }
-
     public function testToArray()
     {
-        $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(),new Mock\Formatter());
-
-        // Should return an array with normalized key _id when object has identifier
-        $document = new Mock\Document();
-        $document->setId('an id');
-        $document->setMongoString('a string');
-        $document->setMongoNumber(5);
-
-        $array = $mapper->toArray($document);
-        $this->assert
-            ->array($array)
-            ->isNotEmpty()
-            ->hasKey('_id')
-            ->notHasKey('id');
-
-        $this->assert
-            ->variable($array['_id'])
-            ->isIdenticalTo('an id');
-
         // Should return an empty array when all mongo keys are null
         $document = new Mock\Document();
         $document->setAttribute('an excluded value');
@@ -136,41 +123,10 @@ class Mapper extends \mageekguy\atoum\test
             ->isEmpty();
 
         // Should return an complete array
-        $embedDocument = new Mock\EmbedDocument();
-        $embedDocument->setMongoString('an embed string');
-        $embedDocument->setMongoNumber(2);
-        $embedDocument->setMongoArray(array('an' => 'embed array', 7 => 2));
-
-        $embedCollection = array();
-        for ($i = 0; $i < 3; $i ++) {
-            $embedCollection[] = $embedDocument;
-        }
-
-        $document = new Mock\Document();
-        $document->setId('an identifier');
-        $document->setMongoString('a string');
-        $document->setMongoNumber(1);
-        $document->setMongoDocument($embedDocument);
-        $document->setMongoCollection($embedCollection);
-        $document->setMongoArray(array('an' => 'array', 8 => 1));
-
+        $document = $this->documentProvider();
         $array = $mapper->toArray($document);
 
-        $embedData = array('mongoString' => 'an embed string', 
-            'mongoNumber' => 2,
-            'mongoArray' => array('an' => 'embed array', 7 => 2));
-
-        $embedCollectionData = array();
-        for ($i = 0; $i < 3; $i ++) {
-            $embedCollectionData[] = $embedData;
-        }
-
-        $expectedArray = array('id' => 'an identifier',
-            'mongoString' => 'a string',
-            'mongoNumber' => 1,
-            'mongoDocument' => $embedData,
-            'mongoCollection' => $embedCollectionData,
-            'mongoArray' => array('an' => 'array', 8 => 1));
+        $expectedArray = $this->arrayProvider();
 
         $this->assert
             ->array($array)
@@ -184,23 +140,9 @@ class Mapper extends \mageekguy\atoum\test
 
         $mapper = new Boomgo\Mapper(new Parser\AnnotationParser(new Mock\Formatter()));
 
-        $embedData = array('mongoString' => 'an embed string', 
-            'mongoNumber' => 2,
-            'mongoArray' => array('an' => 'embed array', 7 => 2));
-
-        $embedCollectionData = array();
-        for ($i = 0; $i < 3; $i ++) {
-            $embedCollectionData[] = $embedData;
-        }
-
-        $data =  array('id' => 'an identifier',
-            'mongoString' => 'a string',
-            'mongoNumber' => 1,
-            'mongoDocument' => $embedData,
-            'mongoCollection' => $embedCollectionData,
-            'mongoArray' => array('an' => 'array', 8 => 1));
-
-        $object = $mapper->hydrate($ns.'Document', $data);
+        $array = $this->arrayProvider();
+        
+        $object = $mapper->hydrate($ns.'Document', $array);
 
         $this->assert
             ->object($object)
@@ -254,15 +196,5 @@ class Mapper extends \mageekguy\atoum\test
                 })
             ->isInstanceOf('RuntimeException')
             ->hasMessage('Unable to hydrate object requiring constructor param');
-
-        // Should throw exception if object don't have/expose identifer (id, setId)
-        $this->assert
-            ->exception(function() use ($mapper, $ns) {
-                    $mapper->hydrate($ns.'DocummentConstruct', array('_id' => 1));
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Object do not handle identifier');
-
-           }
 */
 }

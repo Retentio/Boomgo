@@ -106,7 +106,6 @@ class Map
 
     public function addMutator($key, $mutator)
     {
-        $this->validatePhpMethodName($mutator);
         $this->mutators[$key] = $mutator;
     }
 
@@ -127,7 +126,6 @@ class Map
 
     public function addAccessor($key, $accessor)
     {
-        $this->validatePhpMethodName($accessor);
         $this->accessors[$key] = $accessor;
     }
   
@@ -173,19 +171,5 @@ class Map
     public function getAttributeFor($key)
     {
         return $this->index[$key];
-    }
-
-    /**
-     * Validate a php method name
-     * 
-     * @param  string $method
-     * @throws InvalidArgumentException If method name is not valid
-     */
-    private function validatePhpMethodName($method)
-    {
-        if (!is_string($method) ||
-            !preg_match('#^[a-zA-Z0-9_-]+$#', $method)) {
-            throw new \InvalidArgumentException('Invalid php method name "'.$method.'"');
-            }
     }
 }

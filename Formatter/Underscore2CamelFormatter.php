@@ -10,13 +10,16 @@ class Underscore2CamelFormatter implements FormatterInterface
 
     /**
      * Return an underscored mongo key
+     * Handle _id special mongoDB key
      * 
      * @param  string $phpAttribute A camelCase string
      * @return string
      */
     public function toMongoKey($phpAttribute)
     {
-        return $this->underscore($phpAttribute);
+        $underscored =  $this->underscore($phpAttribute);
+
+        return ($phpAttribute == 'id') ? '_'.$underscored : $underscored ;
     }
 
     /**

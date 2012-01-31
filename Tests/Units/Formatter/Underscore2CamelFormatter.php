@@ -44,7 +44,7 @@ class Underscore2CamelFormatter extends \mageekguy\atoum\test
         $camelCase = $formatter->toPhpAttribute('hello__world_');
         $this->assert
             ->string($camelCase)
-            ->isEqualTo('helloWorld');
+            ->isEqualTo('helloWorld'); 
     }
 
     public function testToMongoAttribute()
@@ -62,5 +62,12 @@ class Underscore2CamelFormatter extends \mageekguy\atoum\test
         $this->assert
             ->string($underscore)
             ->isEqualTo('hello_world');
+
+        
+        // Should handle mongoDB identifier
+        $underscore = $formatter->toMongoKey('id');
+        $this->assert
+            ->string($underscore)
+            ->isEqualTo('_id');
     }
 }

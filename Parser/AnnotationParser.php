@@ -170,23 +170,6 @@ class AnnotationParser implements ParserInterface
     }
 
     /**
-     * Check if a php document handle an identifier
-     *  
-     * @param  ReflectionClass  $class
-     * @return boolean
-     */
-    // public function hasValidIdentifier(\ReflectionClass $class)
-    // {
-    //     if ($class->hasProperty('id') && $class->hasMethod('getId') && $class->hasMethod('setId')) {
-    //         if(($this->isValidAccessor($object->getMethod('getId'))) ||
-    //            ($this->isValidMutator($object->getMethod('setId')))) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
-    /**
      * Check if the getter is public and has no required argument.
      * 
      * @param  ReflectionMethod $method the method to check
