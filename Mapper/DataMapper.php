@@ -2,6 +2,7 @@
 
 namespace Boomgo\Mapper;
 
+use Boomgo\Cache\CacheInterface;
 use Boomgo\Parser\ParserInterface;
 
 /**
@@ -10,6 +11,8 @@ use Boomgo\Parser\ParserInterface;
 class DataMapper
 {
     private $parser;
+
+    private $cache;
 
     /**
      * Constructor
@@ -42,6 +45,16 @@ class DataMapper
         return $this->parser;
     }
 
+    public function setCache(CacheInterface $cache)
+    {
+        $this->cache = $cache;
+    }
+
+    public function getCache()
+    {
+        return $this->cache;
+    }
+
     /**
      * Convert this object to array
      * 
@@ -55,8 +68,18 @@ class DataMapper
         }
 
         $reflectedObject = new \ReflectionObject($object);
+        $className = $reflectedObject->getName();
 
-        $map = $this->parser->getMap($reflectedObject->getName());
+        if ($this->cache) {
+            if ($this->cache->contains($className)) {
+                $map = $this->cache->fetch($className);
+            } else {
+                 $map = $this->parser->getMap($className);
+                 $this->cache->save($className, $map);
+            }
+        } else {
+            $map = $this->parser->getMap($className);
+        }
 
         $array = array();
 
@@ -114,7 +137,16 @@ class DataMapper
             $className = $reflectedObject->getName();
         }
 
-        $map = $this->parser->getMap($className);
+        if ($this->cache) {
+            if ($this->cache->contains($className)) {
+                $map = $this->cache->fetch($className);
+            } else {
+                 $map = $this->parser->getMap($className);
+                 $this->cache->save($className, $map);
+            }
+        } else {
+            $map = $this->parser->getMap($className);
+        }
 
         foreach ($array as $key => $value) {
             if (null !== $value) {
