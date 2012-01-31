@@ -9,12 +9,16 @@ use Boomgo\Mapper;
 require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 
 include __DIR__.'/../../../Parser/ParserInterface.php';
+include __DIR__.'/../../../Parser/ParserProvider.php';
 include __DIR__.'/../../../Parser/AnnotationParser.php';
+
+include __DIR__.'/../../../Cache/CacheInterface.php';
 
 include __DIR__.'/../../../Formatter/FormatterInterface.php';
 
 include __DIR__.'/../../../Mapper/Map.php';
 
+include __DIR__.'/../Mock/Cache.php';
 include __DIR__.'/../Mock/Document.php';
 include __DIR__.'/../Mock/Formatter.php';
 
@@ -24,7 +28,7 @@ class AnnotationParser extends \mageekguy\atoum\test
     public function test__construct()
     {
         // Should be able to define the annotation though the constructor
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(),'@MyHypeAnnot');
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache(), '@MyHypeAnnot');
 
         $this->assert
             ->string($parser->getAnnotation())
@@ -33,7 +37,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testSetGetAnnotation()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
 
         // Should set and get annotation
         $parser->setAnnotation('@MyHypeAnnot');
@@ -57,7 +61,76 @@ class AnnotationParser extends \mageekguy\atoum\test
             ->isInstanceOf('\InvalidArgumentException')
             ->hasMessage('Annotation should start with @ char');
     }
-/*
+
+
+    public function testGetMap()
+    {
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+
+        $map = $parser->getMap('Boomgo\tests\units\Mock\Document');
+
+        // Should return an instance of Map
+        $this->assert
+            ->object($map)
+            ->isInstanceOf('Boomgo\Mapper\Map');
+
+        // Should return an array filled with presisted mongo key name and php attribute name
+        $this->assert
+            ->array($map->getIndex())
+            ->isNotEmpty()
+            ->hasSize(6)
+            ->isIdenticalTo(array('id' => 'id', 
+                'mongoString' => 'mongoString',
+                'mongoNumber' => 'mongoNumber',
+                'mongoDocument' => 'mongoDocument',
+                'mongoCollection' => 'mongoCollection',
+                'mongoArray' => 'mongoArray'));
+
+        // Should return an array of mutator for each mongo key which don't expose a public php attribute
+        $this->assert
+            ->array($map->getMutators())
+            ->isNotEmpty()
+            ->hasSize(6)
+            ->isIdenticalTo (array('id' => 'setId', 
+                'mongoString' => 'setMongoString',
+                'mongoNumber' => 'setMongoNumber',
+                'mongoDocument' => 'setMongoDocument',
+                'mongoCollection' => 'setMongoCollection',
+                'mongoArray' => 'setMongoArray'));
+
+        // Should return an array where key are mongo key containing embedded document or collection 
+        $this->assert
+            ->array($map->getEmbedMaps())
+            ->hasKeys(array('mongoDocument', 'mongoCollection'));
+        
+        // Should return a map instance for a single embedded document
+        $this->assert
+            ->object($map->getEmbedMapFor('mongoDocument'))
+            ->isInstanceOf('Boomgo\Mapper\Map');
+
+        // Should return a map instance for a embedded collection
+        $this->assert
+            ->object($map->getEmbedMapFor('mongoCollection'))
+            ->isInstanceOf('Boomgo\Mapper\Map');
+
+        // Should return an array where key are mongo key and value are embed type
+        $this->assert
+            ->array($map->getEmbedTypes())
+            ->isIdenticalTo(array('mongoDocument' => 'DOCUMENT', 'mongoCollection' => 'COLLECTION'));
+
+        // Should return the type 'DOCUMENT' for a key defined as a single embedded document
+        $this->assert
+            ->string($map->getEmbedTypeFor('mongoDocument'))
+            ->isEqualTo('DOCUMENT');
+
+        // Should return the type 'COLLECTION' for a key defined as embedded collection
+        $this->assert
+            ->string($map->getEmbedTypeFor('mongoCollection'))
+            ->isEqualTo('COLLECTION');
+
+    }
+
+/* @todo refactor scope or into a validator class
     public function testHasValidIdentifier()
     {
         $parser = new Parser\AnnotationParser(new Mock\Formatter());
@@ -120,10 +193,10 @@ class AnnotationParser extends \mageekguy\atoum\test
             ->isInstanceOf('RuntimeException')
             ->hasMessage('Object expect an id but do not expose valid accessor/mutator'); 
     }
-*/
+
     public function testIsValidAccessor()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
 
         // Should return true when getter is public and do not required argument
         $object = new Mock\Document();
@@ -146,7 +219,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testIsValidMutator()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
 
         // Should return true when setter is public and require only one argument
         $object = new Mock\Document();
@@ -169,7 +242,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testIsBoomgoProperty()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
 
          // Should return false if proprerty don't have annotation
         $document = new Mock\DocumentExcludedId();
@@ -216,7 +289,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testParseMetadata()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
 
         // Should throw exception if annotation is missing
         $document = new Mock\DocumentExcludedId();
@@ -254,47 +327,5 @@ class AnnotationParser extends \mageekguy\atoum\test
             ->hasSize(2)
             ->strictlyContainsValues(array('Document', 'Boomgo\tests\units\Mock\EmbedDocument'));
     }
-
-    public function testGetMap()
-    {
-        // Should return a map
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-        $map = $parser->getMap('Boomgo\tests\units\Mock\Document');
-
-        $this->assert
-            ->object($map)
-            ->isInstanceOf('Boomgo\Mapper\Map');
-
-        $this->assert
-            ->array($map->getIndex())
-            ->isNotEmpty()
-            ->hasSize(6)
-            ->isIdenticalTo(array('id' => 'id', 
-                'mongoString' => 'mongoString',
-                'mongoNumber' => 'mongoNumber',
-                'mongoDocument' => 'mongoDocument',
-                'mongoCollection' => 'mongoCollection',
-                'mongoArray' => 'mongoArray'));
-
-
-        $this->assert
-            ->array($map->getMutators())
-            ->isNotEmpty()
-            ->hasSize(6)
-            ->isIdenticalTo (array('id' => 'setId', 
-                'mongoString' => 'setMongoString',
-                'mongoNumber' => 'setMongoNumber',
-                'mongoDocument' => 'setMongoDocument',
-                'mongoCollection' => 'setMongoCollection',
-                'mongoArray' => 'setMongoArray'));
-
-        $this->assert
-            ->array($map->getEmbedMaps())
-            ->hasKeys(array('mongoDocument', 'mongoCollection'));
-            
-        $this->assert
-            ->object($map->getEmbedMapFor('mongoDocument'))
-            ->isInstanceOf('Boomgo\Mapper\Map');
-    }
+*/
 }

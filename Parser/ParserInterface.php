@@ -2,6 +2,7 @@
 
 namespace Boomgo\Parser;
 
+use Boomgo\Cache\CacheInterface;
 use Boomgo\Formatter\FormatterInterface;
 
 interface ParserInterface
@@ -10,5 +11,9 @@ interface ParserInterface
     
     public function getFormatter();
 
-    public function getMap($class, $dependenciesGraph = null);
+    public function setCache(CacheInterface $cache);
+
+    public function getCache();
+
+    public function getMap($class);
 }

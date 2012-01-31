@@ -18,4 +18,14 @@ class Formatter implements FormatterInterface
     {
         return $phpAttribute;
     }
+
+    public function getPhpAccessor($string, $fromMongo = true)
+    {
+        return 'get'.ucfirst($string);
+    }
+
+    public function getPhpMutator($string, $fromMongo = true)
+    {
+        return 'set'.ucfirst($string);
+    }
 }

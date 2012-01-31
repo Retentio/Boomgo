@@ -2,25 +2,26 @@
 
 namespace Boomgo\tests\units\Mapper;
 
-use Boomgo\Mapper;
 use Boomgo\Cache;
-use Boomgo\Parser\AnnotationParser;
+use Boomgo\Mapper;
+use Boomgo\Parser;
 
 use Boomgo\tests\units\Mock;
 
 require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 
-include __DIR__.'/../../../Cache/CacheInterface.php';
-include __DIR__.'/../../../Cache/FileCache.php';
-
 include __DIR__.'/../../../Mapper/DataMapper.php';
 include __DIR__.'/../../../Mapper/Map.php';
 
+include __DIR__.'/../../../Cache/CacheInterface.php';
+
 include __DIR__.'/../../../Parser/ParserInterface.php';
+include __DIR__.'/../../../Parser/ParserProvider.php';
 include __DIR__.'/../../../Parser/AnnotationParser.php';
 
 include __DIR__.'/../../../Formatter/FormatterInterface.php';
 
+include __DIR__.'/../Mock/Cache.php';
 include __DIR__.'/../Mock/Document.php';
 include __DIR__.'/../Mock/Formatter.php';
 
@@ -72,7 +73,7 @@ class DataMapper extends \mageekguy\atoum\test
 
     public function test__construct()
     {
-        $mapper = new Mapper\DataMapper(new AnnotationParser(new Mock\Formatter()));
+        $mapper = new Mapper\DataMapper(new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache()));
     }
 /*
     public function testToArray()
@@ -103,8 +104,7 @@ class DataMapper extends \mageekguy\atoum\test
 */
     public function testToArray()
     {
-        $mapper = new Mapper\DataMapper(new AnnotationParser(new Mock\Formatter()));
-        $mapper->setCache(new Cache\FileCache(__DIR__));
+        $mapper = new Mapper\DataMapper(new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache()));
 
         // Should throw exception if argument is not an object
         $this->assert
@@ -145,8 +145,7 @@ class DataMapper extends \mageekguy\atoum\test
     {
         $ns = 'Boomgo\\tests\\units\\Mock\\';
 
-        $mapper = new Mapper\DataMapper(new AnnotationParser(new Mock\Formatter()));
-        $mapper->setCache(new Cache\FileCache(__DIR__));
+        $mapper = new Mapper\DataMapper(new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache()));
 
         $array = $this->arrayProvider();
         

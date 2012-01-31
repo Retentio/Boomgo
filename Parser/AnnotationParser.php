@@ -3,12 +3,11 @@
 namespace Boomgo\Parser;
 
 use Boomgo\Mapper\Map;
+use Boomgo\Cache\CacheInterface;
 use Boomgo\Formatter\FormatterInterface;
 
-class AnnotationParser implements ParserInterface
+class AnnotationParser extends ParserProvider
 {
-    private $formatter;
-
     private $annotation;
 
     /**
@@ -17,33 +16,13 @@ class AnnotationParser implements ParserInterface
      * @param FormmatterInterface $formatter
      * @param string $annotation
      */
-    public function __construct(FormatterInterface $formatter, $annotation = '@Boomgo')
+    public function __construct(FormatterInterface $formatter, CacheInterface $cache, $annotation = '@Boomgo')
     {
-        $this->setFormatter($formatter);
+        parent::__construct($formatter, $cache);
         $this->setAnnotation($annotation);
     }
 
-    /**
-     * Define the key/attribute formatter
-     * 
-     * @param FormatterInterface $formatter
-     */
-    public function setFormatter(FormatterInterface $formatter)
-    {
-        $this->formatter = $formatter;    
-    }
-
-    /**
-     * Return the key/attribute formatter
-     * 
-     * @return FormatterInterface
-     */
-    public function getFormatter()
-    {
-        return $this->formatter;
-    }
-
-    /**
+   /**
      * Define the annotation for the mapper instance
      * 
      * @param string $annotation
@@ -70,13 +49,13 @@ class AnnotationParser implements ParserInterface
     /**
      * Return the data map
      * 
-     * @param  ReflectionClass $class
-     * @param  array $dependenciesGraph
+     * @param  string $class
+     * @param  array  $dependenciesGraph
      * @return array
      */
-    public function getMap($class, $dependenciesGraph = null)
+    protected function buildMap($class, $dependenciesGraph = null)
     {
-        $dependenciesGraph = $this->updateDependencies($dependenciesGraph, $class);
+        $dependenciesGraph = $this->updateDependencies($class, $dependenciesGraph);
 
         $reflectedClass = new \ReflectionClass($class);
 
@@ -117,7 +96,7 @@ class AnnotationParser implements ParserInterface
 
                 if (!empty($metadata)) {
                     list($embedType,$embedClass) = $metadata;
-                    $embedMap = $this->getMap($embedClass, $dependenciesGraph);
+                    $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
                 }
 
                 $map->add($keyName, $attributeName, $accessorName, $mutatorName, $embedType, $embedMap);
@@ -133,7 +112,7 @@ class AnnotationParser implements ParserInterface
      * @throws RuntimeException If annotation is malformed
      * @return Boolean True if the property should be stored
      */
-    public function isBoomgoProperty(\ReflectionProperty $property)
+    private function isBoomgoProperty(\ReflectionProperty $property)
     {
         $boomgoAnnot = substr_count($property->getDocComment(), $this->getAnnotation());
 
@@ -153,7 +132,7 @@ class AnnotationParser implements ParserInterface
      * @param  \ReflectionProperty $property
      * @return array
      */
-    public function parseMetadata(\ReflectionProperty $property)
+    private function parseMetadata(\ReflectionProperty $property)
     {
         $metadata = array();
 
@@ -175,7 +154,7 @@ class AnnotationParser implements ParserInterface
      * @param  ReflectionMethod $method the method to check
      * @return Boolean True if the getter is valid
      */
-    public function isValidAccessor(\ReflectionMethod $method)
+    private function isValidAccessor(\ReflectionMethod $method)
     {
         return ($method->isPublic() && 
                 0 === $method->getNumberOfRequiredParameters());
@@ -187,31 +166,9 @@ class AnnotationParser implements ParserInterface
      * @param  ReflectionMethod $method the method to check
      * @return Boolean True if the setter is valid
      */
-    public function isValidMutator(\ReflectionMethod $method)
+    private function isValidMutator(\ReflectionMethod $method)
     {
         return ($method->isPublic() && 
                 1 === $method->getNumberOfRequiredParameters());
-    }
-
-    /**
-     * Manage and update map dependencies
-     * 
-     * @param  array  $dependeciesGraph 
-     * @param  string $class            
-     * @return array
-     */
-    protected function updateDependencies($dependenciesGraph, $class)
-    {
-        if (null === $dependenciesGraph) { 
-            $dependenciesGraph = array();
-        }
-
-        if (isset($dependenciesGraph[$class])) {
-            throw new \RuntimeException('Cyclic dependency, a document cannot directly/indirectly be embed in itself');
-        }
-
-        $dependenciesGraph[$class] = true;
-
-        return $dependenciesGraph;
     }
 }
