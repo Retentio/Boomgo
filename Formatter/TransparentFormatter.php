@@ -14,12 +14,12 @@ class TransparentFormatter implements FormatterInterface
         return $mongoKey;
     }
 
-    public function getPhpAccessor($string, $fromMongo)
+    public function getPhpAccessor($string, $fromMongo = true)
     {
         return 'get'.$string;
     }
 
-    public function getPhpMutator($string, $fromMongo)
+    public function getPhpMutator($string, $fromMongo = true)
     {
         return 'set'.$string;
     }

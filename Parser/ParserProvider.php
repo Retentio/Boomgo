@@ -65,8 +65,10 @@ abstract class ParserProvider implements ParserInterface
     }
 
     /**
-     * Return a map
+     * Return a map 
+     * Fetch an already cached map or build then cache it
      * 
+     * @param  string $class The (FQDN) class name
      * @return Map
      */
     public function getMap($class)
@@ -75,13 +77,33 @@ abstract class ParserProvider implements ParserInterface
 
         $map = new Map($class);
 
-        if ($this->cache->contains($class)) {
+        if ($this->cache->contains($class) && !$refresh) {
             $map = $this->cache->fetch($class);
         } else {
             $map = $this->buildMap($class);
             $this->cache->save($class, $map);
         }
         return $map;
+    }
+
+    /**
+     * Force a map to be cached
+     * even if the cache already exists
+     * 
+     * @param  string $class The (FQDN) class name
+     */
+    public function cacheMap($class, $force = true)
+    {
+        $reflectedClass = new \ReflectionClass($class);
+
+        $map = new Map($class);
+
+        if (!$force && $this->cache->contains($class)) {
+            return;
+        }
+
+        $map = $this->buildMap($class);
+        $this->cache->save($class, $map);
     }
 
     /**

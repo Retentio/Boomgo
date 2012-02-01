@@ -10,8 +10,10 @@ use Boomgo\tests\units\Mock;
 
 require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 
-include __DIR__.'/../../../Mapper/DataMapper.php';
 include __DIR__.'/../../../Mapper/Map.php';
+
+include __DIR__.'/../../../Mapper/MapperInterface.php';
+include __DIR__.'/../../../Mapper/MapperProvider.php';
 
 include __DIR__.'/../../../Cache/CacheInterface.php';
 
@@ -25,8 +27,10 @@ include __DIR__.'/../Mock/Cache.php';
 include __DIR__.'/../Mock/Document.php';
 include __DIR__.'/../Mock/Formatter.php';
 
-class DataMapper extends \mageekguy\atoum\test
+abstract class MapperProvider extends \mageekguy\atoum\test
 {
+    abstract public function mapperProvider();
+
     public function documentProvider()
     {
         $embedDocument = new Mock\EmbedDocument();
@@ -73,7 +77,7 @@ class DataMapper extends \mageekguy\atoum\test
 
     public function test__construct()
     {
-        $mapper = new Mapper\DataMapper(new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache()));
+        $mapper = $this->mapperProvider();
     }
 /*
     public function testToArray()
@@ -104,7 +108,7 @@ class DataMapper extends \mageekguy\atoum\test
 */
     public function testToArray()
     {
-        $mapper = new Mapper\DataMapper(new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache()));
+        $mapper = $this->mapperProvider();
 
         // Should throw exception if argument is not an object
         $this->assert
@@ -145,7 +149,7 @@ class DataMapper extends \mageekguy\atoum\test
     {
         $ns = 'Boomgo\\tests\\units\\Mock\\';
 
-        $mapper = new Mapper\DataMapper(new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache()));
+        $mapper = $this->mapperProvider();
 
         $array = $this->arrayProvider();
         

@@ -1,49 +1,10 @@
-<?php
+<?php 
 
 namespace Boomgo\Mapper;
 
-use Boomgo\Cache\CacheInterface;
-use Boomgo\Parser\ParserInterface;
-
-/**
- * @author Ludovic Fleury <ludo.fleury@gmail.com>
- */
-class DataMapper
+abstract class MapperProvider implements MapperInterface
 {
-    private $parser;
-
-    private $cache;
-
-    /**
-     * Constructor
-     * 
-     * @param FormatterInterface An key/attribute formatter
-     * @param string $annotation The annotation used for mapping
-     */
-    public function __construct(ParserInterface $parser)
-    {
-        $this->setParser($parser);
-    }
-
-    /**
-     * Define the parser to use
-     * 
-     * @param ParserInterface $parser
-     */
-    public function setParser(ParserInterface $parser)
-    {
-        $this->parser = $parser;
-    }
-
-    /**
-     * Return the parser used
-     * 
-     * @return ParserInterface
-     */
-    public function getParser()
-    {
-        return $this->parser;
-    }
+    abstract public function getMap($class);
 
     /**
      * Convert this object to array
@@ -60,7 +21,7 @@ class DataMapper
         $reflectedObject = new \ReflectionObject($object);
         $className = $reflectedObject->getName();
 
-        $map = $this->parser->getMap($className);
+        $map = $this->getMap($className);
 
         $array = array();
 
@@ -119,7 +80,7 @@ class DataMapper
             $className = $reflectedObject->getName();
         }
 
-        $map = $this->parser->getMap($className);
+        $map = $this->getMap($className);
 
         foreach ($array as $key => $value) {
             if (null !== $value) {
@@ -149,7 +110,7 @@ class DataMapper
      * @param  mixed  $value  The embed data
      * @return mixed
      */
-    private function hydrateEmbed(Map $map, $key, $value)
+    protected function hydrateEmbed(Map $map, $key, $value)
     {
         // Embed declaration
         $embedType = $map->getEmbedTypeFor($key);
@@ -203,7 +164,7 @@ class DataMapper
      * @param  mixed $data
      * @return mixed
      */
-    private function normalize($data)
+    protected function normalize($data)
     {
         if (null === $data || is_scalar($data)) {
             return $data;

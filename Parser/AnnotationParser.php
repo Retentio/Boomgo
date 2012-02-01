@@ -53,7 +53,7 @@ class AnnotationParser extends ParserProvider
      * @param  array  $dependenciesGraph
      * @return array
      */
-    protected function buildMap($class, $dependenciesGraph = null)
+    public function buildMap($class, $dependenciesGraph = null)
     {
         $dependenciesGraph = $this->updateDependencies($class, $dependenciesGraph);
 
