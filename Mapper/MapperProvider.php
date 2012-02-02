@@ -4,7 +4,35 @@ namespace Boomgo\Mapper;
 
 abstract class MapperProvider implements MapperInterface
 {
+    protected $schemaLess;
+
+    /**
+     * Return a map for a class
+     *  
+     * @param  string $class A class name
+     * @return Map
+     */
     abstract public function getMap($class);
+
+    /**
+     * Return True if the mapper is globally defined as schemaless
+     * 
+     * @return boolean
+     */
+    public function isSchemaLess()
+    {
+        return $this->schemaLess;
+    }
+
+    /**
+     * Enable or disable globally schema-less feature
+     * 
+     * @param boolean $boolean
+     */
+    public function setSchemaLess($boolean)
+    {
+        $this->schemaLess = (bool)$boolean;
+    }
 
     /**
      * Convert this object to array
@@ -24,12 +52,10 @@ abstract class MapperProvider implements MapperInterface
         $map = $this->getMap($className);
 
         $array = array();
-
         $attributes = $map->getIndex(); 
         
-
         foreach ($attributes as $key => $attribute) {
-
+            $value = null;
             if ($map->hasAccessorFor($key)) {
                 $accessor = $map->getAccessorFor($key);
                 $value = $object->$accessor();

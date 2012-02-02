@@ -411,3 +411,7 @@ class DocumentCyclic
         return $this->mongoDocument;
     }
 }
+
+class EmptyDocument
+{
+}
