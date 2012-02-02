@@ -11,10 +11,10 @@ abstract class ParserProvider implements ParserInterface
     protected $formatter;
 
     protected $cache;
-    
+
     /**
      * Initialize
-     * 
+     *
      * @param FormmatterInterface $formatter
      * @param string $annotation
      */
@@ -26,17 +26,17 @@ abstract class ParserProvider implements ParserInterface
 
     /**
      * Define the key/attribute formatter
-     * 
+     *
      * @param FormatterInterface $formatter
      */
     public function setFormatter(FormatterInterface $formatter)
     {
-        $this->formatter = $formatter;    
+        $this->formatter = $formatter;
     }
 
     /**
      * Return the key/attribute formatter
-     * 
+     *
      * @return FormatterInterface
      */
     public function getFormatter()
@@ -46,7 +46,7 @@ abstract class ParserProvider implements ParserInterface
 
     /**
      * Define the map cache
-     * 
+     *
      * @param CacheInterface $cache
      */
     public function setCache(CacheInterface $cache)
@@ -56,7 +56,7 @@ abstract class ParserProvider implements ParserInterface
 
     /**
      * Return the map cache
-     * 
+     *
      * @return CacheInterface
      */
     public function getCache()
@@ -65,9 +65,9 @@ abstract class ParserProvider implements ParserInterface
     }
 
     /**
-     * Return a map 
+     * Return a map
      * Fetch an already cached map or build then cache it
-     * 
+     *
      * @param  string $class The (FQDN) class name
      * @return Map
      */
@@ -77,7 +77,7 @@ abstract class ParserProvider implements ParserInterface
 
         $map = new Map($class);
 
-        if ($this->cache->contains($class) && !$refresh) {
+        if ($this->cache->contains($class)) {
             $map = $this->cache->fetch($class);
         } else {
             $map = $this->buildMap($class);
@@ -89,7 +89,7 @@ abstract class ParserProvider implements ParserInterface
     /**
      * Force a map to be cached
      * even if the cache already exists
-     * 
+     *
      * @param  string $class The (FQDN) class name
      */
     public function cacheMap($class, $force = true)
@@ -108,14 +108,14 @@ abstract class ParserProvider implements ParserInterface
 
     /**
      * Manage and update map dependencies
-     * 
+     *
      * @param  string $class            Class to add to the depencies list
      * @param  array  $dependeciesGraph Null or dependencie legacy
      * @return array
      */
     protected function updateDependencies($class, $dependenciesGraph)
     {
-        if (null === $dependenciesGraph) { 
+        if (null === $dependenciesGraph) {
             $dependenciesGraph = array();
         }
 
