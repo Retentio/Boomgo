@@ -21,7 +21,7 @@ require_once __DIR__.'/../../../Cache/CacheInterface.php';
 require_once __DIR__.'/../../../Cache/FileCache.php';
 
 /**
- * FileCache Test
+ * FileCache tests
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */

@@ -21,7 +21,7 @@ require_once __DIR__.'/../../../Cache/CacheInterface.php';
 require_once __DIR__.'/../../../Cache/NoCache.php';
 
 /**
- * NoCache Test
+ * NoCache tests
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
