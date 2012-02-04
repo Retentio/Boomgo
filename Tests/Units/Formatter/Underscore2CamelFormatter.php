@@ -21,7 +21,7 @@ include __DIR__.'/../../../Formatter/FormatterInterface.php';
 include __DIR__.'/../../../Formatter/Underscore2CamelFormatter.php';
 
 /**
- * Underscore2CamelFormatter test
+ * Underscore2CamelFormatter tests
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
