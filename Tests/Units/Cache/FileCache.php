@@ -29,38 +29,53 @@ class FileCache extends \mageekguy\atoum\test
 {
     private $directory = __DIR__;
 
+    public function test__construct()
+    {
+        // Should implement CacheInterface
+        $this->assert
+            ->class('Boomgo\Cache\FileCache')
+            ->hasInterface('Boomgo\Cache\CacheInterface');
+
+        // Should be able to define the cache directory
+        $cache = new Cache\FileCache($this->directory);
+        $this->assert
+            ->string($cache->getDirectory())
+            ->isEqualTo($this->directory);
+    }
+
     public function testSetDirectory()
     {
         $cache = new Cache\FileCache();
 
         // Should remove trailing /
-        $cache->setDirectory(__DIR__.'/');
+        $cache->setDirectory($this->directory.'/');
         $this->assert
             ->string($cache->getDirectory())
-            ->isEqualTo(__DIR__);
+            ->isEqualTo($this->directory);
 
         // Should remove trailing \
-        $cache->setDirectory(__DIR__.'\\');
+        $cache->setDirectory($this->directory.'\\');
         $this->assert
             ->string($cache->getDirectory())
-            ->isEqualTo(__DIR__);
+            ->isEqualTo($this->directory);
 
         // Should remove trailing DIRECTORY_SEPARATOR
-        $cache->setDirectory(__DIR__.DIRECTORY_SEPARATOR);
+        $cache->setDirectory($this->directory.DIRECTORY_SEPARATOR);
         $this->assert
             ->string($cache->getDirectory())
-            ->isEqualTo(__DIR__);
+            ->isEqualTo($this->directory);
 
         // Should remove all trailing \,/ and DIRECTORY_SEPARATOR
-        $cache->setDirectory(__DIR__.'/'.'\\'.DIRECTORY_SEPARATOR);
+        $cache->setDirectory($this->directory.'/'.'\\'.DIRECTORY_SEPARATOR);
         $this->assert
             ->string($cache->getDirectory())
-            ->isEqualTo(__DIR__);
+            ->isEqualTo($this->directory);
 
         // Should throw exception if directory do not exist
+        $directory = $this->directory;
         $this->assert
-            ->exception(function() use ($cache) {
-                $cache->setDirectory(__DIR__.DIRECTORY_SEPARATOR.'unknowndirectory');
+            ->exception(function() use ($cache, $directory) {
+                $cache->setDirectory($directory.DIRECTORY_SEPARATOR.'unknowndirectory');
             })
             ->isInstanceOf('InvalidArgumentException')
             ->hasMessage('Directory must be valid and writable');
@@ -68,7 +83,7 @@ class FileCache extends \mageekguy\atoum\test
 
     public function testSave()
     {
-        $cache = new Cache\FileCache(__DIR__);
+        $cache = new Cache\FileCache($this->directory);
 
         // Should write a file
         $result = $cache->save('test','my data for the cache test');
@@ -113,7 +128,7 @@ class FileCache extends \mageekguy\atoum\test
 
     public function testContains()
     {
-        $cache = new Cache\FileCache(__DIR__);
+        $cache = new Cache\FileCache($this->directory);
 
         // Should return false if the cached file do not exists
         $this->assert
@@ -133,7 +148,7 @@ class FileCache extends \mageekguy\atoum\test
 
     public function testFetch()
     {
-        $cache = new Cache\FileCache(__DIR__);
+        $cache = new Cache\FileCache($this->directory);
 
         // Should return unserialized data from a cached file
         $filepath = $this->directory.DIRECTORY_SEPARATOR.'fetch_mock_cache_file';
@@ -158,7 +173,7 @@ class FileCache extends \mageekguy\atoum\test
 
     public function testDelete()
     {
-        $cache = new Cache\FileCache(__DIR__);
+        $cache = new Cache\FileCache($this->directory);
 
         // Should delete a cached file and return true
         $filepath = $this->directory.DIRECTORY_SEPARATOR.'delete_mock_cache_file';
