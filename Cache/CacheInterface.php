@@ -1,8 +1,18 @@
 <?php
 
-namespace Boomgo\Cache;
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
-use Boomgo\Mapper\Map;
+namespace Boomgo\Cache;
 
 /**
  * Cache interface
@@ -17,7 +27,6 @@ interface CacheInterface
      * @param  string  $identifier Unique cache identifier
      * @param  mixed   $data       Data to be cached
      * @param  integer $ttl        Time To Live in second
-     * @return boolean
      */
     public function save($identifier, $data, $ttl = 0);
 
@@ -25,7 +34,6 @@ interface CacheInterface
      * Check if a cached entry exists
      *
      * @param  string  $identifier Unique cache identifier
-     * @return boolean
      */
     public function contains($identifier);
 
@@ -33,7 +41,7 @@ interface CacheInterface
      * Return a cached data
      *
      * @param  string  $identifier Unique cache identifier
-     * @return Map
+     * @return mixed
      */
     public function fetch($identifier);
 
@@ -41,7 +49,6 @@ interface CacheInterface
      * Delete a cached entry
      *
      * @param  string  $identifier Unique cache identifier
-     * @return boolean
      */
     public function delete($identifier);
 }

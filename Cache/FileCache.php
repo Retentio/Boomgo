@@ -1,13 +1,24 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\Cache;
 
 /**
  * Filesystem cache
  *
- * It will serialize & store the map definition on the disk.
- * You must ensure that the cache directory exists and is writable.
- * (It wont create the cache dir for you.)
+ * Serialize & store the map definition on the disk.
+ * The cache directory must exist and be writable.
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
@@ -57,7 +68,7 @@ class FileCache implements CacheInterface
     /**
      * Serialize and write data to the disk
      *
-     * @param  string  $identifier The map class name
+     * @param  string  $identifier Unique cache identifier
      * @param  mixed   $data       Data to cache
      * @param  integer $ttl        Time To Live, no effect for this cache system
      * @return boolean $success    True if the file has been cached
@@ -86,7 +97,8 @@ class FileCache implements CacheInterface
     /**
      * Unserialize and return data from the disk
      *
-     * @param  string $identifier The map class name
+     * @param  string $identifier Unique cache identifier
+     * @throws InvalidArgumentException If filename is invalid or not readable
      * @return Map
      */
     public function fetch($identifier)
@@ -103,7 +115,8 @@ class FileCache implements CacheInterface
     /**
      * Remove a cached file from the disk
      *
-     * @param  string $identifier The map class name
+     * @param  string  $identifier Unique cache identifier
+     * @throws InvalidArgumentException If filename is invalid or not readable
      * @return boolean
      */
     public function delete($identifier)
@@ -120,15 +133,28 @@ class FileCache implements CacheInterface
     /**
      * Return the absolute filename
      *
-     * Since all Map are cached under the FQDN of the related class
-     * PHP Namespaced names are formatted to be filesystem compliant
-     * Every "\“ are replace by "_", à la zend old convention.
-     *
      * @param  string $identifier The map class name
      * @return string
      */
     private function getAbsoluteFilepath($filename)
     {
-        return $this->directory.DIRECTORY_SEPARATOR.str_replace('\\', '_', $filename);
+        return $this->directory.DIRECTORY_SEPARATOR.$this->sanitizeFilename($filename);
+    }
+
+    /**
+     * Return a valid filename
+     *
+     * Since the cache is mostly used to store Map definition,
+     * this filters are pretty simple and handle a FQDN as a filename.
+     *
+     * @param  string $filename
+     * @return string
+     */
+    private function sanitizeFilename($filename)
+    {
+        $filename = str_replace('\\', '_', $filename);
+        $filename = trim($filename);
+
+        return $filename;
     }
 }
