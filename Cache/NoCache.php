@@ -66,6 +66,6 @@ class NoCache implements CacheInterface
      */
     public function delete($identifier)
     {
-        return true
+        return true;
     }
 }
