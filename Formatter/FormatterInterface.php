@@ -24,7 +24,7 @@ namespace Boomgo\Formatter;
 interface FormatterInterface
 {
     /**
-     * Format a php attribute from a mongo key
+     * Format a mongo key to a php attribute
      *
      * @param  string $mongoKey
      * @return string
@@ -32,7 +32,7 @@ interface FormatterInterface
     public function toPhpAttribute($mongoKey);
 
     /**
-     * Format a mongo key from a php attribute
+     * Format a php attribute to a mongo key
      *
      * @param  string $toPhpAttribute
      * @return string

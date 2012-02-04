@@ -1,5 +1,17 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\tests\units\Formatter;
 
 use Boomgo\Formatter;
@@ -8,19 +20,18 @@ require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 include __DIR__.'/../../../Formatter/FormatterInterface.php';
 include __DIR__.'/../../../Formatter/Underscore2CamelFormatter.php';
 
+/**
+ * Underscore2CamelFormatter test
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ */
 class Underscore2CamelFormatter extends \mageekguy\atoum\test
 {
     public function test__construct()
     {
-        // Should implements FormatterInterface 
-        $formatter = new Formatter\Underscore2CamelFormatter();
-
+        // Should implement FormatterInterface
         $this->assert
             ->class('Boomgo\Formatter\Underscore2CamelFormatter')
-            ->hasInterface('Boomgo\Formatter\FormatterInterface');
-
-        $this->assert
-            ->class($formatter)
             ->hasInterface('Boomgo\Formatter\FormatterInterface');
     }
 
@@ -44,7 +55,7 @@ class Underscore2CamelFormatter extends \mageekguy\atoum\test
         $camelCase = $formatter->toPhpAttribute('hello__world_');
         $this->assert
             ->string($camelCase)
-            ->isEqualTo('helloWorld'); 
+            ->isEqualTo('helloWorld');
     }
 
     public function testToMongoAttribute()
@@ -63,11 +74,61 @@ class Underscore2CamelFormatter extends \mageekguy\atoum\test
             ->string($underscore)
             ->isEqualTo('hello_world');
 
-        
+
         // Should handle mongoDB identifier
         $underscore = $formatter->toMongoKey('id');
         $this->assert
             ->string($underscore)
             ->isEqualTo('_id');
+    }
+
+    public function testGetPhpAccessor()
+    {
+        $formatter = new Formatter\Underscore2CamelFormatter();
+
+        // Should return a camelCase php accessor when implicitly providing an underscored mongo key
+        $this->assert
+            ->string($formatter->getPhpAccessor('underscored_mongo_key'))
+            ->isEqualTo('getUnderscoredMongoKey');
+
+        // Should return a camelCase php accessor when explicitly providing an underscored mongo key
+        $this->assert
+            ->string($formatter->getPhpAccessor('underscored_mongo_key', true))
+            ->isEqualTo('getUnderscoredMongoKey');
+
+        // Should return a camelCase php accessor when explicitly providing a lower camelCase php attribute
+        $this->assert
+            ->string($formatter->getPhpAccessor('underscoredMongoKey', false))
+            ->isEqualTo('getUnderscoredMongoKey');
+
+        // Should return a camelCase php accessor when explicitly providing an upper camelCase php attribute
+        $this->assert
+            ->string($formatter->getPhpAccessor('UnderscoredMongoKey', false))
+            ->isEqualTo('getUnderscoredMongoKey');
+    }
+
+    public function testGetPhpMutator()
+    {
+        $formatter = new Formatter\Underscore2CamelFormatter();
+
+        // Should return a camelCase php mutator when implicitly providing an underscored mongo key
+        $this->assert
+            ->string($formatter->getPhpMutator('underscored_mongo_key'))
+            ->isEqualTo('setUnderscoredMongoKey');
+
+        // Should return a camelCase php mutator when explicitly providing an underscored mongo key
+        $this->assert
+            ->string($formatter->getPhpMutator('underscored_mongo_key', true))
+            ->isEqualTo('setUnderscoredMongoKey');
+
+        // Should return a camelCase php mutator when explicitly providing a lower camelCase php attribute
+        $this->assert
+            ->string($formatter->getPhpMutator('underscoredMongoKey', false))
+            ->isEqualTo('setUnderscoredMongoKey');
+
+        // Should return a camelCase php mutator when explicitly providing an upper camelCase php attribute
+        $this->assert
+            ->string($formatter->getPhpMutator('UnderscoredMongoKey', false))
+            ->isEqualTo('setUnderscoredMongoKey');
     }
 }

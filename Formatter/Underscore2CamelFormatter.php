@@ -1,16 +1,32 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\Formatter;
 
 /**
- * Formatter for PHP CamelCase attribute to Mongo key underscore
+ * Underscore2CamelFormatter
+ *
+ * Formatter for Mongo key underscore & PHP camelCase attribute.
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
 class Underscore2CamelFormatter implements FormatterInterface
 {
-
     /**
-     * Return an underscored mongo key
-     * Handle _id special mongoDB key
+     * Return an underscored mongo key from a php attribute
+     *
+     * Handle _id exception since mongoDB use underscored identifier
      *
      * @param  string $phpAttribute A camelCase string
      * @return string
@@ -23,7 +39,7 @@ class Underscore2CamelFormatter implements FormatterInterface
     }
 
     /**
-     * Return a camelCase php attribute
+     * Return a camelCase php attribute from a underscored mongo key
      *
      * @param  string $mongoKey An underscored string
      * @return string
@@ -34,23 +50,22 @@ class Underscore2CamelFormatter implements FormatterInterface
     }
 
     /**
-     * Return a php accessor for a mongo key
+     * Return a php accessor for a mongo key or a php attribute
      *
      * @param  string  $string    A mongo key or a php attribute
-     * @param  boolean $fromMongo True: string from mongo, false: string from php
+     * @param  boolean $fromMongo True if an underscored mongo key is provided, false: for a camelCase php attribute
      * @return string
      */
     public function getPhpAccessor($string, $fromMongo = true)
     {
-
         return 'get'.(($fromMongo) ? $this->camelize($string, false) : ucfirst($string));
     }
 
     /**
-     * Return a php mutator for a mongo key
+     * Return a php mutator for a mongo key or a php attribute
      *
      * @param  string  $string    A mongo key or a php attribute
-     * @param  boolean $fromMongo True: string from mongo, false: string from php
+     * @param  boolean $fromMongo True if an underscored mongo key is provided, false: for a camelCase php attribute
      * @return string
      */
     public function getPhpMutator($string, $fromMongo = true)
