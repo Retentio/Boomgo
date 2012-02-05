@@ -1,28 +1,28 @@
-# Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/).
-=================================================================
+Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/)
+==============================================================
 
 _Bommgo still a work in progress and is initially developped for [Retentio](http://retent.io)._
 
 Boomgo is a **light** and **simple** Object Document Mapper on top of the [MongoDB php native driver](http://php.net/mongo).
 
-## Philosophy
+Philosophy
 -------------
 
 Boomgo ODM focuses on the mapping process between PHP objects and MongoDB Documents, It don't abstract any features provided by the native php driver. This way, Boomgo allows you to **keep the full control about your MongoDB interactions** (querying, map reduce, ...).
 
 _In short, Boomgo offers a handy way to manipulate your MongoDB Documents with PHP Objects._
 
-## Features
------------
+Features
+--------
 
 * Build, cache & use a strict Map definition for your object.
 * Hydrate PHP Object from a MongoDB results set.
 * Normalize PHP Object to mongo-storable array.
-* Handles the hydration process of embedded document / collection.
+* Handle hydration process of embedded document / collection.
 * Provide live hydration with schemaless style
 
-## Limitations
---------------
+Limitations
+-----------
 
 * It don't & won't manage object relation for a simple reason: [MongoDB is a NON-RELATIONAL storage](http://www.mongodb.org/display/DOCS/Database+References).
 * It don't & won't provide [identity map](http://en.wikipedia.org/wiki/Identity_map) etc.
@@ -30,13 +30,13 @@ _In short, Boomgo offers a handy way to manipulate your MongoDB Documents with P
 
 If you're looking for full-featured php ODM, you should look at [Mandango](https://github.com/mandango/mandango) which use active record/class generator implementation, and also [Doctrine MongoDB ODM](http://www.doctrine-project.org/projects/mongodb_odm/current/docs/en) data-mapping implementation.
 
-## Roadmap
-----------
+Roadmap
+-------
 
 Improve unit tests (refacto and upgrade coverage), Add a CLI cache warmer, more formatters, more parsers (yml, xml and json). Feel free to contribute !
 
-## Example
-----------
+Example
+-------
 
 Suppose this class (and the embed classes) :
 
