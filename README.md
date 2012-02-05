@@ -1,18 +1,18 @@
 # Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/).
 
-This is a work in progress, unit tested with [atoum](https://github.com/mageekguy/atoum) and intially developped for [Retentio](http://retent.io).
+This is a work in progress and is initially developped for [Retentio](http://retent.io).
 
 ## Features
-Boomgo is a light and simple Object Document Mapper on top of the [MongoDB php native driver](http://php.net/mongo). It aims to provide a tiny PDO-like for the driver. 
+Boomgo is a light and simple Object Document Mapper on top of the [MongoDB php native driver](http://php.net/mongo). It aims to provide a tiny PDO-like for the driver.
 
 * allows you to save & hydrate object based on a "Map".
+* allows you to save & hydrate object without Map (=> live hydration with schemaless style).
 * handles the hydration process of embedded document / collection.
-* allows you to save & hydrate object without Map (=> schemaless style).
 
 ## Limitations
 * It don't & won't manage object relation for a simple reason: [MongoDB is a NON-RELATIONAL storage](http://www.mongodb.org/display/DOCS/Database+References).
 * It don't & won't provide [identity map](http://en.wikipedia.org/wiki/Identity_map) etc.
-* It don't & won't make coffee. 
+* It don't & won't make coffee.
 
 If you're looking for full-featured php ODM, you should look at [Mandango](https://github.com/mandango/mandango) which use active record/class generator implementation, and also [Doctrine MongoDB ODM](http://www.doctrine-project.org/projects/mongodb_odm/current/docs/en) data-mapping implementation.
 
@@ -23,7 +23,7 @@ Improve unit tests (refacto and upgrade coverage), Add a CLI cache warmer, more 
 Suppose this class (and the embed classes) :
 
 ```php
-<?php 
+<?php
 
 class MyDocumentClass
 {
@@ -35,14 +35,14 @@ class MyDocumentClass
 
     /**
      * A persisted field
-     * 
+     *
      * @Boomgo
      */
     private $myField
 
     /**
      * A persisted embed document
-     * 
+     *
      * @Boomgo Document My\Namespace\MyEmbedDocument
      */
     private $myEmbedDocument
@@ -51,7 +51,7 @@ class MyDocumentClass
      * A persisted embed collection of document
      * it should be an array of the same document type
      * Boomgo do not support dynamic mapping
-     * 
+     *
      * @Boomgo Collection My\Other\Namespace\MyOtherEmbedDocument
      */
     private $myEmbedCollection
@@ -111,10 +111,10 @@ $cache = new FileCache('my/custom/path/to/cache/the/map-definition');
 $formatter = new Underscore2CamelFormatter();
 
 // This parser will be responsible to build the map definition using annotation @Boomgo
-$parser = new AnnotationParser($formatter, $cache);
+$parser = new AnnotationParser($formatter);
 
 // This mapper will build the map once, then reuse cached map
-$mapper = new HotMapper($parser);
+$mapper = new StrictMapper($parser, $cache);
 
 $mongoableArray = $mapper->toArray($myObject);
 
@@ -146,8 +146,8 @@ $object = $mapper->hydrate($object, $result);
 Boomgo handles hydration of embedded document, so with our previous example, we could do this :
 
 ```php
-<?php 
+<?php
 
-$object->getMyEmbedDocument() // hydrated instance of My\Namespace\MyEmbedDocument 
+$object->getMyEmbedDocument() // hydrated instance of My\Namespace\MyEmbedDocument
 ?>
 ```
