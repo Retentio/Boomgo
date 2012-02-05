@@ -19,7 +19,7 @@ namespace Boomgo\Cache;
  *
  * Dummy cache implementation usefull for dev environment.
  *
- * @author  Ludovic Fleury <ludo.fleury@gmail.com>
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
 class NoCache implements CacheInterface
 {

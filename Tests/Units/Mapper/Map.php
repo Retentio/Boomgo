@@ -1,5 +1,16 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Boomgo\tests\units\Mapper;
 
@@ -9,7 +20,11 @@ require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 
 include __DIR__.'/../../../Mapper/Map.php';
 
-
+/**
+ * Map tests
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ */
 class Map extends \mageekguy\atoum\test
 {
     public function test__construct()
@@ -44,7 +59,7 @@ class Map extends \mageekguy\atoum\test
             ->array($map->getEmbedTypes())
             ->hasSize(1)
             ->isIdenticalTo(array('fakeKey' => 'COLLECTION'));
-        
+
         // Should throw exception on invalid type
         $this->assert
             ->exception(function() use ($map) {
@@ -104,20 +119,24 @@ class Map extends \mageekguy\atoum\test
          // Should add a basic key/attribute
          $map->add('fakeKey', 'fakeAttribute');
 
-         $index = $map->getIndex();
-
          $this->assert
-            ->array($index)
-            ->hasSize(1)
-            ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'));
+            ->array($map->getMongoIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'))
+            ->array($map->getPhpIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeAttribute' => 'fakeKey'));
 
         // Should add a accessor
         $map->add('fakeKey', 'fakeAttribute', 'fakeAccessor');
 
         $this->assert
-            ->array($index)
-            ->hasSize(1)
-            ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'));
+            ->array($map->getMongoIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'))
+            ->array($map->getPhpIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeAttribute' => 'fakeKey'));
 
         $this->assert
             ->array($map->getAccessors())
@@ -128,9 +147,12 @@ class Map extends \mageekguy\atoum\test
         $map->add('fakeKey', 'fakeAttribute', null, 'fakeMutator');
 
         $this->assert
-            ->array($index)
-            ->hasSize(1)
-            ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'));
+            ->array($map->getMongoIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'))
+            ->array($map->getPhpIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeAttribute' => 'fakeKey'));
 
         $this->assert
             ->array($map->getMutators())
@@ -141,39 +163,16 @@ class Map extends \mageekguy\atoum\test
         $map->add('fakeKey', 'fakeAttribute', 'fakeMutator', 'fakeAccessor', 'Document', new Mapper\Map('FakeMap'));
 
         $this->assert
-            ->array($index)
-            ->hasSize(1)
-            ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'));
+            ->array($map->getMongoIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeKey' => 'fakeAttribute'))
+            ->array($map->getPhpIndex())
+                ->hasSize(1)
+                ->isIdenticalTo(array('fakeAttribute' => 'fakeKey'));
 
         $this->assert
             ->array($map->getEmbedMaps())
             ->hasSize(1);
-    }
-
-    public function testGetKeys()
-    {
-        $map = new Mapper\Map('FakeMap');
-
-        // Should get an array of keys
-        $map->add('fakeKey', 'fakeAttribute');
-
-        $this->assert
-           ->array($map->getKeys())
-           ->hasSize(1)
-           ->isIdenticalTo(array('fakeKey'));
-    }
-
-    public function testGetAttributes()
-    {
-        $map = new Mapper\Map('FakeMap');
-
-        // Should get an array of attributes
-        $map->add('fakeKey', 'fakeAttribute');
-
-        $this->assert
-           ->array($map->getAttributes())
-           ->hasSize(1)
-           ->isIdenticalTo(array('fakeAttribute'));
     }
 
     public function testGetAttributeFor()

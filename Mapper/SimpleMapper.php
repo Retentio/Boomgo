@@ -1,53 +1,94 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\Mapper;
 
-
 use Boomgo\Formatter\FormatterInterface;
-use Boomgo\Formatter\TransparentFormatter;
 
 /**
- * 
+ * SimpleMapper
+ *
+ * Live mapper allowing MongoDB schemaless feature
+ * Rely on dynamic object analyze (do not use a Map definition)
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class SimpleMapper implements MapperInterface
+class SimpleMapper extends MapperProvider implements MapperInterface
 {
+    /**
+     * @var boolean
+     */
     private $schemaLess;
 
     /**
      * Constructor
-     * 
-     * @param FormatterInterface $formatter  A formatter or null
-     * @param boolean            $schemaless True to be schemaless
+     *
+     * @param FormatterInterface $formatter  A formatter
+     * @param boolean            $schemaless True to enable schemaless
      */
-    public function __construct($formatter = null, $schemaLess = true)
+    public function __construct(FormatterInterface $formatter, $schemaLess = true)
     {
-        if (null === $formatter) {
-            $formatter = new TransparentFormatter();
-        }
-
         $this->setFormatter($formatter);
         $this->schemaLess = $schemaLess;
     }
+
     /**
      * Define the formatter
-     * 
-     * @param FormatterInterface $formatter [description]
+     *
+     * @param FormatterInterface $formatter
      */
     public function setFormatter(FormatterInterface $formatter)
     {
         $this->formatter = $formatter;
     }
 
+    /**
+     * Return the formatter used
+     *
+     * @return FormatterInterface
+     */
     public function getFormatter()
     {
         return $this->formatter;
     }
 
+    /**
+     * Enable or disable schema less
+     *
+     * @param boolean $switch
+     */
+    public function setSchemaLess($switch)
+    {
+        $this->schemaLess = $switch;
+    }
+
+    /**
+     * Return whether schema less is enabled
+     *
+     * @return boolean
+     */
     public function isSchemaLess()
     {
         return $this->schemaLess;
     }
 
+    /**
+     * Convert an object to a mongoable array
+     *
+     * @param  mixed $object
+     * @return array
+     */
     public function toArray($object)
     {
         $reflectedObject = new \ReflectionObject($object);
@@ -69,6 +110,16 @@ class SimpleMapper implements MapperInterface
         return $array;
     }
 
+    /**
+     * Hydrate an object
+     *
+     * If schemaless is enabled, any data in the array
+     * will be dynamically appended to the object
+     *
+     * @param  mixed $object
+     * @param  array  $array
+     * @return mixed
+     */
     public function hydrate($object, array $array)
     {
         $reflectedObject = new \ReflectionObject($object);
@@ -78,52 +129,21 @@ class SimpleMapper implements MapperInterface
             $attributeName = $this->formatter->toPhpAttribute($key);
 
             if ($reflectedObject->hasProperty($attributeName)) {
-                    
+
                 $property = $reflectedObject->getProperty($attributeName);
                 $this->setValue($object, $property, $value);
             } elseif ($this->isSchemaless()) {
                 $object->$attributeName = $value;
-            }       
+            }
         }
 
         return $object;
     }
 
     /**
-     * Normalize php data for mongo
-     * 
-     * This code chunk was inspired by the Symfony framework
-     * and is subject to the MIT license. Please see the LICENCE
-     * at https://github.com/symfony/symfony
-     * 
-     * (c) Fabien Potencier <fabien@symfony.com>
-     * @author Nils Adermann <naderman@naderman.de>
-     * 
-     * @param  mixed $data
-     * @return mixed
-     */
-    protected function normalize($data)
-    {
-        if (null === $data || is_scalar($data)) {
-            return $data;
-        }
-        if (is_object($data)) {
-            return $this->toArray($data);
-        }
-        if (is_array($data)) {
-            foreach ($data as $key => $val) {
-                $data[$key] = $this->normalize($val);
-            }
-
-            return $data;
-        }
-        throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
-    }
-
-    /**
      * Return a value for an object property
-     * 
-     * @param  mixed               $object   
+     *
+     * @param  mixed               $object
      * @param  \ReflectionProperty $property
      * @return mixed
      */
@@ -148,7 +168,7 @@ class SimpleMapper implements MapperInterface
 
     /**
      * Define a value for an object property
-     * 
+     *
      * @param mixed               $object
      * @param \ReflectionProperty $property
      * @param mixed               $value

@@ -1,30 +1,50 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\Parser;
 
 use Boomgo\Mapper\Map;
 use Boomgo\Cache\CacheInterface;
 use Boomgo\Formatter\FormatterInterface;
 
-class AnnotationParser extends ParserProvider
+/**
+ * AnnotationParser
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ */
+class AnnotationParser extends ParserProvider implements ParserInterface
 {
+    /**
+     * @var string
+     */
     private $annotation;
 
     /**
      * Initialize
-     * 
+     *
      * @param FormmatterInterface $formatter
      * @param string $annotation
      */
-    public function __construct(FormatterInterface $formatter, CacheInterface $cache, $annotation = '@Boomgo')
+    public function __construct(FormatterInterface $formatter, $annotation = '@Boomgo')
     {
-        parent::__construct($formatter, $cache);
+        parent::__construct($formatter);
         $this->setAnnotation($annotation);
     }
 
    /**
      * Define the annotation for the mapper instance
-     * 
+     *
      * @param string $annotation
      */
     public function setAnnotation($annotation)
@@ -32,13 +52,13 @@ class AnnotationParser extends ParserProvider
         if (!preg_match('#^@[a-zA-Z]+$#', $annotation)) {
              throw new \InvalidArgumentException('Annotation should start with @ char');
         }
-        
+
         $this->annotation = $annotation;
     }
 
     /**
      * Return the annotation defined for the mapper instance
-     * 
+     *
      * @return string
      */
     public function getAnnotation()
@@ -48,7 +68,7 @@ class AnnotationParser extends ParserProvider
 
     /**
      * Return the data map
-     * 
+     *
      * @param  string $class
      * @param  array  $dependenciesGraph
      * @return array
@@ -82,7 +102,7 @@ class AnnotationParser extends ParserProvider
                         !$reflectedClass->hasMethod($mutatorName)) {
                         throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
                     }
-                        
+
                     $reflectedAccessor = $reflectedClass->getMethod($accessorName);
                     $reflectedMutator = $reflectedClass->getMethod($mutatorName);
 
@@ -128,7 +148,7 @@ class AnnotationParser extends ParserProvider
 
     /**
      * Parse Boomgo metadata
-     * 
+     *
      * @param  \ReflectionProperty $property
      * @return array
      */
@@ -138,7 +158,7 @@ class AnnotationParser extends ParserProvider
 
         preg_match('#'.$this->getAnnotation().'\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
 
-        if (empty($metadata) || sizeof($metadata) > 3 || 
+        if (empty($metadata) || sizeof($metadata) > 3 ||
             (!empty($metadata[1]) && empty($metadata[2]))) {
             throw new \RuntimeException('Malformed metadata');
         }
@@ -150,25 +170,25 @@ class AnnotationParser extends ParserProvider
 
     /**
      * Check if the getter is public and has no required argument.
-     * 
+     *
      * @param  ReflectionMethod $method the method to check
      * @return Boolean True if the getter is valid
      */
     private function isValidAccessor(\ReflectionMethod $method)
     {
-        return ($method->isPublic() && 
+        return ($method->isPublic() &&
                 0 === $method->getNumberOfRequiredParameters());
     }
 
     /**
      * Check if the setter is public and has one required argument.
-     * 
+     *
      * @param  ReflectionMethod $method the method to check
      * @return Boolean True if the setter is valid
      */
     private function isValidMutator(\ReflectionMethod $method)
     {
-        return ($method->isPublic() && 
+        return ($method->isPublic() &&
                 1 === $method->getNumberOfRequiredParameters());
     }
 }

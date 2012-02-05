@@ -1,12 +1,29 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\Parser;
 
 use Boomgo\Mapper\Map;
 use Boomgo\Cache\CacheInterface;
 use Boomgo\Formatter\FormatterInterface;
 
-abstract class ParserProvider implements ParserInterface
+/**
+ * ParserProvider
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ */
+abstract class ParserProvider
 {
     protected $formatter;
 
@@ -18,10 +35,9 @@ abstract class ParserProvider implements ParserInterface
      * @param FormmatterInterface $formatter
      * @param string $annotation
      */
-    public function __construct(FormatterInterface $formatter, CacheInterface $cache)
+    public function __construct(FormatterInterface $formatter)
     {
         $this->setFormatter($formatter);
-        $this->setCache($cache);
     }
 
     /**
@@ -45,68 +61,6 @@ abstract class ParserProvider implements ParserInterface
     }
 
     /**
-     * Define the map cache
-     *
-     * @param CacheInterface $cache
-     */
-    public function setCache(CacheInterface $cache)
-    {
-        $this->cache = $cache;
-    }
-
-    /**
-     * Return the map cache
-     *
-     * @return CacheInterface
-     */
-    public function getCache()
-    {
-        return $this->cache;
-    }
-
-    /**
-     * Return a map
-     * Fetch an already cached map or build then cache it
-     *
-     * @param  string $class The (FQDN) class name
-     * @return Map
-     */
-    public function getMap($class)
-    {
-        $reflectedClass = new \ReflectionClass($class);
-
-        $map = new Map($class);
-
-        if ($this->cache->contains($class)) {
-            $map = $this->cache->fetch($class);
-        } else {
-            $map = $this->buildMap($class);
-            $this->cache->save($class, $map);
-        }
-        return $map;
-    }
-
-    /**
-     * Force a map to be cached
-     * even if the cache already exists
-     *
-     * @param  string $class The (FQDN) class name
-     */
-    public function cacheMap($class, $force = true)
-    {
-        $reflectedClass = new \ReflectionClass($class);
-
-        $map = new Map($class);
-
-        if (!$force && $this->cache->contains($class)) {
-            return;
-        }
-
-        $map = $this->buildMap($class);
-        $this->cache->save($class, $map);
-    }
-
-    /**
      * Manage and update map dependencies
      *
      * @param  string $class            Class to add to the depencies list
@@ -127,6 +81,4 @@ abstract class ParserProvider implements ParserInterface
 
         return $dependenciesGraph;
     }
-
-    abstract protected function buildMap($class, $dependenciesGraph = null);
 }

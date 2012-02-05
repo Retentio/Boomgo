@@ -1,4 +1,16 @@
-<?php 
+<?php
+
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 
 namespace Boomgo\tests\units\Parser;
 
@@ -12,23 +24,24 @@ include __DIR__.'/../../../Parser/ParserInterface.php';
 include __DIR__.'/../../../Parser/ParserProvider.php';
 include __DIR__.'/../../../Parser/AnnotationParser.php';
 
-include __DIR__.'/../../../Cache/CacheInterface.php';
-
 include __DIR__.'/../../../Formatter/FormatterInterface.php';
 
 include __DIR__.'/../../../Mapper/Map.php';
 
-include __DIR__.'/../Mock/Cache.php';
 include __DIR__.'/../Mock/Document.php';
 include __DIR__.'/../Mock/Formatter.php';
 
-
+/**
+ * AnnotationParser tests
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ */
 class AnnotationParser extends \mageekguy\atoum\test
 {
     public function test__construct()
     {
         // Should be able to define the annotation though the constructor
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache(), '@MyHypeAnnot');
+        $parser = new Parser\AnnotationParser(new Mock\Formatter(), '@MyHypeAnnot');
 
         $this->assert
             ->string($parser->getAnnotation())
@@ -37,7 +50,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testSetGetAnnotation()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
         // Should set and get annotation
         $parser->setAnnotation('@MyHypeAnnot');
@@ -45,7 +58,7 @@ class AnnotationParser extends \mageekguy\atoum\test
         $this->assert
             ->string($parser->getAnnotation())
             ->isIdenticalTo('@MyHypeAnnot');
-        
+
         // Should throw exception on invalid annotation
         $this->assert
             ->exception(function() use ($parser) {
@@ -63,11 +76,11 @@ class AnnotationParser extends \mageekguy\atoum\test
     }
 
 
-    public function testGetMap()
+    public function testBuildMap()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
-        $map = $parser->getMap('Boomgo\tests\units\Mock\Document');
+        $map = $parser->buildMap('Boomgo\tests\units\Mock\Document');
 
         // Should return an instance of Map
         $this->assert
@@ -76,33 +89,43 @@ class AnnotationParser extends \mageekguy\atoum\test
 
         // Should return an array filled with presisted mongo key name and php attribute name
         $this->assert
-            ->array($map->getIndex())
-            ->isNotEmpty()
-            ->hasSize(6)
-            ->isIdenticalTo(array('id' => 'id', 
-                'mongoString' => 'mongoString',
-                'mongoNumber' => 'mongoNumber',
-                'mongoDocument' => 'mongoDocument',
-                'mongoCollection' => 'mongoCollection',
-                'mongoArray' => 'mongoArray'));
+            ->array($map->getMongoIndex())
+                ->isNotEmpty()
+                ->hasSize(6)
+                ->isIdenticalTo(array('id' => 'id',
+                    'mongoString' => 'mongoString',
+                    'mongoNumber' => 'mongoNumber',
+                    'mongoDocument' => 'mongoDocument',
+                    'mongoCollection' => 'mongoCollection',
+                    'mongoArray' => 'mongoArray'))
+            ->array($map->getPhpIndex())
+                ->isNotEmpty()
+                ->hasSize(6)
+                ->isIdenticalTo(array('id' => 'id',
+                    'mongoString' => 'mongoString',
+                    'mongoNumber' => 'mongoNumber',
+                    'mongoDocument' => 'mongoDocument',
+                    'mongoCollection' => 'mongoCollection',
+                    'mongoArray' => 'mongoArray'));
+
 
         // Should return an array of mutator for each mongo key which don't expose a public php attribute
         $this->assert
             ->array($map->getMutators())
             ->isNotEmpty()
             ->hasSize(6)
-            ->isIdenticalTo (array('id' => 'setId', 
+            ->isIdenticalTo (array('id' => 'setId',
                 'mongoString' => 'setMongoString',
                 'mongoNumber' => 'setMongoNumber',
                 'mongoDocument' => 'setMongoDocument',
                 'mongoCollection' => 'setMongoCollection',
                 'mongoArray' => 'setMongoArray'));
 
-        // Should return an array where key are mongo key containing embedded document or collection 
+        // Should return an array where key are mongo key containing embedded document or collection
         $this->assert
             ->array($map->getEmbedMaps())
             ->hasKeys(array('mongoDocument', 'mongoCollection'));
-        
+
         // Should return a map instance for a single embedded document
         $this->assert
             ->object($map->getEmbedMapFor('mongoDocument'))
@@ -191,12 +214,12 @@ class AnnotationParser extends \mageekguy\atoum\test
                     $parser->hasValidIdentifier($reflection);
                 })
             ->isInstanceOf('RuntimeException')
-            ->hasMessage('Object expect an id but do not expose valid accessor/mutator'); 
+            ->hasMessage('Object expect an id but do not expose valid accessor/mutator');
     }
 
     public function testIsValidAccessor()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
         // Should return true when getter is public and do not required argument
         $object = new Mock\Document();
@@ -206,7 +229,7 @@ class AnnotationParser extends \mageekguy\atoum\test
         $this->assert
             ->boolean($bool)
             ->isTrue();
-        
+
         // Should return false when getter is invalid
         $object = new Mock\DocumentInvalidGetter();
         $reflection = new \ReflectionObject($object);
@@ -219,7 +242,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testIsValidMutator()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
         // Should return true when setter is public and require only one argument
         $object = new Mock\Document();
@@ -229,7 +252,7 @@ class AnnotationParser extends \mageekguy\atoum\test
         $this->assert
             ->boolean($bool)
             ->isTrue();
-        
+
         // Should return false when setter is invalid
         $object = new Mock\DocumentInvalidSetter();
         $reflection = new \ReflectionObject($object);
@@ -242,7 +265,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testIsBoomgoProperty()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
          // Should return false if proprerty don't have annotation
         $document = new Mock\DocumentExcludedId();
@@ -289,7 +312,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testParseMetadata()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), new Mock\Cache());
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
         // Should throw exception if annotation is missing
         $document = new Mock\DocumentExcludedId();

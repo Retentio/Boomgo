@@ -23,7 +23,7 @@ include __DIR__.'/../../../Formatter/TransparentFormatter.php';
 /**
  * TransparentFormatter tests
  *
- * @author  Ludovic Fleury <ludo.fleury@gmail.com>
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
 class TransparentFormatter extends \mageekguy\atoum\test
 {

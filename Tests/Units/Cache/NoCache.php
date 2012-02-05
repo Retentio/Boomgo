@@ -25,7 +25,6 @@ require_once __DIR__.'/../../../Cache/NoCache.php';
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-
 class NoCache extends \mageekguy\atoum\test
 {
     public function testSave()
