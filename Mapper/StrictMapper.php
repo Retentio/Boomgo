@@ -112,6 +112,7 @@ class StrictMapper extends MapperProvider implements MapperInterface
      * Convert this object to array
      *
      * @param  object  $object  An object to convert.
+     * @throws InvalidArgumentException If argument is not an object
      * @return Array
      */
     public function toArray($object)
@@ -130,6 +131,7 @@ class StrictMapper extends MapperProvider implements MapperInterface
 
         foreach ($attributes as $key => $attribute) {
             $value = null;
+
             if ($map->hasAccessorFor($key)) {
                 $accessor = $map->getAccessorFor($key);
                 $value = $object->$accessor();
@@ -145,13 +147,6 @@ class StrictMapper extends MapperProvider implements MapperInterface
                 $array[$key] = $value;
             }
         }
-
-        // If all keys has a null value, we should return an empy array.
-        // PHP suck balls (isset, empty, array_value)
-        if (!array_filter($array)) {
-            $array = array();
-        }
-
         return $array;
     }
 
@@ -164,24 +159,13 @@ class StrictMapper extends MapperProvider implements MapperInterface
      */
     public function hydrate($object, array $array)
     {
+        $reflected = new \ReflectionClass($object);
+
         if (is_string($object)) {
-            $className = $object;
-
-            $reflectedClass = new \ReflectionClass($className);
-            $constructor = $reflectedClass->getConstructor();
-
-            if ($constructor && $constructor->getNumberOfRequiredParameters() > 0) {
-                throw new \RuntimeException('Unable to hydrate an object requiring constructor param');
-            }
-
-            $object = new $object;
-
-        } elseif (is_object($class)) {
-            $reflectedObject = new \ReflectionObject($object);
-            $className = $reflectedObject->getName();
+            $object = $this->createInstance($reflected);
         }
 
-        $map = $this->getMap($className);
+        $map = $this->getMap($reflected->getName());
 
         foreach ($array as $key => $value) {
             if (null !== $value && $map->hasAttributeFor($key)) {
@@ -218,25 +202,21 @@ class StrictMapper extends MapperProvider implements MapperInterface
         $embedMap = $map->getEmbedMapFor($key);
 
         if (!is_array($value)) {
-            throw new \RuntimeException('Embedded document or collection expect an array');
+            throw new \RuntimeException('Key "'.$key.'" defines an embedded document or collection and expects an array of values');
         }
 
         if ($embedType == Map::DOCUMENT) {
-            // Embed document
 
             // Expect an hash (associative array), @todo maybe remove this check ?
             if (array_keys($value) === range(0, sizeof($value) - 1)) {
-                throw new \RuntimeException('Embedded document expect an associative array');
+                throw new \RuntimeException('Key "'.$key.'" defines an embedded document and expects an associative array of values');
             }
-
             $value = $this->hydrate($embedMap->getClass(), $value);
 
         } elseif ($embedType == Map::COLLECTION) {
-            // Embed collection
-
             // Expect an array (numeric array), @todo maybe remove this check ?
             if (array_keys($value) !== range(0, sizeof($value) - 1)) {
-                throw new \RuntimeException('Embedded collection expect a numeric-indexed array');
+                throw new \RuntimeException('Key "'.$key.'" defines an embedded collection and expects an numeric indexed array of values');
             }
 
             $collection = array();
@@ -245,10 +225,8 @@ class StrictMapper extends MapperProvider implements MapperInterface
             foreach ($value as $embedValue) {
                $collection[] = $this->hydrate($embedMap->getClass(), $embedValue);
             }
-
             $value = $collection;
         }
-
         return $value;
     }
 }

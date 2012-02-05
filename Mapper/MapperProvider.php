@@ -22,6 +22,23 @@ namespace Boomgo\Mapper;
 abstract class MapperProvider
 {
     /**
+     * Create an instance from a Reflected class
+     *
+     * @param  ReflectionClass $reflectedClass
+     * @throws RuntimeException If constructor requires parameter
+     * @return mixed
+     */
+    protected function createInstance(\ReflectionClass $reflectedClass)
+    {
+        $constructor = $reflectedClass->getConstructor();
+
+        if ($constructor && $constructor->getNumberOfRequiredParameters() > 0) {
+            throw new \RuntimeException('Unable to hydrate an object requiring constructor param');
+        }
+        return $reflectedClass->newInstance();
+    }
+
+    /**
      * Normalize php data for mongo
      *
      * This code chunk was inspired by the Symfony framework

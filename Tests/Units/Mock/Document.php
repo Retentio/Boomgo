@@ -22,13 +22,19 @@ class Document
     private $mongoString;
 
     /**
+     * A mongo stored and public string
+     * @Boomgo
+     */
+    public $mongoPublicString;
+
+    /**
      * A mongo number
      * @Boomgo
      */
     private $mongoNumber;
 
     /**
-     * An single embedded EmbedDocument 
+     * An single embedded EmbedDocument
      * @Boomgo Document Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoDocument;
@@ -40,7 +46,7 @@ class Document
     private $mongoCollection;
 
     /**
-     * An embedded array 
+     * An embedded array
      * @Boomgo
      */
     private $mongoArray;
@@ -62,11 +68,11 @@ class Document
     {
         $this->mongoString = $value;
     }
-      
+
     public function getMongoString()
     {
         return $this->mongoString;
-    }        
+    }
 
     public function setMongoNumber($value)
     {
@@ -88,12 +94,12 @@ class Document
         return $this->attribute;
     }
 
-    public function setMongoDocument($value) 
+    public function setMongoDocument($value)
     {
         $this->mongoDocument = $value;
     }
 
-    public function getMongoDocument() 
+    public function getMongoDocument()
     {
         return $this->mongoDocument;
     }
@@ -139,7 +145,7 @@ class EmbedDocument
     private $mongoNumber;
 
     /**
-     * An embedded array 
+     * An embedded array
      * @Boomgo
      */
     private $mongoArray;
@@ -154,11 +160,11 @@ class EmbedDocument
     {
         $this->mongoString = $value;
     }
-      
+
     public function getMongoString()
     {
         return $this->mongoString;
-    }        
+    }
 
     public function setMongoNumber($value)
     {
@@ -310,7 +316,7 @@ class DocumentInvalidAnnotation
 
     /**
      * Invalid annotation multi lines
-     * @Boomgo 
+     * @Boomgo
      * @Boomgo
      */
     private $multiline;
@@ -366,7 +372,7 @@ class DocumentCyclic
     private $mongoNumber;
 
     /**
-     * An single embedded EmbedDocument 
+     * An single embedded EmbedDocument
      * @Boomgo Document Boomgo\tests\units\Mock\Document
      */
     private $mongoDocument;
@@ -385,11 +391,11 @@ class DocumentCyclic
     {
         $this->mongoString = $value;
     }
-      
+
     public function getMongoString()
     {
         return $this->mongoString;
-    }        
+    }
 
     public function setMongoNumber($value)
     {
@@ -401,12 +407,12 @@ class DocumentCyclic
         return $this->mongoNumber;
     }
 
-    public function setMongoDocument($value) 
+    public function setMongoDocument($value)
     {
         $this->mongoDocument = $value;
     }
 
-    public function getMongoDocument() 
+    public function getMongoDocument()
     {
         return $this->mongoDocument;
     }

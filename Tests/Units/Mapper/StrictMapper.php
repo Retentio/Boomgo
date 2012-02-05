@@ -18,6 +18,7 @@ use Boomgo\Mapper;
 use Boomgo\Mapper\Map;
 
 use Boomgo\Cache\CacheInterface;
+use Boomgo\Parser\ParserInterface;
 
 use Boomgo\tests\units\Mock;
 
@@ -58,6 +59,7 @@ class StrictMapper extends \mageekguy\atoum\test
         $map = new Map('Boomgo\\tests\\units\\Mock\\Document');
         $map->add('id', 'id', 'getId', 'setId');
         $map->add('mongoString', 'mongoString', 'getMongoString', 'setMongoString');
+        $map->add('mongoPublicString', 'mongoPublicString');
         $map->add('mongoNumber', 'mongoNumber', 'getMongoNumber', 'setMongoNumber');
         $map->add('mongoDocument', 'mongoDocument', 'getMongoDocument', 'setMongoDocument', 'Document', $mapEmbedDocument);
         $map->add('mongoCollection', 'mongoCollection', 'getMongoCollection', 'setMongoCollection', 'Collection', $mapEmbedDocument);
@@ -81,6 +83,7 @@ class StrictMapper extends \mageekguy\atoum\test
         $document = new Mock\Document();
         $document->setId('an identifier');
         $document->setMongoString('a string');
+        $document->mongoPublicString = 'a public string';
         $document->setMongoNumber(1);
         $document->setMongoDocument($embedDocument);
         $document->setMongoCollection($embedCollection);
@@ -102,6 +105,7 @@ class StrictMapper extends \mageekguy\atoum\test
 
         $array =  array('id' => 'an identifier',
             'mongoString' => 'a string',
+            'mongoPublicString' => 'a public string',
             'mongoNumber' => 1,
             'mongoDocument' => $embedArray,
             'mongoCollection' => $embedCollectionArray,
@@ -114,33 +118,61 @@ class StrictMapper extends \mageekguy\atoum\test
     {
         $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
     }
-/*
-    public function testToArray()
+
+    public function testGetCache()
     {
-        // Should return an empty array when all mongo keys are null
-        $document = new Mock\Document();
-        $document->setAttribute('an excluded value');
-        $array = $mapper->toArray($document);
-
+        $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
         $this->assert
-            ->array($array)
-            ->isEmpty();
+            ->object($mapper->getCache())
+                ->isInstanceOf('Boomgo\tests\units\Mock\Cache');
+    }
 
-        // Should return an array filled with every mongo keys if at least one mongo key is filled.
-        $document = new Mock\Document();
-        $document->setMongoString('a stored string');
-        $array = $mapper->toArray($document);
+    public function testGetMap()
+    {
+        $this->mockGenerator->generate('Boomgo\Cache\CacheInterface');
+        $this->mockGenerator->generate('Boomgo\Parser\ParserInterface');
+        $mockCache = new \mock\Boomgo\Cache\CacheInterface;
+        $mockParser = new \mock\Boomgo\Parser\ParserInterface;
 
+        // Should call ParserInterface::buildMap() then CacheInterface::save() if CacheInterface::contains() return false
+        $mockCache->getMockController()->contains = function($identifier){ return false; };
+        $mapper = new Mapper\StrictMapper($mockParser, $mockCache);
         $this->assert
-            ->array($array)
-            ->isNotEmpty()
-            ->hasKeys(array('_id',
-                'mongoString',
-                'mongoNumber',
-                'mongoDocument',
-                'mongoArray'))
-            ->notHasKey('attribute');
-*/
+                ->when(function () use($mapper) {
+                    $mapper->getMap('AFakeClass');
+                })
+                ->mock($mockCache)
+                    ->call('contains')
+                        ->once()
+                    ->beforeMethodCall('save')
+                        ->once()
+                ->mock($mockParser)
+                    ->call('buildMap')
+                        ->once();
+
+        // Should call CacheInterface::fetch() if CacheInterface::contains() returns true
+        $mockCache->getMockController()->contains = function($identifier){ return true; };
+        $mapper = new Mapper\StrictMapper($mockParser, $mockCache);
+        $this->assert
+                ->when(function () use($mapper) {
+                    $mapper->getMap('AFakeClass');
+                })
+                ->mock($mockCache)
+                    ->call('contains')
+                        ->once()
+                    ->beforeMethodCall('fetch')
+                        ->once()
+                ->mock($mockParser)
+                    ->call('buildMap')
+                        ->never();
+
+        // Should return a cached map for the expected class
+        $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache(true));
+        $this->assert
+            ->object($mapper->getMap('AFakeClass'))
+            ->isInstanceOf('Boomgo\Mapper\Map');
+    }
+
     public function testToArray()
     {
         $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
@@ -150,29 +182,40 @@ class StrictMapper extends \mageekguy\atoum\test
             ->exception(function() use ($mapper) {
                     $mapper->toArray(1);;
                 })
-            ->isInstanceOf('InvalidArgumentException')
-            ->hasMessage('Argument must be an object');
+                ->isInstanceOf('InvalidArgumentException')
+                ->hasMessage('Argument must be an object');
 
         // Should return an empty array when providing an empty object
-        // Inject an empty map to the mock parser
-        $mapper->getParser()->map = array('\\stdClass' => new Map('\\stdClass'));
+        // Inject an empty map to the mocked parser
+        $mapper->getParser()->mapList = array('\\stdClass' => new Map('\\stdClass'));
 
         $array = $mapper->toArray(new \stdClass());
 
         $this->assert
             ->array($array)
-            ->isEmpty();
+                ->isEmpty();
 
         // Should return an empty array when providing object without value
-        // Inject a map corresponding to the mock document
-        $mapper->getParser()->map = $this->mapProvider();
+        // Inject a map corresponding to the mocked document
+        $mapper->getParser()->mapList = $this->mapProvider();
 
         $document = new Mock\Document();
         $array = $mapper->toArray($document);
 
         $this->assert
             ->array($array)
-            ->isEmpty();
+                ->isEmpty();
+
+        // Should return an array containing keys that have a non-null value
+        $document = new Mock\Document();
+        $document->setMongoString('the only value');
+
+        $array = $mapper->toArray($document);
+
+        $this->assert
+            ->array($array)
+                ->hasSize(1)
+                ->isIdenticalTo(array('mongoString' => 'the only value'));
 
         // Should return a complete array
         $document = $this->documentProvider();
@@ -181,8 +224,8 @@ class StrictMapper extends \mageekguy\atoum\test
 
         $this->assert
             ->array($array)
-            ->hasSize(6)
-            ->isIdenticalTo($this->arrayProvider());
+                ->hasSize(7)
+                ->isIdenticalTo($this->arrayProvider());
     }
 
     public function testHydrate()
@@ -231,13 +274,71 @@ class StrictMapper extends \mageekguy\atoum\test
                 ->isInstanceOf($ns.'EmbedDocument');
     }
 
-/*
+    public function testHydrateEmbed()
+    {
+        // Inject a pre-built Map for the test into the mocked parser
+        $mapper = new Mapper\StrictMapper(new Mock\Parser($this->mapProvider()), new Mock\Cache());
+
+        $array = $this->arrayProvider();
+        $ns = 'Boomgo\\tests\\units\\Mock\\';
+
+        // Should throws exception if a key defines an embedded document & don't provide an array
+        $array = array('id' => 'an identifier',
+            'mongoString' => 'a string',
+            'mongoPublicString' => 'a public string',
+            'mongoNumber' => 1,
+            'mongoDocument' => 'an invalid value for the key',
+            'mongoArray' => array('an' => 'array', 8 => 1));
+
+        $this->assert
+            ->exception(function() use ($mapper, $array, $ns){
+                $mapper->hydrate($ns.'Document', $array);
+                })
+                ->isInstanceOf('RuntimeException')
+                ->hasMessage('Key "mongoDocument" defines an embedded document or collection and expects an array of values');
+
+        // Should throws exception if a key defines an embedded document & don't provide an associative array
+        $array = array('id' => 'an identifier',
+            'mongoString' => 'a string',
+            'mongoPublicString' => 'a public string',
+            'mongoNumber' => 1,
+            'mongoDocument' => array('an','invalid','array'),
+            'mongoArray' => array('an' => 'array', 8 => 1));
+
+        $this->assert
+            ->exception(function() use ($mapper, $array, $ns){
+                $mapper->hydrate($ns.'Document', $array);
+                })
+                ->isInstanceOf('RuntimeException')
+                ->hasMessage('Key "mongoDocument" defines an embedded document and expects an associative array of values');
+
+        // Should throws exception if a key defines an embedded collection & don't provide a numeric-indexed array
+        $array = array('id' => 'an identifier',
+            'mongoString' => 'a string',
+            'mongoPublicString' => 'a public string',
+            'mongoNumber' => 1,
+            'mongoCollection' => array('an' => 'invalid','array'),
+            'mongoArray' => array('an' => 'array', 8 => 1));
+
+        $this->assert
+            ->exception(function() use ($mapper, $array, $ns){
+                $mapper->hydrate($ns.'Document', $array);
+                })
+                ->isInstanceOf('RuntimeException')
+                ->hasMessage('Key "mongoCollection" defines an embedded collection and expects an numeric indexed array of values');
+    }
+
+    public function testCreateInstance()
+    {
+        $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
+        $ns = 'Boomgo\\tests\\units\\Mock\\';
+
         // Sould throw exception if constructor has mandatory prerequesite
         $this->assert
             ->exception(function() use ($mapper,$ns) {
                     $mapper->hydrate($ns.'DocummentConstructRequired', array('_id' => 1));
                 })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Unable to hydrate object requiring constructor param');
-*/
+                ->isInstanceOf('RuntimeException')
+                ->hasMessage('Unable to hydrate an object requiring constructor param');
+    }
 }

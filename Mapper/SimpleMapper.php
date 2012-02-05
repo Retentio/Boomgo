@@ -91,6 +91,10 @@ class SimpleMapper extends MapperProvider implements MapperInterface
      */
     public function toArray($object)
     {
+        if (!is_object($object)) {
+            throw new \InvalidArgumentException('Argument must be an object');
+        }
+
         $reflectedObject = new \ReflectionObject($object);
         $reflectedProperties = $reflectecObject->getProperties();
 
@@ -116,14 +120,19 @@ class SimpleMapper extends MapperProvider implements MapperInterface
      * If schemaless is enabled, any data in the array
      * will be dynamically appended to the object
      *
-     * @param  mixed $object
+     * @param  mixed  $object
      * @param  array  $array
      * @return mixed
      */
     public function hydrate($object, array $array)
     {
-        $reflectedObject = new \ReflectionObject($object);
-        $reflectedProperties = $reflectedObject->getProperties(\ReflectionProperty::IS_PUBLIC);
+        $reflected = new \ReflectionClass($object);
+
+        if (is_string($object)) {
+            $object = $this->createInstance($reflected);
+        }
+
+        $reflectedProperties = $reflected->getProperties(\ReflectionProperty::IS_PUBLIC);
 
         foreach ($array as $key => $value) {
             $attributeName = $this->formatter->toPhpAttribute($key);
