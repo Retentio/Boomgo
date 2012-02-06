@@ -137,9 +137,9 @@ class SimpleMapper extends MapperProvider implements MapperInterface
         foreach ($array as $key => $value) {
             $attributeName = $this->formatter->toPhpAttribute($key);
 
-            if ($reflectedObject->hasProperty($attributeName)) {
+            if ($reflected->hasProperty($attributeName)) {
 
-                $property = $reflectedObject->getProperty($attributeName);
+                $property = $reflected->getProperty($attributeName);
                 $this->setValue($object, $property, $value);
             } elseif ($this->isSchemaless()) {
                 $object->$attributeName = $value;

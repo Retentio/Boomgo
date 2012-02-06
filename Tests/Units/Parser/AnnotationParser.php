@@ -91,18 +91,20 @@ class AnnotationParser extends \mageekguy\atoum\test
         $this->assert
             ->array($map->getMongoIndex())
                 ->isNotEmpty()
-                ->hasSize(6)
+                ->hasSize(7)
                 ->isIdenticalTo(array('id' => 'id',
                     'mongoString' => 'mongoString',
+                    'mongoPublicString' => 'mongoPublicString',
                     'mongoNumber' => 'mongoNumber',
                     'mongoDocument' => 'mongoDocument',
                     'mongoCollection' => 'mongoCollection',
                     'mongoArray' => 'mongoArray'))
             ->array($map->getPhpIndex())
                 ->isNotEmpty()
-                ->hasSize(6)
+                ->hasSize(7)
                 ->isIdenticalTo(array('id' => 'id',
                     'mongoString' => 'mongoString',
+                    'mongoPublicString' => 'mongoPublicString',
                     'mongoNumber' => 'mongoNumber',
                     'mongoDocument' => 'mongoDocument',
                     'mongoCollection' => 'mongoCollection',
