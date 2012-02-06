@@ -22,6 +22,7 @@ use Boomgo\tests\units\Mock;
 require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
 
 include __DIR__.'/../../../Mapper/MapperInterface.php';
+include __DIR__.'/../../../Mapper/MapperProvider.php';
 include __DIR__.'/../../../Mapper/SimpleMapper.php';
 
 include __DIR__.'/../../../Formatter/FormatterInterface.php';
