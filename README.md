@@ -1,7 +1,7 @@
 Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/)
 ==============================================================
 
-_Bommgo still a work in progress and is initially developped for [Retentio](http://retent.io)._
+_Boomgo still a work in progress and is initially developped for [Retentio](http://retent.io)._
 
 Boomgo is a **light** and **simple** Object Document Mapper on top of the [MongoDB php native driver](http://php.net/mongo).
 
