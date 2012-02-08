@@ -16,10 +16,6 @@ namespace Boomgo\tests\units\Formatter;
 
 use Boomgo\Formatter;
 
-require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
-include __DIR__.'/../../../Formatter/FormatterInterface.php';
-include __DIR__.'/../../../Formatter/TransparentFormatter.php';
-
 /**
  * TransparentFormatter tests
  *
