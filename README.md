@@ -169,3 +169,21 @@ Boomgo handles hydration of embedded document, so with our previous example, we 
 $object->getMyEmbedDocument() // hydrated instance of My\Namespace\MyEmbedDocument
 ?>
 ```
+
+How to run unit tests
+---------------------
+
+Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum) : atoum is distributed with a phar archive and is bundled by default within Boomgo.
+
+To run the complete test suite, open a shell and type :
+
+``` bash
+$ cd path/to/Boomgo
+$ php vendor/mageekguy.atoum.phar -d tests
+```
+
+Want to test on a single class while contributing ? Here is an example with _AnnotationParser_ class :
+
+``` bash
+$ php vendor/mageekguy.atoum.phar -f tests/units/Parser/AnnotationParser.php
+```
