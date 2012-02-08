@@ -14,22 +14,10 @@
 
 namespace Boomgo\tests\units\Parser;
 
-use Boomgo\tests\units\Mock;
 use Boomgo\Parser;
 use Boomgo\Mapper;
 
-require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
-
-include __DIR__.'/../../../Parser/ParserInterface.php';
-include __DIR__.'/../../../Parser/ParserProvider.php';
-include __DIR__.'/../../../Parser/AnnotationParser.php';
-
-include __DIR__.'/../../../Formatter/FormatterInterface.php';
-
-include __DIR__.'/../../../Mapper/Map.php';
-
-include __DIR__.'/../Mock/Document.php';
-include __DIR__.'/../Mock/Formatter.php';
+use Boomgo\tests\units\Mock;
 
 /**
  * AnnotationParser tests

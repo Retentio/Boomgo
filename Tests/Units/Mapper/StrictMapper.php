@@ -15,32 +15,10 @@
 namespace Boomgo\tests\units\Mapper;
 
 use Boomgo\Mapper;
-use Boomgo\Mapper\Map;
-
 use Boomgo\Cache\CacheInterface;
 use Boomgo\Parser\ParserInterface;
 
 use Boomgo\tests\units\Mock;
-
-require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
-
-include __DIR__.'/../../../Mapper/Map.php';
-
-include __DIR__.'/../../../Mapper/MapperInterface.php';
-include __DIR__.'/../../../Mapper/MapperProvider.php';
-include __DIR__.'/../../../Mapper/StrictMapper.php';
-
-include __DIR__.'/../../../Parser/ParserInterface.php';
-include __DIR__.'/../../../Parser/ParserProvider.php';
-
-include __DIR__.'/../../../Cache/CacheInterface.php';
-
-include __DIR__.'/../../../Formatter/FormatterInterface.php';
-
-include __DIR__.'/../Mock/Cache.php';
-include __DIR__.'/../Mock/Document.php';
-include __DIR__.'/../Mock/Formatter.php';
-include __DIR__.'/../Mock/Parser.php';
 
 /**
  * StrictMapper tests
@@ -51,12 +29,12 @@ class StrictMapper extends \mageekguy\atoum\test
 {
     public function mapProvider()
     {
-        $mapEmbedDocument = new Map('Boomgo\\tests\\units\\Mock\\EmbedDocument');
+        $mapEmbedDocument = new Mapper\Map('Boomgo\\tests\\units\\Mock\\EmbedDocument');
         $mapEmbedDocument->add('mongoString', 'mongoString', 'getMongoString', 'setMongoString');
         $mapEmbedDocument->add('mongoNumber', 'mongoNumber', 'getMongoNumber', 'setMongoNumber');
         $mapEmbedDocument->add('mongoArray', 'mongoArray', 'getMongoArray', 'setMongoArray');
 
-        $map = new Map('Boomgo\\tests\\units\\Mock\\Document');
+        $map = new Mapper\Map('Boomgo\\tests\\units\\Mock\\Document');
         $map->add('id', 'id', 'getId', 'setId');
         $map->add('mongoString', 'mongoString', 'getMongoString', 'setMongoString');
         $map->add('mongoPublicString', 'mongoPublicString');
@@ -187,7 +165,7 @@ class StrictMapper extends \mageekguy\atoum\test
 
         // Should return an empty array when providing an empty object
         // Inject an empty map to the mocked parser
-        $mapper->getParser()->mapList = array('\\stdClass' => new Map('\\stdClass'));
+        $mapper->getParser()->mapList = array('\\stdClass' => new Mapper\Map('\\stdClass'));
 
         $array = $mapper->toArray(new \stdClass());
 
@@ -336,7 +314,7 @@ class StrictMapper extends \mageekguy\atoum\test
         // Sould throw exception if constructor has mandatory prerequesite
         $this->assert
             ->exception(function() use ($mapper,$ns) {
-                    $mapper->hydrate($ns.'DocummentConstructRequired', array('_id' => 1));
+                    $mapper->hydrate($ns.'DocumentConstructRequired', array('_id' => 1));
                 })
                 ->isInstanceOf('RuntimeException')
                 ->hasMessage('Unable to hydrate an object requiring constructor param');

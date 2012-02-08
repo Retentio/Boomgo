@@ -16,10 +16,6 @@ namespace Boomgo\tests\units\Cache;
 
 use Boomgo\Cache;
 
-require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
-require_once __DIR__.'/../../../Cache/CacheInterface.php';
-require_once __DIR__.'/../../../Cache/NoCache.php';
-
 /**
  * NoCache tests
  *

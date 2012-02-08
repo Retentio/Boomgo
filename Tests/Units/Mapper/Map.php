@@ -16,10 +16,6 @@ namespace Boomgo\tests\units\Mapper;
 
 use Boomgo\Mapper;
 
-require_once __DIR__.'/../../../vendor/mageekguy.atoum.phar';
-
-include __DIR__.'/../../../Mapper/Map.php';
-
 /**
  * Map tests
  *
