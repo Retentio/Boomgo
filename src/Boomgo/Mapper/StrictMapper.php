@@ -131,23 +131,21 @@ class StrictMapper extends MapperProvider implements MapperInterface
         $attributes = $map->getMongoIndex();
 
         foreach ($attributes as $key => $attribute) {
-            if(!$map->hasEmbedTypeFor($key) || $map->getEmbedTypeFor($key) !== Map::NATIVE) {
-                $value = null;
+            $value = null;
 
-                if ($map->hasAccessorFor($key)) {
-                    $accessor = $map->getAccessorFor($key);
-                    $value = $object->$accessor();
-                } else {
-                    $value = $object->$attribute;
-                }
+            if ($map->hasAccessorFor($key)) {
+                $accessor = $map->getAccessorFor($key);
+                $value = $object->$accessor();
+            } else {
+                $value = $object->$attribute;
+            }
 
-                // Recursively normalize nested non-scalar data
-                if (null !== $value) {
-                    if (!is_scalar($value)) {
-                        $value = $this->normalize($value);
-                    }
-                    $array[$key] = $value;
+            // Recursively normalize nested non-scalar data
+            if (null !== $value) {
+                if (!is_scalar($value) && (!$map->hasEmbedTypeFor($key) || $map->getEmbedTypeFor($key) !== Map::NATIVE)) {
+                    $value = $this->normalize($value);
                 }
+                $array[$key] = $value;
             }
         }
         return $array;
