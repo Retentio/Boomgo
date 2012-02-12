@@ -16,6 +16,7 @@ namespace Boomgo\Mapper;
 
 use Boomgo\Parser\ParserInterface;
 use Boomgo\Cache\CacheInterface;
+use Boomgo\Mapper\Map;
 
 /**
  * StrictMapper
@@ -130,21 +131,23 @@ class StrictMapper extends MapperProvider implements MapperInterface
         $attributes = $map->getMongoIndex();
 
         foreach ($attributes as $key => $attribute) {
-            $value = null;
+            if(!$map->hasEmbedTypeFor($key) || $map->getEmbedTypeFor($key) !== Map::NATIVE) {
+                $value = null;
 
-            if ($map->hasAccessorFor($key)) {
-                $accessor = $map->getAccessorFor($key);
-                $value = $object->$accessor();
-            } else {
-                $value = $object->$attribute;
-            }
-
-            // Recursively normalize nested non-scalar data
-            if (null !== $value) {
-                if (!is_scalar($value)) {
-                    $value = $this->normalize($value);
+                if ($map->hasAccessorFor($key)) {
+                    $accessor = $map->getAccessorFor($key);
+                    $value = $object->$accessor();
+                } else {
+                    $value = $object->$attribute;
                 }
-                $array[$key] = $value;
+
+                // Recursively normalize nested non-scalar data
+                if (null !== $value) {
+                    if (!is_scalar($value)) {
+                        $value = $this->normalize($value);
+                    }
+                    $array[$key] = $value;
+                }
             }
         }
         return $array;
@@ -200,10 +203,6 @@ class StrictMapper extends MapperProvider implements MapperInterface
         // Embed declaration
         $embedType = $map->getEmbedTypeFor($key);
         $embedMap = $map->getEmbedMapFor($key);
-
-        if (!is_array($value)) {
-            throw new \RuntimeException('Key "'.$key.'" defines an embedded document or collection and expects an array of values');
-        }
 
         if ($embedType == Map::DOCUMENT) {
 
