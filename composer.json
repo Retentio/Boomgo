@@ -16,7 +16,7 @@
         }
     ],
 
-    "require": {
+    "recommend": {
         "mageekguy/atoum": "master-dev"
     },
 
