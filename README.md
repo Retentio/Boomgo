@@ -8,7 +8,7 @@ Boomgo is a **light** and **simple** Object Document Mapper on top of the [Mongo
 Philosophy
 -------------
 
-Boomgo ODM focuses on the mapping process between PHP objects and MongoDB Documents, It don't abstract any feature provided by the native php driver. This way, Boomgo allows you to **keep the full control about your MongoDB interactions** (querying, map reduce, ...).
+Boomgo ODM focuses on the mapping process between PHP objects and MongoDB Documents, It doesn't abstract any feature provided by the native php driver. This way, Boomgo allows you to **keep the full control about your MongoDB interactions** (querying, map reduce, ...).
 
 _In short, Boomgo offers a handy way to manipulate your MongoDB Documents with PHP Objects._
 
@@ -24,9 +24,9 @@ Features
 Limitations
 -----------
 
-* It don't & won't manage object relation for a simple reason: [MongoDB is a NON-RELATIONAL storage](http://www.mongodb.org/display/DOCS/Database+References).
-* It don't & won't provide [identity map](http://en.wikipedia.org/wiki/Identity_map) etc.
-* It don't & won't make coffee.
+* It doesn't & won't manage object relation for a simple reason: [MongoDB is a NON-RELATIONAL storage](http://www.mongodb.org/display/DOCS/Database+References).
+* It doesn't & won't provide [identity map](http://en.wikipedia.org/wiki/Identity_map) etc.
+* It doesn't & won't make coffee.
 
 If you're looking for full-featured php ODM, you should look at [Mandango](https://github.com/mandango/mandango) which use active record/class generator implementation, and also [Doctrine MongoDB ODM](http://www.doctrine-project.org/projects/mongodb_odm/current/docs/en) data-mapping implementation.
 
