@@ -1,0 +1,30 @@
+{
+    "name": "retentio/boomgo",
+    "type": "library",
+    "description": "Lightweight and straightforward PHP ODM for MongoDB",
+    "keywords": ["mongodb", "odm"],
+    "homepage": "https://github.com/Retentio/Boomgo",
+    "license": "MIT",
+
+    "authors": [
+        {
+            "name": "Ludovic Fleury"
+        },
+        {
+            "name": "Contributors",
+            "homepage": "https://github.com/Rententio/Boomgo/contributors"
+        }
+    ],
+
+    "require": {
+        "mageekguy/atoum": "master-dev"
+    },
+
+    "autoload": {
+        "psr-0": {
+            "Boomgo": "src"
+        }
+    },
+
+    "target-dir": "boomgo"
+}
