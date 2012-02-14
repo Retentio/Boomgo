@@ -1,3 +1,3 @@
 <?php
 
-$runner->setBootstrapFile(__DIR__.'/src/Boomgo/tests/bootstrap.php');
+$runner->setBootstrapFile(__DIR__.'/tests/Boomgo/tests/bootstrap.php');

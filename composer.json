@@ -22,7 +22,8 @@
 
     "autoload": {
         "psr-0": {
-            "Boomgo": "src"
+            "Boomgo": "src",
+            "Boomgo\\tests": "tests"
         }
     },
 
