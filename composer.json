@@ -8,7 +8,8 @@
 
     "authors": [
         {
-            "name": "Ludovic Fleury"
+            "name": "Ludovic Fleury",
+            "email": "ludo.fleury@gmail.com"
         },
         {
             "name": "Contributors",
@@ -22,8 +23,7 @@
 
     "autoload": {
         "psr-0": {
-            "Boomgo": "src",
-            "Boomgo\\tests": "tests"
+            "Boomgo": "src"
         }
     },
 
