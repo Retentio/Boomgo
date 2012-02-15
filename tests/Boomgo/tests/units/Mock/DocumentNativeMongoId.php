@@ -22,7 +22,7 @@ class DocumentNativeMongoId
 
     /**
      * A mongo number
-     * @Boomgo 
+     * @Boomgo
      */
     private $mongoNumber;
 
