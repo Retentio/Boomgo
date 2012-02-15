@@ -179,11 +179,11 @@ To run the complete test suite, open a shell and type :
 
 ``` bash
 $ cd path/to/Boomgo
-$ php vendor/mageekguy.atoum.phar -d tests
+$ php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -d src/Boomgo/tests
 ```
 
 Want to test on a single class while contributing ? Here is an example with _AnnotationParser_ class :
 
 ``` bash
-$ php vendor/mageekguy.atoum.phar -f tests/units/Parser/AnnotationParser.php
+$ php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -f tests/units/Parser/AnnotationParser.php
 ```
