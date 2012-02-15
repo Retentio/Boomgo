@@ -63,7 +63,9 @@ class AnnotationParser extends \mageekguy\atoum\test
             ->hasMessage('Annotation should start with @ char');
     }
 
-
+    /**
+     * Build a map for a php class checking indexes (mongo/php), accessors, mutators and embed types
+     */
     public function testBuildMap()
     {
         $parser = new Parser\AnnotationParser(new Mock\Formatter());
@@ -97,7 +99,6 @@ class AnnotationParser extends \mageekguy\atoum\test
                     'mongoDocument' => 'mongoDocument',
                     'mongoCollection' => 'mongoCollection',
                     'mongoArray' => 'mongoArray'));
-
 
         // Should return an array of mutator for each mongo key which don't expose a public php attribute
         $this->assert
@@ -140,7 +141,43 @@ class AnnotationParser extends \mageekguy\atoum\test
         $this->assert
             ->string($map->getEmbedTypeFor('mongoCollection'))
             ->isEqualTo('COLLECTION');
+    }
 
+    /**
+     * Build map for a php class with a Mongo native object type
+     */
+    public function testBuildMapNative()
+    {
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+
+        $map = $parser->buildMap('Boomgo\tests\units\Mock\DocumentNativeMongoId');
+
+        $this->assert
+            ->array($map->getMongoIndex())
+                ->isNotEmpty()
+                ->hasSize(3)
+                ->isIdenticalTo(array('id' => 'id',
+                    'mongoString' => 'mongoString',
+                    'mongoNumber' => 'mongoNumber'))
+            ->array($map->getPhpIndex())
+                ->isNotEmpty()
+                ->hasSize(3)
+                ->isIdenticalTo(array('id' => 'id',
+                    'mongoString' => 'mongoString',
+                    'mongoNumber' => 'mongoNumber'));
+
+        $this->assert
+            ->array($map->getEmbedMaps())
+            ->hasKeys(array('id'));
+
+        $this->assert
+            ->boolean($map->hasEmbedTypeFor('id'))
+            ->isTrue();
+
+        $this->assert
+            ->string($map->getEmbedTypeFor('id'))
+            ->isNotEmpty()
+            ->isEqualTo('NATIVE');
     }
 
 /* @todo refactor scope or into a validator class

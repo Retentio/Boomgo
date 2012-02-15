@@ -21,6 +21,7 @@ namespace Boomgo\Mapper;
  */
 class Map
 {
+    const NATIVE = 'NATIVE';
     const DOCUMENT = 'DOCUMENT';
     const COLLECTION = 'COLLECTION';
 
@@ -221,7 +222,7 @@ class Map
     {
         $const = strtoupper($type);
 
-        if ($const !== self::DOCUMENT && $const !== self::COLLECTION) {
+        if ($const !== self::NATIVE && $const !== self::DOCUMENT && $const !== self::COLLECTION) {
             throw new \InvalidArgumentException('Unknown map type "'.$type.'"');
         }
 

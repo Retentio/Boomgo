@@ -25,6 +25,8 @@ use Boomgo\Formatter\FormatterInterface;
  */
 abstract class ParserProvider
 {
+    static $nativeClasses = array('\\MongoId' => true);
+
     protected $formatter;
 
     protected $cache;
@@ -80,5 +82,10 @@ abstract class ParserProvider
         $dependenciesGraph[$class] = true;
 
         return $dependenciesGraph;
+    }
+
+    protected function isNativeSupported($class)
+    {
+        return isset(self::$nativeClasses[$class]);
     }
 }

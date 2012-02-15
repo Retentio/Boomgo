@@ -116,7 +116,12 @@ class AnnotationParser extends ParserProvider implements ParserInterface
 
                 if (!empty($metadata)) {
                     list($embedType,$embedClass) = $metadata;
-                    $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
+                    if ($this->isNativeSupported($embedClass)) {
+                        $nativeMapClass = 'Boomgo\\Mapper\\Map'.$embedClass;
+                        $embedMap = new $nativeMapClass;
+                    } else {
+                        $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
+                    }
                 }
 
                 $map->add($keyName, $attributeName, $accessorName, $mutatorName, $embedType, $embedMap);
