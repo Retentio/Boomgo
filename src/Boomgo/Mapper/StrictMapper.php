@@ -202,17 +202,27 @@ class StrictMapper extends MapperProvider implements MapperInterface
         $embedType = $map->getEmbedTypeFor($key);
         $embedMap = $map->getEmbedMapFor($key);
 
+        // No processing on Mongo native type
+        if ($embedType == Map::NATIVE) {
+            return $value;
+        }
+
+        // Non array value
+        if (!is_array($value)) {
+            throw new \RuntimeException('Key "'.$key.'" defines an embedded document or collection and expects an array of values');
+        }
+
         if ($embedType == Map::DOCUMENT) {
 
             // Expect an hash (associative array), @todo maybe remove this check ?
-            if (array_keys($value) === range(0, sizeof($value) - 1)) {
+            if (array_keys($value) === range(0, count($value) - 1)) {
                 throw new \RuntimeException('Key "'.$key.'" defines an embedded document and expects an associative array of values');
             }
             $value = $this->hydrate($embedMap->getClass(), $value);
 
         } elseif ($embedType == Map::COLLECTION) {
             // Expect an array (numeric array), @todo maybe remove this check ?
-            if (array_keys($value) !== range(0, sizeof($value) - 1)) {
+            if (array_keys($value) !== range(0, count($value) - 1)) {
                 throw new \RuntimeException('Key "'.$key.'" defines an embedded collection and expects an numeric indexed array of values');
             }
 
@@ -222,8 +232,10 @@ class StrictMapper extends MapperProvider implements MapperInterface
             foreach ($value as $embedValue) {
                $collection[] = $this->hydrate($embedMap->getClass(), $embedValue);
             }
+
             $value = $collection;
         }
+
         return $value;
     }
 }
