@@ -1,0 +1,12 @@
+language: php
+phps:
+  - 5.3
+  - 5.4
+before_script:
+  - wget http://getcomposer.org/composer.phar
+  - php composer.phar install
+script: php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -d tests
+notifications:
+  email:
+    - ludo.fleury@gmail.com
+    - dguyon@gmail.com
