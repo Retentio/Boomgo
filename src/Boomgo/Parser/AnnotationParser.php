@@ -171,22 +171,27 @@ class AnnotationParser extends ParserProvider implements ParserInterface
      */
     public function parseMetadata(\ReflectionProperty $property)
     {
+        $tag = substr_count($property->getDocComment(), '@var');
         $metadata = array();
 
-        if (1 === substr_count($property->getDocComment(), '@var')) {
-            preg_match('#@var\h+((?>\\\\?[A-Z]{1}[A-Za-z_]+)+)\h*([a-zA-Z\h\\\\]+)*\s*\v*#', $property->getDocComment(), $metadata);
-
+        if (1 === $tag) {
+            preg_match('#@var\h+(array|(?>\\\\?[A-Z]{1}[A-Za-z_]+)+)\h*([a-zA-Z\h\\\\]+)*\s*\v*#', $property->getDocComment(), $metadata);
+            var_dump($metadata);
             if (count($metadata) > 3) {
                 throw new \RuntimeException(sprintf('Malformed metadata for @var tag in "%s->%s" Boomgo expects minimum standard declaration "@var [type]"', $property->getDeclaringClass()->getName() , $property->getName()));
             }
 
-            // Dealing with a non conventional class name.
-            if (empty($metadata) || empty($metadata[1])) {
+            // Skipping primitive or pseudo type and primitive array without collection definition.
+            if (empty($metadata) || ($metadata[1] == 'array' && empty($metadata[2]))) {
                 return;
             }
 
             $type = $metadata[1];
             $summary = (isset($metadata[2])) ? $metadata[2]: null;
+        } elseif (0 === $tag) {
+            trigger_error(sprintf('Boomgo annoted property in "%s->%s" should be documented with a @var tag', $property->getDeclaringClass()->getName() , $property->getName()), E_USER_WARNING);
+        } else {
+            throw new \RuntimeException(sprintf('Malformed metadata for @var tag in "%s->%s" Boomgo expects minimum standard declaration "@var [type]"', $property->getDeclaringClass()->getName() , $property->getName()));
         }
 
         return array($type, $summary);
