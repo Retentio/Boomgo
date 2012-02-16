@@ -25,6 +25,18 @@ use Boomgo\Formatter\FormatterInterface;
  */
 class AnnotationParser extends ParserProvider implements ParserInterface
 {
+    static $primitiveTypes = array('int' => true,
+        'integer' => true,
+        'bool' => true,
+        'boolean' => true,
+        'float' => true,
+        'double' => true,
+        'real' => true,
+        'string' => true,
+        'array' => true);
+
+    static $pseudoTypes = array('number' => true);
+
     /**
      * @var string
      */
@@ -139,10 +151,10 @@ class AnnotationParser extends ParserProvider implements ParserInterface
      */
     private function isBoomgoProperty(\ReflectionProperty $property)
     {
-        $boomgoAnnot = substr_count($property->getDocComment(), $this->getAnnotation());
+        $annotationTag = substr_count($property->getDocComment(), $this->getAnnotation());
 
-        if (0 < $boomgoAnnot) {
-            if (1 === $boomgoAnnot) {
+        if (0 < $annotationTag) {
+            if (1 === $annotationTag) {
                 return true;
             }
             throw new \RuntimeException('Boomgo annotation should occur only once');
@@ -157,20 +169,26 @@ class AnnotationParser extends ParserProvider implements ParserInterface
      * @param  \ReflectionProperty $property
      * @return array
      */
-    private function parseMetadata(\ReflectionProperty $property)
+    public function parseMetadata(\ReflectionProperty $property)
     {
         $metadata = array();
 
-        preg_match('#'.$this->getAnnotation().'\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
+        if (1 === substr_count($property->getDocComment(), '@var')) {
+            preg_match('#@var\h+((?>\\\\?[A-Z]{1}[A-Za-z_]+)+)\h*([a-zA-Z\h\\\\]+)*\s*\v*#', $property->getDocComment(), $metadata);
 
-        if (empty($metadata) || sizeof($metadata) > 3 ||
-            (!empty($metadata[1]) && empty($metadata[2]))) {
-            throw new \RuntimeException('Malformed metadata');
+            var_dump($metadata);
+            if (empty($metadata) || count($metadata) > 3) {
+                throw new \RuntimeException(sprintf('Malformed metadata for @var tag in "%s->%s" Boomgo expects minimum standard declaration "@var [type]"', $property->getDeclaringClass()->getName() , $property->getName()));
+            }
+
+            if (empty($metadata[1])) {
+                return;
+            }
+            $type = $metadata[1];
+            $summary = @$metadata[2];
         }
 
-        array_shift($metadata);
-
-        return $metadata[1] ? $metadata : array();
+        return $metadata;
     }
 
     /**
