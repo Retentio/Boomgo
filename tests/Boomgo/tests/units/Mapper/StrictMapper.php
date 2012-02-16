@@ -90,6 +90,15 @@ class StrictMapper extends \mageekguy\atoum\test
         return $document;
     }
 
+    public function arrayNativeProvider()
+    {
+        $array =  array('id' => new \MongoId(),
+            'mongoString' => 'a string',
+            'mongoNumber' => 1);
+
+        return $array;
+    }
+
     public function arrayProvider()
     {
         $embedArray = array('mongoString' => 'an embed string',
@@ -171,6 +180,13 @@ class StrictMapper extends \mageekguy\atoum\test
             ->isInstanceOf('Boomgo\Mapper\Map');
     }
 
+    /**
+     * Testing "toArray" on:
+     * - invalid type (non object)
+     * - stdClass
+     * - a valid document class with embedded documents (one/many)
+     * - a valid document class with Mongo type (MongoId)
+     */
     public function testToArray()
     {
         $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
@@ -198,6 +214,7 @@ class StrictMapper extends \mageekguy\atoum\test
         $mapper->getParser()->mapList = $this->mapProvider();
 
         $document = new Mock\Document();
+
         $array = $mapper->toArray($document);
 
         $this->assert
@@ -224,23 +241,28 @@ class StrictMapper extends \mageekguy\atoum\test
             ->array($array)
                 ->hasSize(7)
                 ->isIdenticalTo($this->arrayProvider());
-    }
 
-    public function testToArrayNative()
-    {
-        $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
-        
+        // Should return a filled array without internal processing for Mongo type MongoId
         // Inject a map corresponding to the mocked native document
         $mapper->getParser()->mapList = $this->mapNativeProvider();
 
-        $doc = $this->documentNativeProvider();
+        $document = $this->documentNativeProvider();
 
-        $array = $mapper->toArray($doc);
+        $array = $mapper->toArray($document);
 
-        $new_doc = new Mock\DocumentNativeMongoId();
-        var_dump($mapper->hydrate($new_doc, $array));
+        $this->assert
+            ->array($array)
+                ->hasSize(3)
+                ->hasKeys(array('id', 'mongoString', 'mongoNumber'))
+            ->object($array['id'])
+                ->isInstanceOf('MongoId');
     }
 
+    /**
+     * Testing "hydrate" on:
+     * - a valid document class with embedded documents (one/many)
+     * - a valid document class with Mongo type (MongoId)
+     */
     public function testHydrate()
     {
         // Inject a pre-built Map for the test into the mocked parser
@@ -285,6 +307,23 @@ class StrictMapper extends \mageekguy\atoum\test
                 ->isInstanceOf($ns.'EmbedDocument')
             ->object($embedCollection[2])
                 ->isInstanceOf($ns.'EmbedDocument');
+
+        // Inject a map corresponding to the mocked native document
+        // Should hydrate the root object without processing Mongo type MongoId
+        $mapper->getParser()->mapList = $this->mapNativeProvider();
+        $array = $this->arrayNativeProvider();
+
+        $object = $mapper->hydrate($ns.'DocumentNativeMongoId', $array);
+
+        $this->assert
+            ->object($object)
+                ->isInstanceOf($ns.'DocumentNativeMongoId')
+            ->object($object->getId())
+                ->isInstanceOf('MongoId')
+            ->string($object->getMongoString())
+                ->isEqualTo('a string')
+            ->integer($object->getMongoNumber())
+                ->isEqualTo(1);
     }
 
     public function testHydrateEmbed()
