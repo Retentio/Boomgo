@@ -9,7 +9,6 @@ namespace Boomgo\tests\units\Mock;
 class DocumentInvalidGetter
 {
     /**
-     * Identifier private, non persisted
      * @Boomgo
      */
     private $id;

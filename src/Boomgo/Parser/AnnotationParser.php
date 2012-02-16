@@ -25,19 +25,33 @@ use Boomgo\Formatter\FormatterInterface;
  */
 class AnnotationParser extends ParserProvider implements ParserInterface
 {
-    static $primitiveTypes = array('int' => true,
-        'integer' => true,
-        'bool' => true,
-        'boolean' => true,
-        'float' => true,
-        'double' => true,
-        'real' => true,
-        'string' => true,
-        'array' => true);
-
-    static $pseudoTypes = array('number' => true);
+    /**
+     * Primitive and pseudo types excluded by the parser
+     * @var array
+     */
+    static public $types = array(
+        'int'     => 'flat',
+        'integer' => 'flat',
+        'bool'    => 'flat',
+        'boolean' => 'flat',
+        'float'   => 'flat',
+        'double'  => 'flat',
+        'real'    => 'flat',
+        'string'  => 'flat',
+        'number'  => 'flat',
+        'mixed'   => 'flat',
+        'array'   => 'nested',
+        'object'  => 'nested');
 
     /**
+     * Native type supported by the driver
+     * @var array
+     */
+    static public $natives = array(
+        '\MongoId' => true);
+
+    /**
+     * Tag used to mark persistent attributes
      * @var string
      */
     private $annotation;
@@ -62,7 +76,7 @@ class AnnotationParser extends ParserProvider implements ParserInterface
     public function setAnnotation($annotation)
     {
         if (!preg_match('#^@[a-zA-Z]+$#', $annotation)) {
-             throw new \InvalidArgumentException('Annotation should start with @ char');
+             throw new \InvalidArgumentException('Boomgo annotation tag should start with "@" character');
         }
 
         $this->annotation = $annotation;
@@ -127,12 +141,27 @@ class AnnotationParser extends ParserProvider implements ParserInterface
                 $metadata = $this->parseMetadata($reflectedProperty);
 
                 if (!empty($metadata)) {
-                    list($embedType,$embedClass) = $metadata;
-                    if ($this->isNativeSupported($embedClass)) {
-                        $nativeMapClass = 'Boomgo\\Mapper\\Map'.$embedClass;
-                        $embedMap = new $nativeMapClass;
-                    } else {
-                        $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
+                    $type = $metadata[0];
+                    $summary = (isset($metadata[1])) ? $metadata[1] : null;
+
+                    if ($this->isNestedType($type)) {
+                        $embedDefinition = $this->getEmbedDefinition($type, $summary);
+                        if (null !== $embedDefinition) {
+
+                            if (is_array($embedDefinition)) {
+                                $embedType = Map::COLLECTION;
+                                $embedClass = $embedDefinition[1];
+                            } else {
+                                $embedType = Map::DOCUMENT;
+                                $embedClass = $embedDefinition;
+                            }
+
+                            if ($this->isNativeSupported($embedClass)) {
+                                $embedType = null;
+                            } else {
+                                $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
+                            }
+                        }
                     }
                 }
 
@@ -140,6 +169,16 @@ class AnnotationParser extends ParserProvider implements ParserInterface
             }
         }
         return $map;
+    }
+
+    /**
+     * Check if a type is natively supported
+     * @param  [type]  $embedType [description]
+     * @return boolean
+     */
+    public function isNativeSupported($embedType)
+    {
+        return (isset(static::$natives[$embedType]) || isset(static::$natives['\\'.$embedType]));
     }
 
     /**
@@ -151,13 +190,16 @@ class AnnotationParser extends ParserProvider implements ParserInterface
      */
     private function isBoomgoProperty(\ReflectionProperty $property)
     {
-        $annotationTag = substr_count($property->getDocComment(), $this->getAnnotation());
+        $propertyName = $property->getName();
+        $className = $property->getDeclaringClass()->getName();
 
+        $annotationTag = substr_count($property->getDocComment(), $this->getAnnotation());
         if (0 < $annotationTag) {
             if (1 === $annotationTag) {
                 return true;
             }
-            throw new \RuntimeException('Boomgo annotation should occur only once');
+
+            throw new \RuntimeException(sprintf('Boomgo annotation tag should occur only once for "%s->%s"', $className, $propertyName));
         }
 
         return false;
@@ -166,35 +208,79 @@ class AnnotationParser extends ParserProvider implements ParserInterface
     /**
      * Parse Boomgo metadata
      *
+     * Order of match try to improve performance
+     *
      * @param  \ReflectionProperty $property
      * @return array
      */
     public function parseMetadata(\ReflectionProperty $property)
     {
-        $tag = substr_count($property->getDocComment(), '@var');
+        $propertyName = $property->getName();
+        $className = $property->getDeclaringClass()->getName();
         $metadata = array();
 
-        if (1 === $tag) {
-            preg_match('#@var\h+(array|(?>\\\\?[A-Z]{1}[A-Za-z_]+)+)\h*([a-zA-Z\h\\\\]+)*\s*\v*#', $property->getDocComment(), $metadata);
-            var_dump($metadata);
-            if (count($metadata) > 3) {
-                throw new \RuntimeException(sprintf('Malformed metadata for @var tag in "%s->%s" Boomgo expects minimum standard declaration "@var [type]"', $property->getDeclaringClass()->getName() , $property->getName()));
-            }
+        $varTag = substr_count($property->getDocComment(), '@var');
 
-            // Skipping primitive or pseudo type and primitive array without collection definition.
-            if (empty($metadata) || ($metadata[1] == 'array' && empty($metadata[2]))) {
-                return;
-            }
-
-            $type = $metadata[1];
-            $summary = (isset($metadata[2])) ? $metadata[2]: null;
-        } elseif (0 === $tag) {
-            trigger_error(sprintf('Boomgo annoted property in "%s->%s" should be documented with a @var tag', $property->getDeclaringClass()->getName() , $property->getName()), E_USER_WARNING);
-        } else {
-            throw new \RuntimeException(sprintf('Malformed metadata for @var tag in "%s->%s" Boomgo expects minimum standard declaration "@var [type]"', $property->getDeclaringClass()->getName() , $property->getName()));
+        if (0 === $varTag) {
+            return array();
+            // @TODO For the moment Boomgo do not force or recommend @var
+            // trigger_error(sprintf('Boomgo annoted property in "%s->%s" should use @var tag', $className, $propertyName), E_USER_WARNING);
+        } elseif (1 < $varTag) {
+            throw new \RuntimeException(sprintf('@var tag should occur only once for "%s->%s"', $className, $propertyName));
         }
 
-        return array($type, $summary);
+        // Grep the @var tag content (type & summary)
+        if (!preg_match('#@var\h+(\H+)\h*(.*)\v#', $property->getDocComment(), $metadata)) {
+            $message = 'Malformed Boomgo metadata for @var tag in "%s->%s" expects minimum standard declaration "@var [type]"';
+            throw new \RuntimeException(sprintf($message, $className , $propertyName));
+        }
+        array_shift($metadata);
+        $metadata = array_filter($metadata);
+        return $metadata;
+    }
+
+    public function isNestedType($type)
+    {
+        return (!isset(static::$types[$type]) || static::$types[$type] === 'nested');
+    }
+
+    public function getEmbedDefinition($type, $summary)
+    {
+        $namespacePattern = '#((?:\\\\*)(?:\w+\\\\*)+\w+)#';
+        $embedDefinition = null;
+        /*
+         * Embedded collection (primitive type)
+         *   @var array Valid\Namespace
+         */
+        if ($type == 'array') {
+            if (isset($summary) && preg_match_all($namespacePattern, $summary, $classes)) {
+                $embedDefinition = array('array', $classes[0][0]);
+            } else {
+                $embedDefinition = null; // Assuming we deal with regular array
+            }
+        }
+
+        /*
+         * Embedded object/document (sugar/not typed)
+         *   @var object Valid\Namespace
+         */
+        elseif ($type == 'object') {
+            if (preg_match($namespacePattern, $summary, $classes)) {
+                $embedDefinition = $classes[0];
+            } else {
+                throw new \RuntimeExcpetion(sprintf('Malformed Boomgo "object" metadata for @var in "%s->%s"', $className, $propertyName));
+            }
+        }
+
+        /*
+         * Embedded object/document (typed)
+         *   @var Valid\Namespace
+         */
+        elseif (preg_match($namespacePattern, $type, $classes)) {
+            $embedDefinition = $classes[0];
+        }
+
+        return $embedDefinition;
     }
 
     /**

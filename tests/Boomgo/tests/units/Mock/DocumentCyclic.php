@@ -29,7 +29,8 @@ class DocumentCyclic
 
     /**
      * An single embedded EmbedDocument
-     * @Boomgo Document Boomgo\tests\units\Mock\Document
+     * @Boomgo
+     * @var Boomgo\tests\units\Mock\Document
      */
     private $mongoDocument;
 

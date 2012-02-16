@@ -70,26 +70,6 @@ class StrictMapper extends \mageekguy\atoum\test
         return $document;
     }
 
-    public function mapNativeProvider()
-    {
-        $map = new Mapper\Map('Boomgo\\tests\\units\\Mock\\DocumentNativeMongoId');
-        $map->add('id', 'id', 'getId', 'setId', 'NATIVE', new Mapper\Map('tarace'));
-        $map->add('mongoString', 'mongoString', 'getMongoString', 'setMongoString');
-        $map->add('mongoNumber', 'mongoNumber', 'getMongoNumber', 'setMongoNumber');
-
-        return array('Boomgo\\tests\\units\\Mock\\DocumentNativeMongoId' => $map);
-    }
-
-    public function documentNativeProvider()
-    {
-        $document = new Mock\DocumentNativeMongoId();
-        $document->setId(new \MongoId());
-        $document->setMongoString('a string');
-        $document->setMongoNumber(1);
-
-        return $document;
-    }
-
     public function arrayProvider()
     {
         $embedArray = array('mongoString' => 'an embed string',
@@ -224,21 +204,6 @@ class StrictMapper extends \mageekguy\atoum\test
             ->array($array)
                 ->hasSize(7)
                 ->isIdenticalTo($this->arrayProvider());
-    }
-
-    public function testToArrayNative()
-    {
-        $mapper = new Mapper\StrictMapper(new Mock\Parser(), new Mock\Cache());
-        
-        // Inject a map corresponding to the mocked native document
-        $mapper->getParser()->mapList = $this->mapNativeProvider();
-
-        $doc = $this->documentNativeProvider();
-
-        $array = $mapper->toArray($doc);
-
-        $new_doc = new Mock\DocumentNativeMongoId();
-        var_dump($mapper->hydrate($new_doc, $array));
     }
 
     public function testHydrate()

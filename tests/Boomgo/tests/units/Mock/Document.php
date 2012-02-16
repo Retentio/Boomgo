@@ -12,18 +12,21 @@ class Document
     /**
      * Identifier
      * @Boomgo
+     * @var \MongoId
      */
     private $id;
 
     /**
      * A mongo stored string
      * @Boomgo
+     * @var string
      */
     private $mongoString;
 
     /**
      * A mongo stored and public string
      * @Boomgo
+     * @var string
      */
     public $mongoPublicString;
 
@@ -35,19 +38,24 @@ class Document
 
     /**
      * An single embedded EmbedDocument
-     * @Boomgo Document Boomgo\tests\units\Mock\EmbedDocument
+     *
+     * @Boomgo
+     * @var object Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoDocument;
 
     /**
      * A embedded collection of EmbedDocument
-     * @Boomgo Collection Boomgo\tests\units\Mock\EmbedDocument
+     *
+     * @Boomgo
+     * @var array Boomgo\Tests\Units\Mock\EmbedDocument
      */
     private $mongoCollection;
 
     /**
      * An embedded array
      * @Boomgo
+     * @var array
      */
     private $mongoArray;
 

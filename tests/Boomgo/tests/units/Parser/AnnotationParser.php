@@ -53,14 +53,14 @@ class AnnotationParser extends \mageekguy\atoum\test
                 $parser->setAnnotation('invalid');
             })
             ->isInstanceOf('\InvalidArgumentException')
-            ->hasMessage('Annotation should start with @ char');
+            ->hasMessage('Boomgo annotation tag should start with "@" character');
 
         $this->assert
             ->exception(function() use ($parser) {
                 $parser->setAnnotation('@12');
             })
             ->isInstanceOf('\InvalidArgumentException')
-            ->hasMessage('Annotation should start with @ char');
+            ->hasMessage('Boomgo annotation tag should start with "@" character');
     }
 
     /**
@@ -141,43 +141,47 @@ class AnnotationParser extends \mageekguy\atoum\test
         $this->assert
             ->string($map->getEmbedTypeFor('mongoCollection'))
             ->isEqualTo('COLLECTION');
+
+        $parser = new Parser\AnnotationParser(new Mock\Formatter());
     }
 
-    /**
-     * Build map for a php class with a Mongo native object type
-     */
-    public function testBuildMapNative()
+    public function testParseMetadata()
     {
         $parser = new Parser\AnnotationParser(new Mock\Formatter());
 
-        $map = $parser->buildMap('Boomgo\tests\units\Mock\DocumentNativeMongoId');
+        $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','mongoArray');
+        $metadata = $parser->parseMetadata($reflectedProperty);
 
         $this->assert
-            ->array($map->getMongoIndex())
-                ->isNotEmpty()
-                ->hasSize(3)
-                ->isIdenticalTo(array('id' => 'id',
-                    'mongoString' => 'mongoString',
-                    'mongoNumber' => 'mongoNumber'))
-            ->array($map->getPhpIndex())
-                ->isNotEmpty()
-                ->hasSize(3)
-                ->isIdenticalTo(array('id' => 'id',
-                    'mongoString' => 'mongoString',
-                    'mongoNumber' => 'mongoNumber'));
+            ->array($metadata)
+                ->hasSize(1)
+                ->isIdenticalTo(array('array'));
 
+        $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','id');
+        $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
-            ->array($map->getEmbedMaps())
-            ->hasKeys(array('id'));
+            ->array($metadata)
+                ->hasSize(1)
+                ->isIdenticalTo(array('\MongoId'));
 
+        $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','mongoCollection');
+        $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
-            ->boolean($map->hasEmbedTypeFor('id'))
-            ->isTrue();
+            ->array($metadata)
+                ->hasSize(2)
+                ->isIdenticalTo(array('array', 'Boomgo\Tests\Units\Mock\EmbedDocument'));
 
+        // Should return an array of metadata
+        $document = new Mock\Document();
+        $reflectedObject = new \ReflectionObject($document);
+        $reflectedProperty = $reflectedObject->getProperty('mongoDocument');
+
+        $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
-            ->string($map->getEmbedTypeFor('id'))
+            ->array($metadata)
             ->isNotEmpty()
-            ->isEqualTo('NATIVE');
+            ->hasSize(2)
+            ->strictlyContainsValues(array('Boomgo\tests\units\Mock\EmbedDocument'));
     }
 
 /* @todo refactor scope or into a validator class
@@ -335,47 +339,6 @@ class AnnotationParser extends \mageekguy\atoum\test
                 })
             ->isInstanceOf('RuntimeException')
             ->hasMessage('Boomgo annotation should occur only once');
-    }
-
-    public function testParseMetadata()
-    {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-        // Should throw exception if annotation is missing
-        $document = new Mock\DocumentExcludedId();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('id');
-
-        $this->assert
-            ->exception(function() use ($parser, $reflectedProperty) {
-                    $parser->parseMetadata($reflectedProperty);
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Malformed metadata');
-
-        // Should throw exception if annotation is incomplete
-        $document = new Mock\DocumentInvalidAnnotation();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('incomplete');
-
-        $this->assert
-            ->exception(function() use ($parser, $reflectedProperty) {
-                    $parser->parseMetadata($reflectedProperty);
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Malformed metadata');
-
-        // Should return an array of metadata
-        $document = new Mock\Document();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('mongoDocument');
-
-        $metadata = $parser->parseMetadata($reflectedProperty);
-        $this->assert
-            ->array($metadata)
-            ->isNotEmpty()
-            ->hasSize(2)
-            ->strictlyContainsValues(array('Document', 'Boomgo\tests\units\Mock\EmbedDocument'));
     }
 */
 }
