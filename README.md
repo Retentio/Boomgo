@@ -21,6 +21,16 @@ Features
 * Handle hydration process of embedded document / collection.
 * Provide live hydration with schemaless style
 
+Installation
+------------
+This project is under heavy development, you can fork or clone the repository.
+If you want to use it right now (at your own risk) you could also use composer:
+
+```bash
+$ wget http://getcomposer.org/composer.phar
+$ php composer.phar install
+```
+
 Limitations
 -----------
 
@@ -179,7 +189,7 @@ To run the complete test suite, open a shell and type :
 
 ``` bash
 $ cd path/to/Boomgo
-$ php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -d src/Boomgo/tests
+$ php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -d tests
 ```
 
 Want to test on a single class while contributing ? Here is an example with _AnnotationParser_ class :
