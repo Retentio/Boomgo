@@ -176,19 +176,20 @@ class AnnotationParser extends ParserProvider implements ParserInterface
         if (1 === substr_count($property->getDocComment(), '@var')) {
             preg_match('#@var\h+((?>\\\\?[A-Z]{1}[A-Za-z_]+)+)\h*([a-zA-Z\h\\\\]+)*\s*\v*#', $property->getDocComment(), $metadata);
 
-            var_dump($metadata);
-            if (empty($metadata) || count($metadata) > 3) {
+            if (count($metadata) > 3) {
                 throw new \RuntimeException(sprintf('Malformed metadata for @var tag in "%s->%s" Boomgo expects minimum standard declaration "@var [type]"', $property->getDeclaringClass()->getName() , $property->getName()));
             }
 
-            if (empty($metadata[1])) {
+            // Dealing with a non conventional class name.
+            if (empty($metadata) || empty($metadata[1])) {
                 return;
             }
+
             $type = $metadata[1];
-            $summary = @$metadata[2];
+            $summary = (isset($metadata[2])) ? $metadata[2]: null;
         }
 
-        return $metadata;
+        return array($type, $summary);
     }
 
     /**
