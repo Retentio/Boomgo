@@ -15,7 +15,6 @@
 namespace Boomgo\Parser;
 
 use Boomgo\Mapper\Map;
-use Boomgo\Cache\CacheInterface;
 use Boomgo\Formatter\FormatterInterface;
 
 /**
@@ -25,11 +24,35 @@ use Boomgo\Formatter\FormatterInterface;
  */
 abstract class ParserProvider
 {
-    static $nativeClasses = array('\\MongoId' => true);
+    /**
+     * Native types supported by MongoDB driver
+     * @var array
+     */
+    static public $nativesClass = array(
+        '\\MongoId' => true);
 
+    /**
+     * Primitive & pseudo types definition
+     * @var array
+     */
+    static public $types = array(
+        'int'     => 'scalar',
+        'integer' => 'scalar',
+        'bool'    => 'scalar',
+        'boolean' => 'scalar',
+        'float'   => 'scalar',
+        'double'  => 'scalar',
+        'real'    => 'scalar',
+        'string'  => 'scalar',
+        'number'  => 'scalar',
+        'mixed'   => 'indefinable',
+        'array'   => 'composite',
+        'object'  => 'composite');
+
+    /**
+     * @var FormatterInterface
+     */
     protected $formatter;
-
-    protected $cache;
 
     /**
      * Initialize
@@ -63,7 +86,39 @@ abstract class ParserProvider
     }
 
     /**
+     * Check if class is natively supported by MongoDB driver
+     *
+     * Native types (MongoId, MongoDate...)
+     * shouldn't be denormalized to an array.
+     *
+     * @param  string  $class A FQDN
+     * @return boolean
+     */
+    public function isNativeSupported($class)
+    {
+        // Prepend the firt \ if missing
+        $class = (strpos($class,'\\') === 0) ? $class : '\\'.$class;
+        return (isset(static::$nativesClass[$class]));
+    }
+
+    /**
+     * Check if type is composite
+     *
+     * Array and object could be associated with a submap
+     *
+     * @param  string  $type A supported (pseudo) type
+     * @return boolean
+     */
+    protected function isCompositeType($type)
+    {
+        return (!isset(static::$types[$type]) || static::$types[$type] === 'composite');
+    }
+
+    /**
      * Manage and update map dependencies
+     *
+     * Avoid cyclic dependecy: a map embedding the same map.
+     * It would cause an infinite parsing loop.
      *
      * @param  string $class            Class to add to the depencies list
      * @param  array  $dependeciesGraph Null or dependencie legacy
@@ -82,10 +137,5 @@ abstract class ParserProvider
         $dependenciesGraph[$class] = true;
 
         return $dependenciesGraph;
-    }
-
-    protected function isNativeSupported($class)
-    {
-        return isset(self::$nativeClasses[$class]);
     }
 }

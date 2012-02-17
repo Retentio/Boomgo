@@ -26,31 +26,6 @@ use Boomgo\Formatter\FormatterInterface;
 class AnnotationParser extends ParserProvider implements ParserInterface
 {
     /**
-     * Primitive and pseudo types excluded by the parser
-     * @var array
-     */
-    static public $types = array(
-        'int'     => 'flat',
-        'integer' => 'flat',
-        'bool'    => 'flat',
-        'boolean' => 'flat',
-        'float'   => 'flat',
-        'double'  => 'flat',
-        'real'    => 'flat',
-        'string'  => 'flat',
-        'number'  => 'flat',
-        'mixed'   => 'flat',
-        'array'   => 'nested',
-        'object'  => 'nested');
-
-    /**
-     * Native type supported by the driver
-     * @var array
-     */
-    static public $natives = array(
-        '\MongoId' => true);
-
-    /**
      * Tag used to mark persistent attributes
      * @var string
      */
@@ -144,7 +119,7 @@ class AnnotationParser extends ParserProvider implements ParserInterface
                     $type = $metadata[0];
                     $summary = (isset($metadata[1])) ? $metadata[1] : null;
 
-                    if ($this->isNestedType($type)) {
+                    if ($this->isCompositeType($type)) {
                         $embedDefinition = $this->getEmbedDefinition($type, $summary);
                         if (null !== $embedDefinition) {
 
@@ -158,6 +133,7 @@ class AnnotationParser extends ParserProvider implements ParserInterface
 
                             if ($this->isNativeSupported($embedClass)) {
                                 $embedType = null;
+                                $embedClass = null;
                             } else {
                                 $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
                             }
@@ -169,16 +145,6 @@ class AnnotationParser extends ParserProvider implements ParserInterface
             }
         }
         return $map;
-    }
-
-    /**
-     * Check if a type is natively supported
-     * @param  [type]  $embedType [description]
-     * @return boolean
-     */
-    public function isNativeSupported($embedType)
-    {
-        return (isset(static::$natives[$embedType]) || isset(static::$natives['\\'.$embedType]));
     }
 
     /**
@@ -237,11 +203,6 @@ class AnnotationParser extends ParserProvider implements ParserInterface
         array_shift($metadata);
         $metadata = array_filter($metadata);
         return $metadata;
-    }
-
-    public function isNestedType($type)
-    {
-        return (!isset(static::$types[$type]) || static::$types[$type] === 'nested');
     }
 
     public function getEmbedDefinition($type, $summary)
