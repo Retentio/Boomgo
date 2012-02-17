@@ -151,37 +151,35 @@ class AnnotationParser extends \mageekguy\atoum\test
 
         $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','mongoArray');
         $metadata = $parser->parseMetadata($reflectedProperty);
-
         $this->assert
             ->array($metadata)
-                ->hasSize(1)
-                ->isIdenticalTo(array('array'));
+                ->hasSize(2)
+                ->isIdenticalTo(array('type' => 'array', 'summary' => ''));
 
         $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','id');
         $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
             ->array($metadata)
-                ->hasSize(1)
-                ->isIdenticalTo(array('\MongoId'));
+                ->hasSize(2)
+                ->isIdenticalTo(array('type' =>'\MongoId',  'summary' => ''));
 
         $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','mongoCollection');
         $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
             ->array($metadata)
                 ->hasSize(2)
-                ->isIdenticalTo(array('array', 'Boomgo\Tests\Units\Mock\EmbedDocument'));
+                ->isIdenticalTo(array('type' =>'array', 'summary' => 'Boomgo\Tests\Units\Mock\EmbedDocument'));
 
         // Should return an array of metadata
         $document = new Mock\Document();
         $reflectedObject = new \ReflectionObject($document);
         $reflectedProperty = $reflectedObject->getProperty('mongoDocument');
-
         $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
             ->array($metadata)
             ->isNotEmpty()
             ->hasSize(2)
-            ->strictlyContainsValues(array('Boomgo\tests\units\Mock\EmbedDocument'));
+            ->isIdenticalTo(array('type' => 'object', 'summary' => 'Boomgo\tests\units\Mock\EmbedDocument'));
     }
 
 /* @todo refactor scope or into a validator class

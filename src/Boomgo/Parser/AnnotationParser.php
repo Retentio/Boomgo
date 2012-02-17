@@ -86,63 +86,51 @@ class AnnotationParser extends ParserProvider implements ParserInterface
 
         foreach ($reflectedProperties as $reflectedProperty) {
 
-            if ($this->isBoomgoProperty($reflectedProperty)) {
-
-                $attributeName = $reflectedProperty->getName();
-                $keyName = $this->formatter->toMongoKey($attributeName);
-                $accessorName = null;
-                $mutatorName = null;
-                $embedType = null;
-                $embedMap = null;
-
-                if (!$reflectedProperty->isPublic()) {
-                    $accessorName = $this->formatter->getPhpAccessor($attributeName, false);
-                    $mutatorName = $this->formatter->getPhpMutator($attributeName, false);
-
-                    if (!$reflectedClass->hasMethod($accessorName) ||
-                        !$reflectedClass->hasMethod($mutatorName)) {
-                        throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
-                    }
-
-                    $reflectedAccessor = $reflectedClass->getMethod($accessorName);
-                    $reflectedMutator = $reflectedClass->getMethod($mutatorName);
-
-                    if (!$this->isValidAccessor($reflectedAccessor) ||
-                        !$this->isValidMutator($reflectedMutator)) {
-                        throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
-                    }
-                }
-
-                $metadata = $this->parseMetadata($reflectedProperty);
-
-                if (!empty($metadata)) {
-                    $type = $metadata[0];
-                    $summary = (isset($metadata[1])) ? $metadata[1] : null;
-
-                    if ($this->isCompositeType($type)) {
-                        $embedDefinition = $this->getEmbedDefinition($type, $summary);
-                        if (null !== $embedDefinition) {
-
-                            if (is_array($embedDefinition)) {
-                                $embedType = Map::COLLECTION;
-                                $embedClass = $embedDefinition[1];
-                            } else {
-                                $embedType = Map::DOCUMENT;
-                                $embedClass = $embedDefinition;
-                            }
-
-                            if ($this->isNativeSupported($embedClass)) {
-                                $embedType = null;
-                                $embedClass = null;
-                            } else {
-                                $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
-                            }
-                        }
-                    }
-                }
-
-                $map->add($keyName, $attributeName, $accessorName, $mutatorName, $embedType, $embedMap);
+            if (!$this->isBoomgoProperty($reflectedProperty)) {
+                continue;
             }
+
+            $attributeName = $reflectedProperty->getName();
+            $keyName = $this->formatter->toMongoKey($attributeName);
+            $accessorName = null;
+            $mutatorName = null;
+            $embedType = null;
+            $embedMap = null;
+
+            // Find accessor & mutator for a protected/private property
+            if (!$reflectedProperty->isPublic()) {
+                $accessorName = $this->formatter->getPhpAccessor($attributeName, false);
+                $mutatorName = $this->formatter->getPhpMutator($attributeName, false);
+
+                if (!$reflectedClass->hasMethod($accessorName) ||
+                    !$reflectedClass->hasMethod($mutatorName)) {
+                    throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
+                }
+
+                $reflectedAccessor = $reflectedClass->getMethod($accessorName);
+                $reflectedMutator = $reflectedClass->getMethod($mutatorName);
+
+                if (!$this->isValidAccessor($reflectedAccessor) ||
+                    !$this->isValidMutator($reflectedMutator)) {
+                    throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
+                }
+            }
+
+            // Extract metadata
+            $metadata = $this->parseMetadata($reflectedProperty);
+
+            // Handle embedded documents / collections
+            if ($this->isCompositeType($metadata['type'])) {
+                $definition = $this->getDefinition($metadata);
+
+                if (null !== $definition && !$this->isNativeSupported($definition['class'])) {
+                    $embedType = $definition['type'];
+                    $embedClass = $definition['class'];
+                    $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
+                }
+            }
+
+            $map->add($keyName, $attributeName, $accessorName, $mutatorName, $embedType, $embedMap);
         }
         return $map;
     }
@@ -174,7 +162,7 @@ class AnnotationParser extends ParserProvider implements ParserInterface
     /**
      * Parse Boomgo metadata
      *
-     * Order of match try to improve performance
+     * Extract metadata from the optional var tag
      *
      * @param  \ReflectionProperty $property
      * @return array
@@ -183,65 +171,62 @@ class AnnotationParser extends ParserProvider implements ParserInterface
     {
         $propertyName = $property->getName();
         $className = $property->getDeclaringClass()->getName();
-        $metadata = array();
+
+        // If tag isn't defined: return a default array with the mixed type
+        $metadata = array('type' => 'mixed', 'summary' => '');
 
         $varTag = substr_count($property->getDocComment(), '@var');
 
-        if (0 === $varTag) {
-            return array();
-            // @TODO For the moment Boomgo do not force or recommend @var
-            // trigger_error(sprintf('Boomgo annoted property in "%s->%s" should use @var tag', $className, $propertyName), E_USER_WARNING);
-        } elseif (1 < $varTag) {
+        if (1 < $varTag) {
             throw new \RuntimeException(sprintf('@var tag should occur only once for "%s->%s"', $className, $propertyName));
+        } elseif (1 === $varTag) {
+            // Grep the @var tag content (type & summary)
+
+            if (!preg_match('#@var\h+(\H+)\h*(.*)\v#', $property->getDocComment(), $captured)) {
+                $message = 'Malformed Boomgo metadata for @var tag in "%s->%s" expects minimum standard declaration "@var [type]"';
+                throw new \RuntimeException(sprintf($message, $className , $propertyName));
+            }
+
+            $metadata['type'] = $captured[1];
+            $metadata['summary'] = trim($captured[2]);
         }
 
-        // Grep the @var tag content (type & summary)
-        if (!preg_match('#@var\h+(\H+)\h*(.*)\v#', $property->getDocComment(), $metadata)) {
-            $message = 'Malformed Boomgo metadata for @var tag in "%s->%s" expects minimum standard declaration "@var [type]"';
-            throw new \RuntimeException(sprintf($message, $className , $propertyName));
-        }
-        array_shift($metadata);
-        $metadata = array_filter($metadata);
         return $metadata;
     }
 
-    public function getEmbedDefinition($type, $summary)
+    /**
+     * Return a definition from an array of metadata
+     *
+     * @param  array  $metadata
+     * @return array|null
+     */
+    public function getDefinition(array $metadata)
     {
+        $type = $metadata['type'];
         $namespacePattern = '#((?:\\\\*)(?:\w+\\\\*)+\w+)#';
-        $embedDefinition = null;
-        /*
-         * Embedded collection (primitive type)
-         *   @var array Valid\Namespace
-         */
-        if ($type == 'array') {
-            if (isset($summary) && preg_match_all($namespacePattern, $summary, $classes)) {
-                $embedDefinition = array('array', $classes[0][0]);
-            } else {
-                $embedDefinition = null; // Assuming we deal with regular array
-            }
-        }
+        $definition = null;
 
-        /*
-         * Embedded object/document (sugar/not typed)
-         *   @var object Valid\Namespace
-         */
-        elseif ($type == 'object') {
-            if (preg_match($namespacePattern, $summary, $classes)) {
-                $embedDefinition = $classes[0];
+        if ($type == 'array'  && isset($metadata['summary'])) {
+            // Array are special, could mean an embedded "collection" or a regular array
+            if (preg_match_all($namespacePattern, $metadata['summary'], $classes)) {
+                // Embedded collection:  @var array Valid\Namespace
+                $definition = array('type' => Map::COLLECTION, 'class' => $classes[0][0]);
+            }
+
+        } elseif ($type == 'object') {
+            if (isset($metadata['summary']) && preg_match($namespacePattern, $metadata['summary'], $classes)) {
+                // Embedded & not typed object/document:  @var object Valid\Namespace
+                $definition = array('type' => Map::DOCUMENT, 'class' => $classes[0]);
             } else {
                 throw new \RuntimeExcpetion(sprintf('Malformed Boomgo "object" metadata for @var in "%s->%s"', $className, $propertyName));
             }
+
+        } elseif (preg_match($namespacePattern, $type, $classes)) {
+            //Embedded && typed object/document   @var Valid\Namespace
+             $definition = array('type' => Map::DOCUMENT, 'class' => $classes[0]);
         }
 
-        /*
-         * Embedded object/document (typed)
-         *   @var Valid\Namespace
-         */
-        elseif (preg_match($namespacePattern, $type, $classes)) {
-            $embedDefinition = $classes[0];
-        }
-
-        return $embedDefinition;
+        return $definition;
     }
 
     /**
