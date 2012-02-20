@@ -15,9 +15,6 @@
 namespace Boomgo\tests\units\Parser;
 
 use Boomgo\Parser;
-use Boomgo\Mapper;
-
-use Boomgo\tests\units\Mock;
 
 /**
  * AnnotationParser tests
@@ -29,7 +26,7 @@ class AnnotationParser extends \mageekguy\atoum\test
     public function test__construct()
     {
         // Should be able to define the annotation though the constructor
-        $parser = new Parser\AnnotationParser(new Mock\Formatter(), '@MyHypeAnnot');
+        $parser = new Parser\AnnotationParser('@MyHypeAnnot');
 
         $this->assert
             ->string($parser->getAnnotation())
@@ -38,7 +35,7 @@ class AnnotationParser extends \mageekguy\atoum\test
 
     public function testSetGetAnnotation()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser();
 
         // Should set and get annotation
         $parser->setAnnotation('@MyHypeAnnot');
@@ -54,289 +51,35 @@ class AnnotationParser extends \mageekguy\atoum\test
             })
             ->isInstanceOf('\InvalidArgumentException')
             ->hasMessage('Boomgo annotation tag should start with "@" character');
-
-        $this->assert
-            ->exception(function() use ($parser) {
-                $parser->setAnnotation('@12');
-            })
-            ->isInstanceOf('\InvalidArgumentException')
-            ->hasMessage('Boomgo annotation tag should start with "@" character');
     }
 
-    /**
-     * Build a map for a php class checking indexes (mongo/php), accessors, mutators and embed types
-     */
-    public function testBuildMap()
+    public function testParse()
     {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
+        $parser = new Parser\AnnotationParser();
 
-        $map = $parser->buildMap('Boomgo\tests\units\Mock\Document');
+        $metadata = $parser->parse('Boomgo\\tests\\units\\Fixture\\Annotation');
 
-        // Should return an instance of Map
-        $this->assert
-            ->object($map)
-            ->isInstanceOf('Boomgo\Mapper\Map');
-
-        // Should return an array filled with presisted mongo key name and php attribute name
-        $this->assert
-            ->array($map->getMongoIndex())
-                ->isNotEmpty()
-                ->hasSize(7)
-                ->isIdenticalTo(array('id' => 'id',
-                    'mongoString' => 'mongoString',
-                    'mongoPublicString' => 'mongoPublicString',
-                    'mongoNumber' => 'mongoNumber',
-                    'mongoDocument' => 'mongoDocument',
-                    'mongoCollection' => 'mongoCollection',
-                    'mongoArray' => 'mongoArray'))
-            ->array($map->getPhpIndex())
-                ->isNotEmpty()
-                ->hasSize(7)
-                ->isIdenticalTo(array('id' => 'id',
-                    'mongoString' => 'mongoString',
-                    'mongoPublicString' => 'mongoPublicString',
-                    'mongoNumber' => 'mongoNumber',
-                    'mongoDocument' => 'mongoDocument',
-                    'mongoCollection' => 'mongoCollection',
-                    'mongoArray' => 'mongoArray'));
-
-        // Should return an array of mutator for each mongo key which don't expose a public php attribute
-        $this->assert
-            ->array($map->getMutators())
-            ->isNotEmpty()
-            ->hasSize(6)
-            ->isIdenticalTo (array('id' => 'setId',
-                'mongoString' => 'setMongoString',
-                'mongoNumber' => 'setMongoNumber',
-                'mongoDocument' => 'setMongoDocument',
-                'mongoCollection' => 'setMongoCollection',
-                'mongoArray' => 'setMongoArray'));
-
-        // Should return an array where key are mongo key containing embedded document or collection
-        $this->assert
-            ->array($map->getEmbedMaps())
-            ->hasKeys(array('mongoDocument', 'mongoCollection'));
-
-        // Should return a map instance for a single embedded document
-        $this->assert
-            ->object($map->getEmbedMapFor('mongoDocument'))
-            ->isInstanceOf('Boomgo\Mapper\Map');
-
-        // Should return a map instance for a embedded collection
-        $this->assert
-            ->object($map->getEmbedMapFor('mongoCollection'))
-            ->isInstanceOf('Boomgo\Mapper\Map');
-
-        // Should return an array where key are mongo key and value are embed type
-        $this->assert
-            ->array($map->getEmbedTypes())
-            ->isIdenticalTo(array('mongoDocument' => 'DOCUMENT', 'mongoCollection' => 'COLLECTION'));
-
-        // Should return the type 'DOCUMENT' for a key defined as a single embedded document
-        $this->assert
-            ->string($map->getEmbedTypeFor('mongoDocument'))
-            ->isEqualTo('DOCUMENT');
-
-        // Should return the type 'COLLECTION' for a key defined as embedded collection
-        $this->assert
-            ->string($map->getEmbedTypeFor('mongoCollection'))
-            ->isEqualTo('COLLECTION');
-
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-    }
-
-    public function testParseMetadata()
-    {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-        $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','mongoArray');
-        $metadata = $parser->parseMetadata($reflectedProperty);
         $this->assert
             ->array($metadata)
+                ->hasSize(6)
+                ->hasKeys(array('type', 'typeDescription',  'namespace', 'typeNamespace', 'typeManyNamespace', 'typeInvalidNamespace'))
+            ->array($metadata['type'])
+                ->hasSize(1)
+                ->isIdenticalTo(array('type' => 'type'))
+            ->array($metadata['typeDescription'])
+                ->hasSize(1)
+                ->isIdenticalTo(array('type' => 'type'))
+            ->array($metadata['namespace'])
+                ->hasSize(1)
+                ->isIdenticalTo(array('type' => 'Type\\Is\\Namespace\\Object'))
+            ->array($metadata['typeNamespace'])
                 ->hasSize(2)
-                ->isIdenticalTo(array('type' => 'array', 'summary' => ''));
-
-        $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','id');
-        $metadata = $parser->parseMetadata($reflectedProperty);
-        $this->assert
-            ->array($metadata)
+                ->isIdenticalTo(array('type' => 'type', 'mappedClass' => 'Valid\\Namespace\\Object'))
+            ->array($metadata['typeManyNamespace'])
                 ->hasSize(2)
-                ->isIdenticalTo(array('type' =>'\MongoId',  'summary' => ''));
-
-        $reflectedProperty = new \ReflectionProperty('Boomgo\tests\units\Mock\Document','mongoCollection');
-        $metadata = $parser->parseMetadata($reflectedProperty);
-        $this->assert
-            ->array($metadata)
-                ->hasSize(2)
-                ->isIdenticalTo(array('type' =>'array', 'summary' => 'Boomgo\Tests\Units\Mock\EmbedDocument'));
-
-        // Should return an array of metadata
-        $document = new Mock\Document();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('mongoDocument');
-        $metadata = $parser->parseMetadata($reflectedProperty);
-        $this->assert
-            ->array($metadata)
-            ->isNotEmpty()
-            ->hasSize(2)
-            ->isIdenticalTo(array('type' => 'object', 'summary' => 'Boomgo\tests\units\Mock\EmbedDocument'));
+                ->isIdenticalTo(array('type' => 'type', 'mappedClass' => 'First\\Namespace\\Object Second\\Namespace\\Object'))
+            ->array($metadata['typeInvalidNamespace'])
+                ->hasSize(1)
+                ->isIdenticalTo(array('type' => 'type'));
     }
-
-/* @todo refactor scope or into a validator class
-    public function testHasValidIdentifier()
-    {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-        // Should return true when object provide a valid identifier implementation
-        $object = new Mock\Document();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->hasValidIdentifier($reflection);
-
-        $this->assert
-            ->boolean($bool)
-            ->isTrue();
-
-        // Should return false when an object provide an uncomplete identifier implementation (getter)
-        $object = new Mock\DocumentMissGetter();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->hasValidIdentifier($reflection);
-
-        $this->assert
-            ->boolean($bool)
-            ->isFalse();
-
-        // Should return false when an object provide an uncomplete identifier implementation (setter)
-        $object = new Mock\DocumentMissSetter();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->hasValidIdentifier($reflection);
-
-        $this->assert
-            ->boolean($bool)
-            ->isFalse();
-
-         // Should return false when an object provide a valid identifier implementation without mongo annotation
-        $object = new Mock\DocumentExcludedId();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->hasValidIdentifier($reflection);
-
-        $this->assert
-            ->boolean($bool)
-            ->isFalse();
-
-        // Should throw exception when an bject provide a complete yet invalid identifier implem (getter)
-        $object = new Mock\DocumentInvalidGetter();
-        $reflection = new \ReflectionObject($object);
-
-        $this->assert
-            ->exception(function() use ($parser, $reflection) {
-                    $parser->hasValidIdentifier($reflection);
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Object expect an id but do not expose valid accessor/mutator');
-
-        // Should throw exception when an object provide a complete yet invalid identifier implem (setter)
-        $object = new Mock\DocumentInvalidSetter();
-        $reflection = new \ReflectionObject($object);
-
-        $this->assert
-            ->exception(function() use ($parser, $reflection) {
-                    $parser->hasValidIdentifier($reflection);
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Object expect an id but do not expose valid accessor/mutator');
-    }
-
-    public function testIsValidAccessor()
-    {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-        // Should return true when getter is public and do not required argument
-        $object = new Mock\Document();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->isValidAccessor($reflection->getMethod('getId'));
-
-        $this->assert
-            ->boolean($bool)
-            ->isTrue();
-
-        // Should return false when getter is invalid
-        $object = new Mock\DocumentInvalidGetter();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->isValidAccessor($reflection->getMethod('getId'));
-
-        $this->assert
-            ->boolean($bool)
-            ->isFalse();
-    }
-
-    public function testIsValidMutator()
-    {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-        // Should return true when setter is public and require only one argument
-        $object = new Mock\Document();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->isValidMutator($reflection->getMethod('setId'));
-
-        $this->assert
-            ->boolean($bool)
-            ->isTrue();
-
-        // Should return false when setter is invalid
-        $object = new Mock\DocumentInvalidSetter();
-        $reflection = new \ReflectionObject($object);
-        $bool = $parser->isValidMutator($reflection->getMethod('setId'));
-
-        $this->assert
-            ->boolean($bool)
-            ->isFalse();
-    }
-
-    public function testIsBoomgoProperty()
-    {
-        $parser = new Parser\AnnotationParser(new Mock\Formatter());
-
-         // Should return false if proprerty don't have annotation
-        $document = new Mock\DocumentExcludedId();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('id');
-
-        $bool = $parser->isBoomgoProperty($reflectedProperty);
-        $this->assert
-            ->boolean($bool)
-            ->isFalse();
-
-        // Should return true if proprerty has annotation
-        $document = new Mock\Document();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('id');
-
-        $bool = $parser->isBoomgoProperty($reflectedProperty);
-        $this->assert
-            ->boolean($bool)
-            ->isTrue();
-
-        // Should throws exception if property has 2 inline annotations
-        $document = new Mock\DocumentInvalidAnnotation();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('inline');
-        $this->assert
-            ->exception(function() use ($parser, $reflectedProperty) {
-                    $parser->isBoomgoProperty($reflectedProperty);
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Boomgo annotation should occur only once');
-
-        // Should throws exception if property has 2 multi-line annotations
-        $document = new Mock\DocumentInvalidAnnotation();
-        $reflectedObject = new \ReflectionObject($document);
-        $reflectedProperty = $reflectedObject->getProperty('multiline');
-        $this->assert
-            ->exception(function() use ($parser, $reflectedProperty) {
-                    $parser->isBoomgoProperty($reflectedProperty);
-                })
-            ->isInstanceOf('RuntimeException')
-            ->hasMessage('Boomgo annotation should occur only once');
-    }
-*/
 }
