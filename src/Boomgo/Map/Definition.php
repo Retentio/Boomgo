@@ -33,11 +33,11 @@ class Definition
         'array'   => true,
         'object'  => false);
 
-    private $type;
-
     private $attribute;
 
     private $key;
+
+    private $type;
 
     private $mappedType;
 
@@ -49,6 +49,7 @@ class Definition
 
     /**
      * Check is a string is a valid namespace
+     * @todo  refacto & move this method
      *
      * @param  string  $string
      * @return boolean
@@ -63,6 +64,11 @@ class Definition
         $this->fromArray($metadata);
     }
 
+    public function __toString()
+    {
+        return $this->attribute;
+    }
+
     public function getType()
     {
         return $this->type;
@@ -72,20 +78,9 @@ class Definition
     {
         return $this->attribute;
     }
-
-    public function setAttribute($value)
-    {
-        $this->attribute = $value;
-    }
-
     public function getKey()
     {
         return $this->key;
-    }
-
-    public function setKey($value)
-    {
-        $this->key = $value;
     }
 
     public function getMappedType()
@@ -98,25 +93,25 @@ class Definition
         return $this->mappedClass;
     }
 
-    public function getMutator()
-    {
-        return $this->mutator;
-    }
+    // public function getMutator()
+    // {
+    //     return $this->mutator;
+    // }
 
-    public function setMutator($value)
-    {
-        $this->mutator = $value;
-    }
+    // public function setMutator($value)
+    // {
+    //     $this->mutator = $value;
+    // }
 
-    public function getAccessor()
-    {
-        return $this->accessor;
-    }
+    // public function getAccessor()
+    // {
+    //     return $this->accessor;
+    // }
 
-    public function setAccessor($value)
-    {
-        $this->accessor = $value;
-    }
+    // public function setAccessor($value)
+    // {
+    //     $this->accessor = $value;
+    // }
 
     public function isMapped()
     {
@@ -197,5 +192,7 @@ class Definition
         }
 
         $this->type = $type;
+        $this->attribute = $data['attribute'];
+        $this->key = $data['key'];
     }
 }

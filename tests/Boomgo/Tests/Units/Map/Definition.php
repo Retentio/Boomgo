@@ -26,7 +26,7 @@ class Definition extends Test
 {
     public function test__construct()
     {
-        // Should throw an error if no array is provided
+        // Should throw an error if argument array (metadata) isn't provided
         $this->assert
             ->error(function() {
                 new Map\Definition();
