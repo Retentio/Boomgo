@@ -129,6 +129,8 @@ class AnnotationParser implements ParserInterface
             throw new \RuntimeException(sprintf('"@var" tag is not unique', $tag));
         }
 
+        $metadata['attribute'] = $property->getName();
+
         // Grep type and optional namespaces
         preg_match('#@var\h+([a-zA-Z0-9\\\\_]+)(?:\h+\[([a-zA-Z0-9\\\\\s,_]+)\]\h*|.*)\v#', $docComment, $captured);
 
