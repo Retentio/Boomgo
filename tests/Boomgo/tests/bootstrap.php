@@ -6,4 +6,4 @@ if ((!$loader = @include __DIR__.'/../../../vendor/.composer/autoload.php')) {
         'php composer.phar install'.PHP_EOL);
 }
 
-$loader->add('Boomgo\\tests', 'tests');
+$loader->add('Boomgo\\Tests', 'tests');

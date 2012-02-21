@@ -18,7 +18,7 @@
     ],
 
     "recommend": {
-        "mageekguy/atoum": "master-dev"
+        "mageekguy/atoum": "dev-master"
     },
 
     "autoload": {
