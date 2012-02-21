@@ -12,8 +12,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\tests\units\Parser;
+namespace Boomgo\Tests\Units\Parser;
 
+use Boomgo\Tests\Units\Test;
 use Boomgo\Parser;
 
 /**
@@ -21,7 +22,7 @@ use Boomgo\Parser;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class AnnotationParser extends \mageekguy\atoum\test
+class AnnotationParser extends Test
 {
     public function test__construct()
     {
@@ -61,8 +62,10 @@ class AnnotationParser extends \mageekguy\atoum\test
 
         $this->assert
             ->array($metadata)
-                ->hasSize(6)
-                ->hasKeys(array('type', 'typeDescription',  'namespace', 'typeNamespace', 'typeManyNamespace', 'typeInvalidNamespace'))
+                ->hasSize(7)
+                ->hasKeys(array('novar', 'type', 'typeDescription',  'namespace', 'typeNamespace', 'typeManyNamespace', 'typeInvalidNamespace'))
+            ->array($metadata['novar'])
+                ->isEmpty()
             ->array($metadata['type'])
                 ->hasSize(1)
                 ->isIdenticalTo(array('type' => 'type'))

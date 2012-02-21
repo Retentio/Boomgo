@@ -6,6 +6,11 @@ class Annotation
 {
     /**
      * @Boomgo
+     */
+    public $novar;
+
+    /**
+     * @Boomgo
      * @var type
      */
     public $type;
