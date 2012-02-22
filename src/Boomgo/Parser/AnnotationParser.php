@@ -64,22 +64,39 @@ class AnnotationParser implements ParserInterface
     }
 
     /**
-     * Extract and return Boomgo metadata from a class
+     * Implement ParserInterface
      *
-     * @param  string $class FQDN of the class to parse
-     * @return array
+     * {@inheritdoc}
      */
-    public function parse($class)
+    public function supports($resource, $type = null)
     {
+        return is_string($resource) && 'php' === pathinfo($resource, PATHINFO_EXTENSION) && (!$type || 'annotation' === $type);
+    }
+
+    /**
+     * Implement ParserInterface
+     *
+     * {@inheritdoc}
+     */
+    public function parse($filepath)
+    {
+        // Regexp instead of tokens because of the bad perf @link > https://gist.github.com/1886076
+        if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
+            throw new \RuntimeException('Unable to find namespace declaration');
+        }
+
+        $fqcn = $captured[1].'\\'.$captured[2];
         $metadata = array();
 
-        $reflectedClass = new \ReflectionClass($class);
+        $reflectedClass = new \ReflectionClass($fqcn);
+        $metadata['class'] = $reflectedClass->getName();
+
         $reflectedProperties = $reflectedClass->getProperties();
         foreach ($reflectedProperties as $reflectedProperty) {
 
             if ($this->isBoomgoProperty($reflectedProperty)) {
                 $propertyMetadata = $this->parseMetadata($reflectedProperty);
-                $metadata[$reflectedProperty->getName()] = $propertyMetadata;
+                $metadata['definitions'][$reflectedProperty->getName()] = $propertyMetadata;
             }
         }
 

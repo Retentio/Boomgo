@@ -58,30 +58,35 @@ class AnnotationParser extends Test
     {
         $parser = new Parser\AnnotationParser();
 
-        $metadata = $parser->parse('Boomgo\\Tests\\Units\\Fixture\\Annotation');
+        $metadata = $parser->parse(__DIR__.'/../Fixture/Annotation.php');
         $this->assert
             ->array($metadata)
+                ->hasSize(2)
+                ->hasKeys(array('class', 'definitions'))
+            ->string($metadata['class'])
+                ->isIdenticalTo('Boomgo\\Tests\\Units\\Fixture\\Annotation')
+            ->array($metadata['definitions'])
                 ->hasSize(7)
                 ->hasKeys(array('novar', 'type', 'typeDescription',  'namespace', 'typeNamespace', 'typeManyNamespace', 'typeInvalidNamespace'))
-            ->array($metadata['novar'])
+            ->array($metadata['definitions']['novar'])
                 ->hasSize(1)
                 ->isIdenticalTo(array('attribute' => 'novar'))
-            ->array($metadata['type'])
+            ->array($metadata['definitions']['type'])
                 ->hasSize(2)
                 ->isIdenticalTo(array('attribute' => 'type', 'type' => 'type'))
-            ->array($metadata['typeDescription'])
+            ->array($metadata['definitions']['typeDescription'])
                 ->hasSize(2)
                 ->isIdenticalTo(array('attribute' => 'typeDescription', 'type' => 'type'))
-            ->array($metadata['namespace'])
+            ->array($metadata['definitions']['namespace'])
                 ->hasSize(2)
                 ->isIdenticalTo(array('attribute' => 'namespace', 'type' => 'Type\\Is\\Namespace\\Object'))
-            ->array($metadata['typeNamespace'])
+            ->array($metadata['definitions']['typeNamespace'])
                 ->hasSize(3)
                 ->isIdenticalTo(array('attribute' => 'typeNamespace', 'type' => 'type', 'mappedClass' => 'Valid\\Namespace\\Object'))
-            ->array($metadata['typeManyNamespace'])
+            ->array($metadata['definitions']['typeManyNamespace'])
                 ->hasSize(3)
                 ->isIdenticalTo(array('attribute' => 'typeManyNamespace', 'type' => 'type', 'mappedClass' => 'First\\Namespace\\Object Second\\Namespace\\Object'))
-            ->array($metadata['typeInvalidNamespace'])
+            ->array($metadata['definitions']['typeInvalidNamespace'])
                 ->hasSize(2)
                 ->isIdenticalTo(array('attribute' => 'typeInvalidNamespace', 'type' => 'type'));
     }

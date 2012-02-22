@@ -1,13 +1,13 @@
 <?php
 
-namespace Boomgo\tests\units\Mock;
+namespace Boomgo\Tests\Units\Fixture;
 
 /**
  * An invalid Boomgo document class
  * fully exposing mapper capabilities with identifier
  * yet with cyclic dependency
  */
-class Document
+class AnnotedDocument
 {
     /**
      * Identifier
@@ -32,15 +32,22 @@ class Document
 
     /**
      * A mongo number
-     * @Boomgo
+     * @Boomgo number
      */
     private $mongoNumber;
+
+    /**
+     * An embedded array
+     * @Boomgo
+     * @var array
+     */
+    private $mongoArray;
 
     /**
      * An single embedded EmbedDocument
      *
      * @Boomgo
-     * @var object Boomgo\tests\units\Mock\EmbedDocument
+     * @var Boomgo\tests\units\Mock\EmbedDocument
      */
     private $mongoDocument;
 
@@ -51,13 +58,6 @@ class Document
      * @var array Boomgo\Tests\Units\Mock\EmbedDocument
      */
     private $mongoCollection;
-
-    /**
-     * An embedded array
-     * @Boomgo
-     * @var array
-     */
-    private $mongoArray;
 
 
     private $attribute;

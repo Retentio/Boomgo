@@ -89,17 +89,17 @@ class Underscore2CamelFormatter extends \mageekguy\atoum\test
 
         // Should return a camelCase php accessor when explicitly providing an underscored mongo key
         $this->assert
-            ->string($formatter->getPhpAccessor('underscored_mongo_key', true))
+            ->string($formatter->getPhpAccessor('underscored_mongo_key', 'mixed', true))
             ->isEqualTo('getUnderscoredMongoKey');
 
         // Should return a camelCase php accessor when explicitly providing a lower camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpAccessor('underscoredMongoKey', false))
+            ->string($formatter->getPhpAccessor('underscoredMongoKey', 'mixed', false))
             ->isEqualTo('getUnderscoredMongoKey');
 
         // Should return a camelCase php accessor when explicitly providing an upper camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpAccessor('UnderscoredMongoKey', false))
+            ->string($formatter->getPhpAccessor('UnderscoredMongoKey', 'mixed', false))
             ->isEqualTo('getUnderscoredMongoKey');
     }
 
@@ -114,17 +114,17 @@ class Underscore2CamelFormatter extends \mageekguy\atoum\test
 
         // Should return a camelCase php mutator when explicitly providing an underscored mongo key
         $this->assert
-            ->string($formatter->getPhpMutator('underscored_mongo_key', true))
+            ->string($formatter->getPhpMutator('underscored_mongo_key', 'mixed', true))
             ->isEqualTo('setUnderscoredMongoKey');
 
         // Should return a camelCase php mutator when explicitly providing a lower camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpMutator('underscoredMongoKey', false))
+            ->string($formatter->getPhpMutator('underscoredMongoKey', 'mixed', false))
             ->isEqualTo('setUnderscoredMongoKey');
 
         // Should return a camelCase php mutator when explicitly providing an upper camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpMutator('UnderscoredMongoKey', false))
+            ->string($formatter->getPhpMutator('UnderscoredMongoKey', 'mixed', false))
             ->isEqualTo('setUnderscoredMongoKey');
     }
 }

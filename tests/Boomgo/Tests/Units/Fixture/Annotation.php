@@ -1,6 +1,6 @@
 <?php
 
-namespace Boomgo\tests\units\Fixture;
+namespace Boomgo\Tests\Units\Fixture;
 
 class Annotation
 {

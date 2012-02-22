@@ -34,19 +34,19 @@ class Definition extends Test
             ->withType(E_RECOVERABLE_ERROR);
 
         // Should set the default type "mixed"
-        $definition = new Map\Definition(array());
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('mixed');
 
         // Should set a provided type
-        $definition = new Map\Definition(array('type' => 'string'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'string'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('string');
 
         // Should ignore mappedClass when providing a supported non-mappable (pseudo) type
-        $definition = new Map\Definition(array('type' => 'string', 'mappedClass' => '\\User\\Namespace'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'string', 'mappedClass' => '\\User\\Namespace'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('string')
@@ -56,7 +56,7 @@ class Definition extends Test
                 ->isNull();
 
         // Should hanlde a custom type (FQDN): must be defined as a type and a mappedClass
-        $definition = new Map\Definition(array('type' => '\\User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => '\\User\\Namespace\\Object'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('\\User\\Namespace\\Object')
@@ -66,7 +66,7 @@ class Definition extends Test
                 ->isEqualTo('\\User\\Namespace\\Object');
 
         // Should prepend a \ to a custom type (FQDN)
-        $definition = new Map\Definition(array('type' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'User\\Namespace\\Object'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('\\User\\Namespace\\Object')
@@ -74,7 +74,7 @@ class Definition extends Test
                 ->isEqualTo('\\User\\Namespace\\Object');
 
         // Should handle embedded collection of documents with type array and custom type as mappedClass
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => '\\Valid\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => '\\Valid\\Namespace\\Object'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('array')
@@ -84,7 +84,7 @@ class Definition extends Test
                 ->isEqualTo('\\Valid\\Namespace\\Object');
 
         // Should prepend a \ for embedded collection of documents
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => 'Valid\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => 'Valid\\Namespace\\Object'));
         $this->assert
             ->string($definition->getType())
                 ->isEqualTo('array')
@@ -94,7 +94,7 @@ class Definition extends Test
         // Should throw exception if type is not supported and isn't a valid FQDN
         $this->assert
             ->exception(function() {
-                new Map\Definition(array('type' => 'invalid_FQDN'));
+                new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'invalid_FQDN'));
             })
             ->isInstanceOf('InvalidArgumentException')
             ->hasMessage('User type "invalid_FQDN" is not a valid FQDN');
@@ -102,7 +102,7 @@ class Definition extends Test
         // Should throw exception if type is array and mappedClass isn't a valid FQDN
         $this->assert
             ->exception(function() {
-                new Map\Definition(array('type' => 'array','mappedClass' => 'invalid_FQDN'));
+                new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array','mappedClass' => 'invalid_FQDN'));
             })
             ->isInstanceOf('InvalidArgumentException')
             ->hasMessage('Mapped class "invalid_FQDN" is not a valid FQDN');
@@ -111,25 +111,25 @@ class Definition extends Test
     public function testIsMapped()
     {
         // Should return true if type is a FQDN
-        $definition = new Map\Definition(array('type' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isMapped())
                 ->isTrue();
 
         // Should return true if type is array and mappedClass is FQDN
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isMapped())
                 ->isTrue();
 
         // Should return false if type is supported and non mappable
-        $definition = new Map\Definition(array('type' => 'string'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'string'));
         $this->assert
             ->boolean($definition->isMapped())
                 ->isFalse();
 
         // Should return false if type is array and no mappedClass is provided
-        $definition = new Map\Definition(array('type' => 'array'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array'));
         $this->assert
             ->boolean($definition->isMapped())
                 ->isFalse();
@@ -138,7 +138,7 @@ class Definition extends Test
     public function testIsDocumentMapped()
     {
         // Should return false if type is a FQDN
-        $definition = new Map\Definition(array('type' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isDocumentMapped())
                 ->isTrue();
@@ -146,20 +146,20 @@ class Definition extends Test
         foreach (Map\Definition::$nativeClasses as $nativeClass => $boolean) {
 
             // Should return false if type is a native supported FQDN
-            $definition = new Map\Definition(array('type' => $nativeClass));
+            $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => $nativeClass));
             $this->assert
                 ->boolean($definition->isDocumentMapped())
                     ->isTrue();
         }
 
         // Should return false if type is array and mappedClass is FQDN
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isDocumentMapped())
                 ->isFalse();
 
         // Should return false if type is not a FQDN
-        $definition = new Map\Definition(array('type' => 'string'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'string'));
         $this->assert
             ->boolean($definition->isDocumentMapped())
                 ->isFalse();
@@ -168,7 +168,7 @@ class Definition extends Test
     public function testIsCollectionMapped()
     {
         // Should return true if type is array and mappedClass is FQDN
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isCollectionMapped())
                 ->isTrue();
@@ -176,20 +176,20 @@ class Definition extends Test
         foreach (Map\Definition::$nativeClasses as $nativeClass => $boolean) {
 
             // Should return true if type is array and mappedClass a native supported FQDN
-            $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => $nativeClass));
+            $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => $nativeClass));
             $this->assert
                 ->boolean($definition->isCollectionMapped())
                     ->isTrue();
         }
 
         // Should return false if type is a FQDN
-        $definition = new Map\Definition(array('type' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isCollectionMapped())
                 ->isFalse();
 
         // Should return false if type is not a FQDN
-        $definition = new Map\Definition(array('type' => 'array'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array'));
         $this->assert
             ->boolean($definition->isCollectionMapped())
                 ->isFalse();
@@ -200,32 +200,32 @@ class Definition extends Test
         foreach (Map\Definition::$nativeClasses as $nativeClass => $boolean) {
 
             // Should return true for each native types embedded as single document
-            $definition = new Map\Definition(array('type' => $nativeClass));
+            $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => $nativeClass));
             $this->assert
                 ->boolean($definition->isNativeMapped())
                     ->isTrue();
 
             // Should return true for each native types embedded as collection of documents
-            $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => $nativeClass));
+            $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => $nativeClass));
             $this->assert
                 ->boolean($definition->isNativeMapped())
                     ->isTrue();
         }
 
         // Should return false if type isn't a FQDN
-        $definition = new Map\Definition(array());
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key'));
         $this->assert
             ->boolean($definition->isNativeMapped())
                 ->isFalse();
 
         // Should return false if type is a FQDN and isn't natively supported
-        $definition = new Map\Definition(array('type' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isNativeMapped())
                 ->isFalse();
 
         // Should return false for non native FQDN type
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isNativeMapped())
                 ->isFalse();
@@ -234,13 +234,13 @@ class Definition extends Test
     public function testIsUserMapped()
     {
         // Should return true if type is a custom user FQDN
-        $definition = new Map\Definition(array('type' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isUserMapped())
                 ->isTrue();
 
         // Should return true if type is array and mappedClass is a custom FQDN
-        $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
         $this->assert
             ->boolean($definition->isUserMapped())
                 ->isTrue();
@@ -248,20 +248,20 @@ class Definition extends Test
         foreach (Map\Definition::$nativeClasses as $nativeClass => $boolean) {
 
             // Should return false if type is a native supported FQDN
-            $definition = new Map\Definition(array('type' => $nativeClass));
+            $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => $nativeClass));
             $this->assert
                 ->boolean($definition->isUserMapped())
                     ->isFalse();
 
             // Should return false if type is array and mappedClass a native supported FQDN
-            $definition = new Map\Definition(array('type' => 'array', 'mappedClass' => $nativeClass));
+            $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'array', 'mappedClass' => $nativeClass));
             $this->assert
                 ->boolean($definition->isUserMapped())
                     ->isFalse();
         }
 
         // Should return false if type isn't a FQDN
-        $definition = new Map\Definition(array('type' => 'string'));
+        $definition = new Map\Definition(array('attribute' => 'attribute', 'key' => 'key', 'type' => 'string'));
         $this->assert
             ->boolean($definition->isUserMapped())
                 ->isFalse();

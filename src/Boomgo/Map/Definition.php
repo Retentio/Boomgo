@@ -160,6 +160,8 @@ class Definition
 
     private function fromArray(array $metadata)
     {
+        // @TODO Throw exception if mandatory parameters Attribute & Key are missing !!
+
         $defaults = array('type' => 'mixed', 'mappedClass' => null);
         $data = array_merge($defaults, $metadata);
 

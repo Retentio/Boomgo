@@ -21,5 +21,20 @@ namespace Boomgo\Parser;
  */
 interface ParserInterface
 {
-    public function parse($class);
+    /**
+     * Returns true if this class supports the given resource.
+     *
+     * @param  resource $resource
+     * @param  string   $type
+     * @return boolean
+     */
+    public function supports($resource);
+
+    /**
+     * Extract and return an array of metadata from a resource
+     *
+     * @param  string $filepath
+     * @return array
+     */
+    public function parse($filepath);
 }
