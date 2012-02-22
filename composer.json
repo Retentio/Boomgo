@@ -15,7 +15,6 @@
             "homepage": "https://github.com/Rententio/Boomgo/contributors"
         }
     ],
-
     "require": {
         "php": ">=5.3.2",
         "symfony/finder": "dev-master"

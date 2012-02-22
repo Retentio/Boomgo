@@ -1,5 +1,5 @@
-Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/)
-==============================================================
+Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/) [![Build Status](https://secure.travis-ci.org/Retentio/Boomgo.png?branch=refacto)](http://travis-ci.org/Retentio/Boomgo)
+=============================================================================================================================
 
 _Boomgo still a work in progress and is initially developped for [Retentio](http://retent.io)._
 
