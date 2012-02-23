@@ -21,43 +21,36 @@ class AnnotedDocument
      * @Boomgo
      * @var string
      */
-    private $mongoString;
-
-    /**
-     * A mongo stored and public string
-     * @Boomgo
-     * @var string
-     */
-    public $mongoPublicString;
+    private $string;
 
     /**
      * A mongo number
      * @Boomgo number
      */
-    private $mongoNumber;
+    private $number;
 
     /**
      * An embedded array
      * @Boomgo
      * @var array
      */
-    private $mongoArray;
+    private $array;
 
     /**
      * An single embedded EmbedDocument
      *
      * @Boomgo
-     * @var Boomgo\tests\units\Mock\EmbedDocument
+     * @var Boomgo\Tests\Units\Fixture\AnnotedDocumentEmbed
      */
-    private $mongoDocument;
+    private $document;
 
     /**
      * A embedded collection of EmbedDocument
      *
      * @Boomgo
-     * @var array Boomgo\Tests\Units\Mock\EmbedDocument
+     * @var array Boomgo\Tests\Units\Fixtures\AnnotedDocument
      */
-    private $mongoCollection;
+    private $collection;
 
 
     private $attribute;
@@ -72,24 +65,24 @@ class AnnotedDocument
         $this->id =$id;
     }
 
-    public function setMongoString($value)
+    public function setString($value)
     {
-        $this->mongoString = $value;
+        $this->string = $value;
     }
 
-    public function getMongoString()
+    public function getString()
     {
-        return $this->mongoString;
+        return $this->string;
     }
 
-    public function setMongoNumber($value)
+    public function setNumber($value)
     {
-        $this->mongoNumber = $value;
+        $this->umber = $value;
     }
 
-    public function getMongoNumber()
+    public function getNumber()
     {
-        return $this->mongoNumber;
+        return $this->umber;
     }
 
     public function setAttribute($value)
@@ -102,33 +95,33 @@ class AnnotedDocument
         return $this->attribute;
     }
 
-    public function setMongoDocument($value)
+    public function setArray($value)
     {
-        $this->mongoDocument = $value;
+        $this->array = $value;
     }
 
-    public function getMongoDocument()
+    public function getArray()
     {
-        return $this->mongoDocument;
+        return $this->array;
     }
 
-    public function setMongoArray($value)
+    public function setDocument($value)
     {
-        $this->mongoArray = $value;
+        $this->document = $value;
     }
 
-    public function getMongoArray()
+    public function getDocument()
     {
-        return $this->mongoArray;
+        return $this->document;
     }
 
-    public function setMongoCollection($value)
+    public function setCollection($value)
     {
-        $this->mongoCollection = $value;
+        $this->collection = $value;
     }
 
-    public function getMongoCollection()
+    public function getCollection()
     {
-        return $this->mongoCollection;
+        return $this->collection;
     }
 }
