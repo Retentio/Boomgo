@@ -53,7 +53,7 @@ class Map
      */
     public function __construct($class)
     {
-        $this->class = $class;
+        $this->class = (strpos($class,'\\') === 0) ? $class : '\\'.$class;
         $this->phpIndex = array();
         $this->mongoIndex = array();
         $this->definitions = array();
@@ -169,36 +169,32 @@ class Map
     /**
      * Adds an embedded map for a mongo key
      *
-     * @param string $attribute
      * @param Map    $map
      */
-    public function addDependency($attribute, Map $map)
+    public function addDependency(Map $map)
     {
-        if (!isset($this->phpAttribute[$attribute])) {
-            throw new \InvalidArgumentException(sprintf('Unable to add dependency for an un-mapped php attribute "%s"', $attribute));
-        }
-        $this->dependencies[$attribute] = $map;
+        $this->dependencies[$map->getClass()] = $map;
     }
 
     /**
-     * Checks if an embedded map exists for a mongo key
+     * Checks if an embedded map exists for a class
      *
-     * @param  string  $key
+     * @param  string  $class
      * @return boolean
      */
-    public function hasDependency($attribute)
+    public function hasDependency($class)
     {
-        return isset($this->dependencies[$attribute]);
+        return isset($this->dependencies[$class]);
     }
 
     /**
      * Returns an embedded map for a mongo key
      *
-     * @param  string $key
+     * @param  string $class
      * @return mixed  null|Map
      */
-    public function getDependency($attribute)
+    public function getDependency($class)
     {
-        return ($this->dependencies($attribute)) ? $this->dependencies[$attribute] : null;
+        return ($this->hasDependency($class)) ? $this->dependencies[$class] : null;
     }
 }

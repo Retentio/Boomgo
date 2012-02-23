@@ -18,7 +18,8 @@ use Boomgo\Map\Map;
 use Boomgo\Parser\ParserInterface;
 use Boomgo\Formatter\FormatterInterface;
 use Boomgo\Cache\CacheInterface;
-use Symfony\Component\Finder\Finder;
+use Symfony\Component\Finder\Finder,
+    Symfony\Component\Finder\SplFileInfo;
 
 /**
  * Builder
@@ -117,32 +118,64 @@ class Builder
 
     /**
      * Build Map(s) for an absolute directory or file path
+     *
      * @param string $path
      */
     public function build($path)
     {
-        $processed = 0;
+        $processed = array();
         $finder = new Finder();
 
-        if (is_dir($path)) {
+        if (is_array($path)) {
+            $collection = $path;
+        } elseif (is_dir($path)) {
             $collection = $finder->files()->name('*')->in($path);
         } elseif (is_file($path)) {
             $collection = array($path);
         } else {
-            throw new \InvalidArgumentException('Argument must be an aboslute directory or file path');
+            throw new \InvalidArgumentException('Argument must be an array or absolute directory or file path');
         }
 
         foreach ($collection as $resource) {
+            $resource = ($resource instanceof SplFileInfo) ? $resource->getPathName() : $resource;
             if ($this->parser->supports($resource))
             {
                 $metadata = $this->parser->parse($resource);
                 $map = $this->buildMap($metadata);
-                $this->cache->save($map->getClass(), $map);
-                $processed++;
+
+                $processed[$map->getClass()] = $map;
             }
         }
 
+        foreach ($processed as $class => $map) {
+            $map = $this->buildDependencie($map, $processed, array($map->getClass() => true), $map);
+            $this->cache->save($class, $map);
+        }
+
         return $processed;
+    }
+
+    private function buildDependencie(Map $masterMap, array $availableMaps, array $dependencies, Map $subMap)
+    {
+        $definitions = $subMap->getDefinitions();
+        foreach ($definitions as $definition) {
+
+            if ($definition->isUserMapped()) {
+
+                if (!isset($dependencies[$definition->getMappedClass()])) {
+                    $dependencies[$definition->getMappedClass()] = true;
+
+                    if (isset($availableMaps[$definition->getMappedClass()])) {
+                        $masterMap->addDependency($availableMaps[$definition->getMappedClass()]);
+                        $this->buildDependencie($masterMap, $availableMaps, $dependencies, $availableMaps[$definition->getMappedClass()]);
+                    } else {
+                        throw new \RuntimeException (sprintf('Unable to build dependencie "%s" for the map "%s"', $definition->getMappedClass(), $map->getClass()));
+                    }
+                }
+            }
+        }
+
+        return $masterMap;
     }
 
     /**
@@ -171,13 +204,15 @@ class Builder
      */
     private function buildDefinition(array $metadata)
     {
-        if (!isset($metadata['attribute'])) {
-            throw new \RuntimeException('Invalid metadata');
+        if (!isset($metadata['attribute']) && !isset($metadata['key'])) {
+            throw new \RuntimeException('Invalid metadata should provide an attribute or a key');
         }
 
         // @TODO Rethink this hacky method cause I hate annotation ?
         if (!isset($metadata['key'])) {
-            $metadata['key'] = $this->formatter->toPhpAttribute($metadata['attribute']);
+            $metadata['key'] = $this->formatter->toMongoKey($metadata['attribute']);
+        } elseif (!isset($metadata['attribute'])) {
+            $metadata['attribute'] = $this->formatter->toPhpAttribute($metadata['key']);
         }
 
         return new Definition($metadata);

@@ -24,17 +24,17 @@ use Boomgo\Map;
  */
 class Builder extends Test
 {
-    public function metadataProvider()
-    {
-        return array ('class' => 'Test\FQDN',
-            'definitions' => array(
-                'mixed' => array ('attribute' => 'mixed'),
-                'string' => array ('attribute' => 'string', 'type' => 'string'),
-                'number' => array ('attribute' => 'number', 'type' => 'number'),
-                'document' => array ('attribute' => 'document', 'type' => 'User\\Namespace\\Object'),
-                'collection' => array ('attribute' => 'collection', 'type' => 'array', 'mappedClass' => 'Valid\\Namespace\\Object')
-        ));
-    }
+    // public function metadataProvider()
+    // {
+    //     return array ('class' => 'Test\FQDN',
+    //         'definitions' => array(
+    //             'mixed' => array ('attribute' => 'mixed'),
+    //             'string' => array ('attribute' => 'string', 'type' => 'string'),
+    //             'number' => array ('attribute' => 'number', 'type' => 'number'),
+    //             'document' => array ('attribute' => 'document', 'type' => 'User\\Namespace\\Object'),
+    //             'collection' => array ('attribute' => 'collection', 'type' => 'array', 'mappedClass' => 'Valid\\Namespace\\Object')
+    //     ));
+    // }
 
     public function testBuild()
     {
@@ -43,12 +43,18 @@ class Builder extends Test
         $this->mock('Boomgo\\Cache\\CacheInterface', '\\Mock\\Cache', 'Cache');
         //$mockParser = new \Mock\Parser\Parser;
         $mockParser = new \Boomgo\Parser\AnnotationParser;
+        // $mockCache = new \Boomgo\Cache\FileCache();
         $mockCache = new \Mock\Cache\Cache;
         $mockFormatter = new \Mock\Formatter\Formatter;
         $mockFormatter->getMockController()->toPhpAttribute = function($string) { return $string; };
 
         $builder = new Map\Builder($mockParser, $mockFormatter, $mockCache);
-        $builder->build(__DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture'.DIRECTORY_SEPARATOR.'AnnotedDocument.php');
+
+        $dir = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture'.DIRECTORY_SEPARATOR;
+        $processed = $builder->build(array($dir.'AnnotedDocument.php', $dir.'AnnotedDocumentEmbed.php'));
+        $this->assert
+            ->array($processed)
+            ->hasSize(2);
     }
 
     // public function testBuildMap()
