@@ -12,8 +12,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\tests\units\Formatter;
+namespace Boomgo\Tests\Units\Formatter;
 
+use Boomgo\Tests\Units\Test;
 use Boomgo\Formatter;
 
 /**
@@ -21,7 +22,7 @@ use Boomgo\Formatter;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class TransparentFormatter extends \mageekguy\atoum\test
+class TransparentFormatter extends Test
 {
     public function test__construct()
     {

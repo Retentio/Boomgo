@@ -12,8 +12,9 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\tests\units\Cache;
+namespace Boomgo\Tests\Units\Cache;
 
+use Boomgo\Tests\Units\Test;
 use Boomgo\Cache;
 
 /**
@@ -21,7 +22,7 @@ use Boomgo\Cache;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class NoCache extends \mageekguy\atoum\test
+class NoCache extends Test
 {
     public function testSave()
     {
