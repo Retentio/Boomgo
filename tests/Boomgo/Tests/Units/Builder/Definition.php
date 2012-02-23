@@ -12,10 +12,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\Tests\Units\Map;
+namespace Boomgo\Tests\Units\Builder;
 
 use Boomgo\Tests\Units\Test;
-use Boomgo\Map as Src;
+use Boomgo\Builder as Src;
 
 /**
  * Definition tests

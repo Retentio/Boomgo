@@ -12,12 +12,13 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\Map;
+namespace Boomgo\Builder;
 
-use Boomgo\Map\Map;
-use Boomgo\Parser\ParserInterface;
-use Boomgo\Formatter\FormatterInterface;
+use Boomgo\Map as Export;
+use Boomgo\Builder\Map;
 use Boomgo\Cache\CacheInterface;
+use Boomgo\Formatter\FormatterInterface;
+use Boomgo\Parser\ParserInterface;
 use Symfony\Component\Finder\Finder,
     Symfony\Component\Finder\SplFileInfo;
 
@@ -149,33 +150,11 @@ class Builder
 
         foreach ($processed as $class => $map) {
             $map = $this->buildDependencie($map, $processed, array($map->getClass() => true), $map);
-            $this->cache->save($class, $map);
+            $export = $this->export($map);
+            $this->cache->save($export->class, $export);
         }
 
         return $processed;
-    }
-
-    private function buildDependencie(Map $masterMap, array $availableMaps, array $dependencies, Map $subMap)
-    {
-        $definitions = $subMap->getDefinitions();
-        foreach ($definitions as $definition) {
-
-            if ($definition->isUserMapped()) {
-
-                if (!isset($dependencies[$definition->getMappedClass()])) {
-                    $dependencies[$definition->getMappedClass()] = true;
-
-                    if (isset($availableMaps[$definition->getMappedClass()])) {
-                        $masterMap->addDependency($availableMaps[$definition->getMappedClass()]);
-                        $this->buildDependencie($masterMap, $availableMaps, $dependencies, $availableMaps[$definition->getMappedClass()]);
-                    } else {
-                        throw new \RuntimeException (sprintf('Unable to build dependencie "%s" for the map "%s"', $definition->getMappedClass(), $map->getClass()));
-                    }
-                }
-            }
-        }
-
-        return $masterMap;
     }
 
     /**
@@ -216,5 +195,56 @@ class Builder
         }
 
         return new Definition($metadata);
+    }
+
+    /**
+     * Optimize dependencies
+     *
+     * @param  Map    $masterMap
+     * @param  array  $availableMaps
+     * @param  array  $dependencies
+     * @param  Map    $subMap
+     * @return Map    $masterMap
+     */
+    private function buildDependencie(Map $masterMap, array $availableMaps, array $dependencies, Map $subMap)
+    {
+        $definitions = $subMap->getDefinitions();
+        foreach ($definitions as $definition) {
+
+            if ($definition->isUserMapped()) {
+
+                if (!isset($dependencies[$definition->getMappedClass()])) {
+                    $dependencies[$definition->getMappedClass()] = true;
+
+                    if (isset($availableMaps[$definition->getMappedClass()])) {
+                        $masterMap->addDependency($availableMaps[$definition->getMappedClass()]);
+                        $this->buildDependencie($masterMap, $availableMaps, $dependencies, $availableMaps[$definition->getMappedClass()]);
+                    } else {
+                        throw new \RuntimeException (sprintf('Unable to build dependencie "%s" for the map "%s"', $definition->getMappedClass(), $map->getClass()));
+                    }
+                }
+            }
+        }
+
+        return $masterMap;
+    }
+
+    /**
+     * Export the Map to a lightweight read-only Map
+     *
+     * @param  Boomgo\Map\Map $map
+     * @return Boomgo\Map
+     */
+    private function export(Map $map)
+    {
+        $array = $map->toArray();
+        $export = new Export();
+        $export->class = $array['class'];
+        $export->phpIndex = $array['phpIndex'];
+        $export->mongoIndex = $array['mongoIndex'];
+        $export->definitions = $array['definitions'];
+        $export->dependencies = isset($array['dependencies']) ? $array['dependencies'] : null;
+
+        return $export;
     }
 }

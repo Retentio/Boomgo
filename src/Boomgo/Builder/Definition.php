@@ -1,6 +1,6 @@
 <?php
 
-namespace Boomgo\Map;
+namespace Boomgo\Builder;
 
 class Definition
 {
@@ -93,25 +93,25 @@ class Definition
         return $this->mappedClass;
     }
 
-    // public function getMutator()
-    // {
-    //     return $this->mutator;
-    // }
+    public function getMutator()
+    {
+        return $this->mutator;
+    }
 
-    // public function setMutator($value)
-    // {
-    //     $this->mutator = $value;
-    // }
+    public function setMutator($value)
+    {
+        $this->mutator = $value;
+    }
 
-    // public function getAccessor()
-    // {
-    //     return $this->accessor;
-    // }
+    public function getAccessor()
+    {
+        return $this->accessor;
+    }
 
-    // public function setAccessor($value)
-    // {
-    //     $this->accessor = $value;
-    // }
+    public function setAccessor($value)
+    {
+        $this->accessor = $value;
+    }
 
     public function isMapped()
     {
@@ -196,5 +196,26 @@ class Definition
         $this->type = $type;
         $this->attribute = $data['attribute'];
         $this->key = $data['key'];
+    }
+
+    public function toArray()
+    {
+        $array = array();
+        $array['attribute'] = $this->attribute;
+        $array['key'] = $this->key;
+        $array['type'] = $this->type;
+        $array['mutator'] = $this->mutator;
+        $array['accessor'] = $this->accessor;
+
+        if ($this->isMapped()) {
+            $array['mapped']['type'] = $this->mappedType;
+            $array['mapped']['class'] = $this->mappedClass;
+
+            if ($this->isUserMapped()) {
+                $array['mapped']['user'] = true;
+            }
+        }
+
+        return $array;
     }
 }

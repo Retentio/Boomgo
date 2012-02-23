@@ -12,10 +12,10 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\Tests\Units\Map;
+namespace Boomgo\Tests\Units\Builder;
 
 use Boomgo\Tests\Units\Test;
-use Boomgo\Map as Src;
+use Boomgo\Builder as Src;
 
 /**
  * Map tests
@@ -37,7 +37,7 @@ class Map extends Test
         $map = new Src\Map('FQDN');
         $this->assert
             ->string($map->getClass())
-                ->isEqualTo('FQDN')
+                ->isEqualTo('\FQDN')
             ->array($map->getPhpIndex())
                 ->isEmpty()
             ->array($map->getMongoIndex())
@@ -104,7 +104,7 @@ class Map extends Test
 
     private function mockDefinitionProvider()
     {
-        $this->mock('Boomgo\\Map\\Definition', '\\Mock\\Map', 'Definition');
+        $this->mock('Boomgo\\Builder\\Definition', '\\Mock\\Map', 'Definition');
         $mockController = new \mageekguy\atoum\mock\controller();
         $mockController->__construct = function() {};
         $mockController->injectInNextMockInstance();

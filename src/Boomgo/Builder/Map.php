@@ -12,7 +12,7 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\Map;
+namespace Boomgo\Builder;
 
 /**
  * DocumentMap
@@ -196,5 +196,26 @@ class Map
     public function getDependency($class)
     {
         return ($this->hasDependency($class)) ? $this->dependencies[$class] : null;
+    }
+
+    /**
+     * Export to array
+     * @return array
+     */
+    public function toArray()
+    {
+        $array['class'] = $this->getClass();
+        $array['phpIndex'] = $this->getPhpIndex();
+        $array['mongoIndex'] = $this->getMongoIndex();
+
+        foreach ($this->getDefinitions() as $attribute => $definition) {
+            $array['definitions'][$attribute] = $definition->toArray();
+        }
+
+        foreach ($this->getDependencies() as $class => $dependency) {
+            $array['dependencies'][$class] = $dependency->toArray();
+        }
+
+        return $array;
     }
 }
