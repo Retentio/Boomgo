@@ -14,9 +14,7 @@
 
 namespace Boomgo\Mapper;
 
-use Boomgo\Parser\ParserInterface;
-use Boomgo\Cache\CacheInterface;
-use Boomgo\Mapper\Map;
+use Boomgo\Map;
 
 /**
  * StrictMapper
@@ -29,125 +27,34 @@ use Boomgo\Mapper\Map;
 class StrictMapper extends MapperProvider implements MapperInterface
 {
     /**
-     * @var ParserInterface
-     */
-    private $parser;
-
-    /**
-     * @var CacheInterface
-     */
-    private $cache;
-
-    /**
-     * Constructor
-     *
-     * @param FormatterInterface An key/attribute formatter
-     * @param string $annotation The annotation used for mapping
-     */
-    public function __construct(ParserInterface $parser, CacheInterface $cache)
-    {
-        $this->setParser($parser);
-        $this->setCache($cache);
-    }
-
-    /**
-     * Defines the parser
-     *
-     * @param ParserInterface $parser
-     */
-    public function setParser(ParserInterface $parser)
-    {
-        $this->parser = $parser;
-    }
-
-    /**
-     * Returns the parser used
-     *
-     * @return ParserInterface
-     */
-    public function getParser()
-    {
-        return $this->parser;
-    }
-
-    /**
-     * Define the cache driver
-     *
-     * @param CacheInterface $cache
-     */
-    public function setCache(CacheInterface $cache)
-    {
-        $this->cache = $cache;
-    }
-
-    /**
-     * Returns the cache driver used
-     *
-     * @return CacheInterface
-     */
-    public function getCache()
-    {
-        return $this->cache;
-    }
-
-    /**
-     * Returns a map
-     * Reused from the cache or on-the-fly parsed then cached
-     *
-     * @param  string $class
-     * @return Map
-     */
-    public function getMap($class)
-    {
-        if ($this->cache->contains($class)) {
-            $map = $this->cache->fetch($class);
-        } else {
-            $map = $this->parser->buildMap($class);
-            $this->cache->save($class, $map);
-        }
-
-        return $map;
-    }
-
-    /**
-     * Convert this object to array
+     * Convert this object to a Mongo-able array (without native type linerization)
      *
      * @param  object  $object  An object to convert.
-     * @throws InvalidArgumentException If argument is not an object
      * @return Array
      */
-    public function toArray($object)
+    public function serialize(Map $map, $object)
     {
-        if (!is_object($object)) {
-            throw new \InvalidArgumentException('Argument must be an object');
-        }
-
-        $reflectedObject = new \ReflectionObject($object);
-        $className = $reflectedObject->getName();
-
-        $map = $this->getMap($className);
-
         $array = array();
-        $attributes = $map->getMongoIndex();
+        $definitions = $map->getDefinitions();
 
-        foreach ($attributes as $key => $attribute) {
+        foreach ($definitions as $attribute => $definition) {
             $value = null;
-
-            if ($map->hasAccessorFor($key)) {
-                $accessor = $map->getAccessorFor($key);
-                $value = $object->$accessor();
-            } else {
-                $value = $object->$attribute;
-            }
+            $value = call_user_func(array($object, $definition['accessor']));
 
             // Recursively normalize nested non-scalar data
             if (null !== $value) {
-                if (!is_scalar($value) && (!$map->hasEmbedTypeFor($key) || $map->getEmbedTypeFor($key) !== Map::NATIVE)) {
-                    $value = $this->normalize($value);
+                if (!is_scalar($value)) {
+                    if (isset($definition['mapped'])) {
+                        $value = $this->serializeEmbed($map, $definition, $value);
+                    } else {
+                        $value = $this->normalize($value);
+                    }
                 }
-                $array[$key] = $value;
+
+                $array[$definition['key']] = $value;
             }
         }
+
         return $array;
     }
 
@@ -158,34 +65,69 @@ class StrictMapper extends MapperProvider implements MapperInterface
      * @param  array  $array An array of data from mongo
      * @return object
      */
-    public function hydrate($object, array $array)
+    public function hydrate(Map $map, $object, array $array)
     {
-        $reflected = new \ReflectionClass($object);
-
-        if (is_string($object)) {
-            $object = $this->createInstance($reflected);
-        }
-
-        $map = $this->getMap($reflected->getName());
-
         foreach ($array as $key => $value) {
-            if (null !== $value && $map->hasAttributeFor($key)) {
+            if (null !== $value && $map->hasDefinition($key)) {
+                $definition = $map->getDefinition($key);
+                $attribute = $definition['attribute'];
 
-                $attribute = $map->getAttributeFor($key);
-
-                if ($map->hasEmbedMapFor($key)) {
-                    $value = $this->hydrateEmbed($map, $key, $value);
+                if (isset($definition['mapped'])) {
+                    $value = $this->hydrateEmbed($map, $definition, $value);
                 }
 
-                if ($map->hasMutatorFor($key)) {
-                    $mutator = $map->getMutatorFor($key);
-                    $object->$mutator($value);
-                } else {
-                    $object->$attribute = $value;
-                }
+                call_user_func(array($object, $definition['mutator']), $value);
             }
         }
+
         return $object;
+    }
+
+    /**
+     * Serialize embed document from a super Map
+     * @param  Map    $map
+     * @param  array  $definition
+     * @param  mixed  $value
+     * @return mixed
+     */
+    protected function serializeEmbed(Map $map, array $definition, $value)
+    {
+        // No processing on Mongo native type
+        if (!isset($definition['mapped']['user'])) {
+            return $value;
+        }
+
+        // Embed type: single or collection
+        $embedType = $definition['mapped']['type'];
+
+        // Load embed map
+        $embedMap = $this->loadMap($definition['mapped']['class'], $map);
+
+        if ($embedType == 'document') {
+            // Expect an hash (associative array), @todo maybe remove this check ?
+            if (!is_object($value)) {
+                throw new \RuntimeException('Attribute "'.$definition['attribute'].'" defines an embedded document and expects an associative array of value');
+            }
+
+            $value = $this->toArray($embedMap, $value);
+
+        } elseif ($embedType == 'collection') {
+            // Expect an array (numeric array), @todo maybe remove this check ?
+            if (!is_array($value) && array_keys($value) !== range(0, count($value) - 1)) {
+                throw new \RuntimeException('Key "'.$definition['attribute'].'" defines an embedded collection and expects an numeric indexed array of value');
+            }
+
+            $collection = array();
+
+            // Recursively serialize embed documents
+            foreach ($value as $embedValue) {
+               $collection[] = $this->toArray($embedMap, $embedValue);
+            }
+
+            $value = $collection;
+        }
+
+        return $value;
     }
 
     /**
@@ -196,34 +138,36 @@ class StrictMapper extends MapperProvider implements MapperInterface
      * @param  mixed  $value  The embed data
      * @return mixed
      */
-    protected function hydrateEmbed(Map $map, $key, $value)
+    protected function hydrateEmbed(Map $map, array $definition, $value)
     {
-        // Embed declaration
-        $embedType = $map->getEmbedTypeFor($key);
-        $embedMap = $map->getEmbedMapFor($key);
-
         // No processing on Mongo native type
-        if ($embedType == Map::NATIVE) {
+        if (!isset($definition['mapped']['user'])) {
             return $value;
         }
 
-        // Non array value
+        // From here, we expect an array of value (embed document or collection)
         if (!is_array($value)) {
-            throw new \RuntimeException('Key "'.$key.'" defines an embedded document or collection and expects an array of values');
+            throw new \RuntimeException('Attribute "'.$definition['attribute'].'" defines an embedded document or collection and expects an array of values');
         }
 
-        if ($embedType == Map::DOCUMENT) {
+        // Embed type single or collection
+        $embedType = $definition['mapped']['type'];
 
+        // Load embed map
+        $embedMap = $this->loadMap($definition['mapped']['class']);
+
+        if ($embedType == 'document') {
             // Expect an hash (associative array), @todo maybe remove this check ?
             if (array_keys($value) === range(0, count($value) - 1)) {
-                throw new \RuntimeException('Key "'.$key.'" defines an embedded document and expects an associative array of values');
+                throw new \RuntimeException('Attribute "'.$definition['attribute'].'" defines an embedded document and expects an associative array of values');
             }
+
             $value = $this->hydrate($embedMap->getClass(), $value);
 
-        } elseif ($embedType == Map::COLLECTION) {
+        } elseif ($embedType == 'collection') {
             // Expect an array (numeric array), @todo maybe remove this check ?
             if (array_keys($value) !== range(0, count($value) - 1)) {
-                throw new \RuntimeException('Key "'.$key.'" defines an embedded collection and expects an numeric indexed array of values');
+                throw new \RuntimeException('Key "'.$definition['attribute'].'" defines an embedded collection and expects an numeric indexed array of values');
             }
 
             $collection = array();

@@ -14,6 +14,8 @@
 
 namespace Boomgo\Mapper;
 
+use Boomgo\Map;
+
 /**
  * MapperInterface
  *
@@ -27,7 +29,7 @@ interface MapperInterface
      * @param  mixed $object
      * @return array
      */
-    public function toArray($object);
+    public function serialize(Map $map, $object);
 
     /**
      * Hydrate a PHP object from an array
@@ -36,5 +38,5 @@ interface MapperInterface
      * @param  array  $array
      * @return object
      */
-    public function hydrate($object, array $array);
+    public function hydrate(Map $map, $object, array $array);
 }

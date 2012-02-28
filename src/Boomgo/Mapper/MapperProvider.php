@@ -56,9 +56,7 @@ abstract class MapperProvider
         if (null === $data || is_scalar($data)) {
             return $data;
         }
-        if (is_object($data)) {
-            return $this->toArray($data);
-        }
+
         if (is_array($data)) {
             foreach ($data as $key => $val) {
                 $data[$key] = $this->normalize($val);
@@ -66,6 +64,7 @@ abstract class MapperProvider
 
             return $data;
         }
+
         throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
     }
 }
