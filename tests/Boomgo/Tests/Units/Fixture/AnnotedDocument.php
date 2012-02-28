@@ -48,7 +48,7 @@ class AnnotedDocument
      * A embedded collection of EmbedDocument
      *
      * @Boomgo
-     * @var array Boomgo\Tests\Units\Fixtures\AnnotedDocument
+     * @var array [Boomgo\Tests\Units\Fixture\AnnotedDocumentEmbed]
      */
     private $collection;
 
