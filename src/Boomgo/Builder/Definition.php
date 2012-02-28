@@ -1,7 +1,24 @@
 <?php
 
+/**
+ * This file is part of the Boomgo PHP ODM.
+ *
+ * http://boomgo.org
+ * https://github.com/Retentio/Boomgo
+ *
+ * (c) Ludovic Fleury <ludo.fleury@gmail.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
+
 namespace Boomgo\Builder;
 
+/**
+ * Definition
+ *
+ * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ */
 class Definition
 {
     const DOCUMENT = 'document';
@@ -196,6 +213,8 @@ class Definition
         $this->type = $type;
         $this->attribute = $data['attribute'];
         $this->key = $data['key'];
+        $this->accessor = $data['accessor'];
+        $this->mutator = $data['mutator'];
     }
 
     public function toArray()

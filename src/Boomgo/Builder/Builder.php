@@ -16,7 +16,7 @@ namespace Boomgo\Builder;
 
 use Boomgo\Map as Export;
 use Boomgo\Builder\Map;
-use Boomgo\Cache\CacheInterface;
+use Boomgo\Writer\WriterInterface;
 use Boomgo\Formatter\FormatterInterface;
 use Boomgo\Parser\ParserInterface;
 use Symfony\Component\Finder\Finder,
@@ -40,9 +40,9 @@ class Builder
     protected $formatter;
 
     /**
-     * @var Boomgo\Cache\CacheInterface
+     * @var Boomgo\Writer\WriterInterface
      */
-    protected $cache;
+    protected $writer;
 
     /**
      * Initialize
@@ -50,11 +50,11 @@ class Builder
      * @param FormmatterInterface $formatter
      * @param string $annotation
      */
-    public function __construct(ParserInterface $parser, FormatterInterface $formatter, CacheInterface $cache)
+    public function __construct(ParserInterface $parser, FormatterInterface $formatter, WriterInterface $writer)
     {
         $this->setParser($parser);
         $this->setFormatter($formatter);
-        $this->setCache($cache);
+        $this->setWriter($writer);
     }
 
     /**
@@ -98,23 +98,23 @@ class Builder
     }
 
     /**
-     * Define the cache
+     * Define the writer
      *
-     * @param CacheInterface $cache
+     * @param WriterInterface $writer
      */
-    public function setCache(CacheInterface $cache)
+    public function setWriter(WriterInterface $writer)
     {
-        $this->cache = $cache;
+        $this->writer = $writer;
     }
 
     /**
-     * Return the cache
+     * Return the writer
      *
-     * @return CacheInterface
+     * @return WriterInterface
      */
-    public function getCache()
+    public function getWriter()
     {
-        return $this->cache;
+        return $this->writer;
     }
 
     /**
@@ -124,18 +124,8 @@ class Builder
      */
     public function build($path)
     {
+        $collection = $this->load($path);
         $processed = array();
-        $finder = new Finder();
-
-        if (is_array($path)) {
-            $collection = $path;
-        } elseif (is_dir($path)) {
-            $collection = $finder->files()->name('*')->in($path);
-        } elseif (is_file($path)) {
-            $collection = array($path);
-        } else {
-            throw new \InvalidArgumentException('Argument must be an array or absolute directory or file path');
-        }
 
         foreach ($collection as $resource) {
             $resource = ($resource instanceof SplFileInfo) ? $resource->getPathName() : $resource;
@@ -149,12 +139,36 @@ class Builder
         }
 
         foreach ($processed as $class => $map) {
-            $map = $this->buildDependencie($map, $processed, array($map->getClass() => true), $map);
-            $export = $this->export($map);
-            $this->cache->save($export->class, $export);
+            $map = $this->buildDependencies($map, $processed, array($map->getClass() => true), $map);
+            $export = $map->export();
+            $this->writer->write($export->class, $export);
         }
 
         return $processed;
+    }
+
+    /**
+     * Return a collection of resource
+     *
+     * @param  string $path
+     * @return array
+     */
+    private function load($path)
+    {
+        $finder = new Finder();
+        $collection = array();
+
+        if (is_array($path)) {
+            $collection = $path;
+        } elseif (is_dir($path)) {
+            $collection = $finder->files()->name('*')->in($path);
+        } elseif (is_file($path)) {
+            $collection = array($path);
+        } else {
+            throw new \InvalidArgumentException('Argument must be an array or absolute directory or file path');
+        }
+
+        return $collection;
     }
 
     /**
@@ -169,7 +183,7 @@ class Builder
 
         foreach ($metadata['definitions'] as $metadataDefinition) {
             $definition = $this->buildDefinition($metadataDefinition);
-            $map->add($definition);
+            $map->addDefinition($definition);
         }
 
         return $map;
@@ -194,6 +208,9 @@ class Builder
             $metadata['attribute'] = $this->formatter->toPhpAttribute($metadata['key']);
         }
 
+        $metadata['accessor'] = $this->formatter->getPhpAccessor($metadata['attribute']);
+        $metadata['mutator'] = $this->formatter->getPhpMutator($metadata['attribute']);
+
         return new Definition($metadata);
     }
 
@@ -204,9 +221,10 @@ class Builder
      * @param  array  $availableMaps
      * @param  array  $dependencies
      * @param  Map    $subMap
+     *
      * @return Map    $masterMap
      */
-    private function buildDependencie(Map $masterMap, array $availableMaps, array $dependencies, Map $subMap)
+    private function buildDependencies(Map $masterMap, array $availableMaps, array $dependencies, Map $subMap)
     {
         $definitions = $subMap->getDefinitions();
         foreach ($definitions as $definition) {
@@ -218,33 +236,14 @@ class Builder
 
                     if (isset($availableMaps[$definition->getMappedClass()])) {
                         $masterMap->addDependency($availableMaps[$definition->getMappedClass()]);
-                        $this->buildDependencie($masterMap, $availableMaps, $dependencies, $availableMaps[$definition->getMappedClass()]);
+                        $this->buildDependencies($masterMap, $availableMaps, $dependencies, $availableMaps[$definition->getMappedClass()]);
                     } else {
-                        throw new \RuntimeException (sprintf('Unable to build dependencie "%s" for the map "%s"', $definition->getMappedClass(), $map->getClass()));
+                        throw new \RuntimeException (sprintf('Unable to build dependencie "%s" for the map "%s"', $definition->getMappedClass(), $masterMap->getClass()));
                     }
                 }
             }
         }
 
         return $masterMap;
-    }
-
-    /**
-     * Export the Map to a lightweight read-only Map
-     *
-     * @param  Boomgo\Map\Map $map
-     * @return Boomgo\Map
-     */
-    private function export(Map $map)
-    {
-        $array = $map->toArray();
-        $export = new Export();
-        $export->class = $array['class'];
-        $export->phpIndex = $array['phpIndex'];
-        $export->mongoIndex = $array['mongoIndex'];
-        $export->definitions = $array['definitions'];
-        $export->dependencies = isset($array['dependencies']) ? $array['dependencies'] : null;
-
-        return $export;
     }
 }

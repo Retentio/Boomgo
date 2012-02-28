@@ -28,21 +28,80 @@ class Builder extends Test
     {
         $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
         $this->mock('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
-        $this->mock('Boomgo\\Cache\\CacheInterface', '\\Mock\\Cache', 'Cache');
-        //$mockParser = new \Mock\Parser\Parser;
-        $mockParser = new \Boomgo\Parser\AnnotationParser;
-        // $mockCache = new \Boomgo\Cache\FileCache();
-        $mockCache = new \Mock\Cache\Cache;
+        $this->mock('Boomgo\\Writer\\WriterInterface', '\\Mock\\Writer', 'Writer');
+
+        $fixtureMetadata = $this->metadataProvider();
+
+        $mockParser = new \Mock\Parser\Parser;
+        $mockParser->getMockController()->supports = function() { return true; };
+        $mockParser->getMockController()->parse = function($file) use ($fixtureMetadata) { return ($file == __FILE__) ? $fixtureMetadata['\\Fixture\\Class'] : $fixtureMetadata['\\Fixture\\Embed\\Class']; };
+
         $mockFormatter = new \Mock\Formatter\Formatter;
         $mockFormatter->getMockController()->toPhpAttribute = function($string) { return $string; };
-        $mockFormatter->getMockController()->toMongoKey = function($string) { return $string; };
+        $mockFormatter->getMockController()->toMongoKey = function($string) { return strtoupper($string); };
+        $mockFormatter->getMockController()->getPhpAccessor = function($string) { return 'get'.ucfirst($string); };
+        $mockFormatter->getMockController()->getPhpMutator = function($string) { return 'set'.ucfirst($string); };
 
-        $builder = new Src\Builder($mockParser, $mockFormatter, $mockCache);
+        $mockWriter = new \Mock\Writer\Writer;
 
-        $dir = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture'.DIRECTORY_SEPARATOR;
-        $processed = $builder->build(array($dir.'AnnotedDocument.php', $dir.'AnnotedDocumentEmbed.php'));
+
+        $builder = new Src\Builder($mockParser, $mockFormatter, $mockWriter);
+
         $this->assert
-            ->array($processed)
-            ->hasSize(2);
+            ->array($builder->build(array(__FILE__, __DIR__.DIRECTORY_SEPARATOR.'Map.php')))
+                ->hasSize(2)
+            ->mock($mockWriter)
+                ->call('write')
+                    ->exactly(2);
+
+        $processed = $builder->build(array(__FILE__, __DIR__.DIRECTORY_SEPARATOR.'Map.php'));
+        $map = $processed['\\Fixture\\Class'];
+        $this->assert
+            ->object($map)
+                ->isInstanceOf('\\Boomgo\\Builder\\Map');
+
+        $definition = $map->getDefinition('document');
+        $this->assert
+            ->object($definition)
+                ->isInstanceOf('\\Boomgo\\Builder\\Definition');
+
+        $definition = $map->getDefinition('collection');
+        $this->assert
+            ->object($definition)
+                ->isInstanceOf('\\Boomgo\\Builder\\Definition');
+
+        $dependencies = $map->getDependencies();
+        $this->assert
+            ->array($dependencies)
+                ->hasSize(1)
+                ->hasKey('\\Fixture\\Embed\\Class');
+
+        $dependency = $map->getDependency('\\Fixture\\Embed\\Class');
+        $this->assert
+            ->object($dependency)
+                ->isInstanceOf('\\Boomgo\\Builder\\Map');
+
+
+        $definition = $dependency->getDefinition('string');
+        $this->assert
+            ->object($definition)
+                ->isInstanceOf('\\Boomgo\\Builder\\Definition');
+    }
+
+    private function metadataProvider()
+    {
+        return array(
+            '\\Fixture\\Class' => array(
+                'class' => '\\Fixture\\Class',
+                'definitions' => array(
+                    array('attribute' => 'string', 'type' => 'string'),
+                    array('attribute' => 'array', 'type' => 'array'),
+                    array('attribute' => 'document', 'type' => '\\Fixture\\Embed\\Class'),
+                    array('attribute' => 'collection', 'type' => 'array', 'mappedClass' => '\\Fixture\\Embed\\Class' ))),
+            '\\Fixture\\Embed\\Class' => array(
+                'class' => '\\Fixture\\Embed\\Class',
+                'definitions' => array(
+                    array('attribute' => 'string', 'type' => 'string'),
+                    array('attribute' => 'array', 'type' => 'array'))));
     }
 }

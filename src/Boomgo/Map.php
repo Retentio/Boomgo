@@ -27,11 +27,6 @@ class Map
     public $class;
 
     /**
-     * @var array Indexed by "PHP attributes" where value are "MongoDB keys"
-     */
-    public $phpIndex;
-
-    /**
      * @var array Indexed by "MongoDB keys" where are "PHP attributes"
      */
     public $mongoIndex;
@@ -42,9 +37,29 @@ class Map
     public $definitions;
 
     /**
-     * @var array Indexed by "PHP attributes"
+     * @var array Indexed by "PHP class"
      */
     public $dependencies;
+
+    /**
+     * Return class name
+     *
+     * @return string
+     */
+    public function getClass()
+    {
+        return $this->class;
+    }
+
+    /**
+     * Return all the definitions
+     *
+     * @return array
+     */
+    public function getDefinitions()
+    {
+        return $this->definitions;
+    }
 
     /**
      * Check if a definition exists
@@ -52,9 +67,9 @@ class Map
      * @param  string $identifier
      * @return boolean
      */
-    public function has($identifier)
+    public function hasDefinition($identifier)
     {
-        return isset($this->phpIndex[$identifier]) || isset($this->mongoIndex[$identifier]);
+        return isset($this->definitions[$identifier]) || isset($this->mongoIndex[$identifier]);
     }
 
     /**
@@ -63,10 +78,10 @@ class Map
      * @param  string $identifier
      * @return mixed  null|Definition
      */
-    public function get($identifier)
+    public function getDefinition($identifier)
     {
         // Identifier is a php attribute
-        if (isset($this->phpIndex[$identifier])) {
+        if (isset($this->definitions[$identifier])) {
             return $this->definitions[$identifier];
         }
 

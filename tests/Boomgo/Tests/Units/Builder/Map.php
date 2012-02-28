@@ -38,8 +38,6 @@ class Map extends Test
         $this->assert
             ->string($map->getClass())
                 ->isEqualTo('\FQDN')
-            ->array($map->getPhpIndex())
-                ->isEmpty()
             ->array($map->getMongoIndex())
                 ->isEmpty()
             ->array($map->getDefinitions())
@@ -48,16 +46,13 @@ class Map extends Test
                 ->isEmpty();
     }
 
-    public function testAdd()
+    public function testAddDefinition()
     {
-        // Should append an item to phpIndex, mongoIndex and Definition
+        // Should append an item to mongoIndex and Definition
         $map = new Src\Map('FQDN');
         $mockDefinition = $this->mockDefinitionProvider();
-        $map->add($mockDefinition);
+        $map->addDefinition($mockDefinition);
         $this->assert
-            ->array($map->getPhpIndex())
-                ->hasSize(1)
-                ->isIdenticalTo(array('attribute' => 'key'))
             ->array($map->getMongoIndex())
                 ->hasSize(1)
                 ->isIdenticalTo(array('key' => 'attribute'))
@@ -66,39 +61,39 @@ class Map extends Test
                 ->isIdenticalTo(array('attribute' => $mockDefinition));
     }
 
-    public function testHas()
+    public function testHasDefinition()
     {
         // Should return false when looking for an unknown attribute
         $map = new Src\Map('FQDN');
         $this->assert
-            ->boolean($map->has('unkown'))
+            ->boolean($map->hasDefinition('unkown'))
                 ->isFalse();
 
         // Should return true for an existing "PHP attribute" or "MongoDB key"
         $mockDefinition = $this->mockDefinitionProvider();
-        $map->add($mockDefinition);
+        $map->addDefinition($mockDefinition);
         $this->assert
-            ->boolean($map->has('attribute'))
+            ->boolean($map->hasDefinition('attribute'))
                 ->isTrue()
-            ->boolean($map->has('key'))
+            ->boolean($map->hasDefinition('key'))
                 ->istrue();
     }
 
-    public function testGet()
+    public function testGetDefinition()
     {
         // Should return null when getting with an unknown attribute
         $map = new Src\Map('FQDN');
         $this->assert
-            ->variable($map->get('unkown'))
+            ->variable($map->getDefinition('unkown'))
                 ->isNull();
 
         // Should return true when getting with an existing "PHP attribute" or "MongoDB key"
         $mockDefinition = $this->mockDefinitionProvider();
-        $map->add($mockDefinition);
+        $map->addDefinition($mockDefinition);
         $this->assert
-            ->object($map->get('attribute'))
+            ->object($map->getDefinition('attribute'))
                 ->isIdenticalTo($mockDefinition)
-            ->object($map->get('key'))
+            ->object($map->getDefinition('key'))
                 ->isIdenticalTo($mockDefinition);
     }
 

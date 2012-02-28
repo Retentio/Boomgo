@@ -15,7 +15,9 @@
 namespace Boomgo\Builder;
 
 /**
- * DocumentMap
+ * Map pan
+ *
+ * Map master used to build the lighter exported map
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
@@ -25,11 +27,6 @@ class Map
      * @var string The mapped FQDN
      */
     private $class;
-
-    /**
-     * @var array Indexed by "PHP attributes" where value are "MongoDB keys"
-     */
-    private $phpIndex;
 
     /**
      * @var array Indexed by "MongoDB keys" where are "PHP attributes"
@@ -54,7 +51,6 @@ class Map
     public function __construct($class)
     {
         $this->class = (strpos($class,'\\') === 0) ? $class : '\\'.$class;
-        $this->phpIndex = array();
         $this->mongoIndex = array();
         $this->definitions = array();
         $this->dependencies = array();
@@ -71,23 +67,9 @@ class Map
     }
 
     /**
-     * Returns the php indexed map
-     *
-     * Reversed representation of the mongoIndex array (no need to flip it)
-     * Array keys are php attribute & values are mongo key.
-     *
-     * @example array('phpAttribute' => 'mongoKey');
-     * @return  array
-     */
-    public function getPhpIndex()
-    {
-        return $this->phpIndex;
-    }
-
-    /**
      * Returns the mongo indexed map
      *
-     * Reversed representation of the phpIndex array (no need to flip it)
+     * Reversed index array (no need to flip it)
      * Array keys are mongo keys & values are php attribute.
      *
      * @example array('mongoKey' => 'phpAttribute');
@@ -123,12 +105,11 @@ class Map
      *
      * @param Definition $definition
      */
-    public function add(Definition $definition)
+    public function addDefinition(Definition $definition)
     {
         $attribute = $definition->getAttribute();
         $key = $definition->getKey();
 
-        $this->phpIndex[$attribute] = $key;
         $this->mongoIndex[$key] = $attribute;
 
         $this->definitions[$attribute] = $definition;
@@ -140,9 +121,9 @@ class Map
      * @param  string $identifier
      * @return boolean
      */
-    public function has($identifier)
+    public function hasDefinition($identifier)
     {
-        return isset($this->phpIndex[$identifier]) || isset($this->mongoIndex[$identifier]);
+        return isset($this->definitions[$identifier]) || isset($this->mongoIndex[$identifier]);
     }
 
     /**
@@ -151,10 +132,10 @@ class Map
      * @param  string $identifier
      * @return mixed  null|Definition
      */
-    public function get($identifier)
+    public function getDefinition($identifier)
     {
         // Identifier is a php attribute
-        if (isset($this->phpIndex[$identifier])) {
+        if (isset($this->definitions[$identifier])) {
             return $this->definitions[$identifier];
         }
 
@@ -202,20 +183,19 @@ class Map
      * Export to array
      * @return array
      */
-    public function toArray()
+    public function export()
     {
-        $array['class'] = $this->getClass();
-        $array['phpIndex'] = $this->getPhpIndex();
-        $array['mongoIndex'] = $this->getMongoIndex();
+        $export = new \Boomgo\Map();
+        $export->class =  $this->getClass();
+        $export->mongoIndex = $this->getMongoIndex();
 
         foreach ($this->getDefinitions() as $attribute => $definition) {
-            $array['definitions'][$attribute] = $definition->toArray();
+            $export->definitions[$attribute] = $definition->toArray();
         }
-
         foreach ($this->getDependencies() as $class => $dependency) {
-            $array['dependencies'][$class] = $dependency->toArray();
+            $export->dependencies[$class] = $dependency->export();
         }
 
-        return $array;
+        return $export;
     }
 }
