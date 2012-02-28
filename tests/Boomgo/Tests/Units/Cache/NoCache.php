@@ -24,43 +24,23 @@ use Boomgo\Cache;
  */
 class NoCache extends Test
 {
-    public function testSave()
-    {
-        $cache = new Cache\NoCache();
-
-        // Should return true
-        $this->assert
-            ->boolean($cache->save('identifier', 'data'))
-            ->isTrue();
-    }
-
-    public function testContains()
+    public function testHas()
     {
         $cache = new Cache\NoCache();
 
         // Should return false
         $this->assert
-            ->boolean($cache->contains('identifier'))
+            ->boolean($cache->has('identifier'))
             ->isFalse();
     }
 
-    public function testFetch()
+    public function testGet()
     {
         $cache = new Cache\NoCache();
 
         // Should return null
         $this->assert
-            ->variable($cache->fetch('identifier'))
+            ->variable($cache->get('identifier'))
             ->isNull();
-    }
-
-    public function testDelete()
-    {
-        $cache = new Cache\NoCache();
-
-        // Should return true
-        $this->assert
-            ->boolean($cache->delete('identifier'))
-            ->isTrue();
     }
 }
