@@ -17,7 +17,8 @@
     ],
     "require": {
         "php": ">=5.3.2",
-        "symfony/finder": "dev-master"
+        "symfony/finder": "dev-master",
+        "cedriclombardot/twig-generator": "dev-master"
     },
 
     "recommend": {
