@@ -15,14 +15,14 @@
 namespace Boomgo\Tests\Units\Builder;
 
 use Boomgo\Tests\Units\Test;
-use Boomgo\Builder as Src;
+use Boomgo\Builder;
 
 /**
  * Builder tests
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class Builder extends Test
+class MapBuilder extends Test
 {
     public function testBuild()
     {
@@ -42,17 +42,7 @@ class Builder extends Test
         $mockFormatter->getMockController()->getPhpAccessor = function($string) { return 'get'.ucfirst($string); };
         $mockFormatter->getMockController()->getPhpMutator = function($string) { return 'set'.ucfirst($string); };
 
-        $mockWriter = new \Mock\Writer\Writer;
-
-
-        $builder = new Src\Builder($mockParser, $mockFormatter, $mockWriter);
-
-        $this->assert
-            ->array($builder->build(array(__FILE__, __DIR__.DIRECTORY_SEPARATOR.'Map.php')))
-                ->hasSize(2)
-            ->mock($mockWriter)
-                ->call('write')
-                    ->exactly(2);
+        $builder = new Builder\MapBuilder($mockParser, $mockFormatter);
 
         $processed = $builder->build(array(__FILE__, __DIR__.DIRECTORY_SEPARATOR.'Map.php'));
         $map = $processed['\\Fixture\\Class'];

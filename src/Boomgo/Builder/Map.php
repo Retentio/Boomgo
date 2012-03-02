@@ -66,6 +66,19 @@ class Map
         return $this->class;
     }
 
+    public function getClassName()
+    {
+        $array = explode('\\', $this->class);
+        return $array[count($array)-1];
+    }
+
+    public function getNamespace()
+    {
+        $array = explode('\\', $this->class);
+        unset($array[count($array)-1]);
+        return implode('\\', $array);
+    }
+
     /**
      * Returns the mongo indexed map
      *

@@ -67,4 +67,42 @@ abstract class MapperProvider
 
         throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
     }
+
+    /**
+     * Serialize an embedded collection
+     *
+     * Return a collection of hydrated objects
+     *
+     * @param  MapperInterface $mapper
+     * @param  array           $collection
+     * @return array
+     */
+    protected function serializeEmbeddedCollection(MapperInterface $mapper, array $collection)
+    {
+        $data = array();
+        foreach ($collection as $object) {
+            $data[] = $mapper->serialize($mapper, $object)
+        }
+
+        return $data;
+    }
+
+    /**
+     * Unserialize an embedded collection
+     *
+     * Return a collection of serialized objects (arrays)
+     *
+     * @param  MapperInterface $mapper
+     * @param  array           $data
+     * @return array
+     */
+    protected function unserializeEmbeddedCollection(MapperInterface $mapper, array $data)
+    {
+        $collection = array();
+        foreach ($data as $document) {
+            $collection[] = $mapper->unserialize($mapper, $data);
+        }
+
+        return $collection;
+    }
 }

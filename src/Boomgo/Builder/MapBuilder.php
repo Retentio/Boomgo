@@ -14,9 +14,7 @@
 
 namespace Boomgo\Builder;
 
-use Boomgo\Map as Export;
 use Boomgo\Builder\Map;
-use Boomgo\Writer\WriterInterface;
 use Boomgo\Formatter\FormatterInterface;
 use Boomgo\Parser\ParserInterface;
 use Symfony\Component\Finder\Finder,
@@ -27,7 +25,7 @@ use Symfony\Component\Finder\Finder,
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class Builder
+class MapBuilder
 {
     /**
      * @var Boomgo\Parser\ParserInterface
@@ -40,21 +38,15 @@ class Builder
     protected $formatter;
 
     /**
-     * @var Boomgo\Writer\WriterInterface
-     */
-    protected $writer;
-
-    /**
      * Initialize
      *
      * @param FormmatterInterface $formatter
      * @param string $annotation
      */
-    public function __construct(ParserInterface $parser, FormatterInterface $formatter, WriterInterface $writer)
+    public function __construct(ParserInterface $parser, FormatterInterface $formatter)
     {
         $this->setParser($parser);
         $this->setFormatter($formatter);
-        $this->setWriter($writer);
     }
 
     /**
@@ -98,26 +90,6 @@ class Builder
     }
 
     /**
-     * Define the writer
-     *
-     * @param WriterInterface $writer
-     */
-    public function setWriter(WriterInterface $writer)
-    {
-        $this->writer = $writer;
-    }
-
-    /**
-     * Return the writer
-     *
-     * @return WriterInterface
-     */
-    public function getWriter()
-    {
-        return $this->writer;
-    }
-
-    /**
      * Build Map(s) for an absolute directory or file path
      *
      * @param string $path
@@ -140,8 +112,6 @@ class Builder
 
         foreach ($processed as $class => $map) {
             $map = $this->buildDependencies($map, $processed, array($map->getClass() => true), $map);
-            $export = $map->export();
-            $this->writer->write($export->class, $export);
         }
 
         return $processed;

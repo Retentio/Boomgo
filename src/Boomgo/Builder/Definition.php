@@ -110,6 +110,19 @@ class Definition
         return $this->mappedClass;
     }
 
+    public function getMappedClassName()
+    {
+        $array = explode('\\', $this->mappedClass);
+        return $array[count($array)-1];
+    }
+
+    public function getMappedNamespace()
+    {
+        $array = explode('\\', $this->mappedClass);
+        unset($array[count($array)-1]);
+        return implode('\\', $array);
+    }
+
     public function getMutator()
     {
         return $this->mutator;

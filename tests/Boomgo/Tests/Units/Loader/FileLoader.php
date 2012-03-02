@@ -14,8 +14,7 @@
 
 namespace Boomgo\Tests\Units\Loader;
 
-use Boomgo\Tests\Units\Test,
-    Boomgo\Tests\Units\Adapter\FileAdapter;
+use Boomgo\Tests\Units\Test;
 use Boomgo\Loader;
 
 /**
@@ -24,10 +23,57 @@ use Boomgo\Loader;
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
 
-class FileLoader extends FileAdapter
+class FileLoader extends Test
 {
     private $fixtures = array();
     private $directory = __DIR__;
+
+    public function test__construct()
+    {
+        // Should be able to define the directory
+        $file = new Loader\FileLoader($this->directory);
+        $this->assert
+            ->string($file->getDirectory())
+            ->isEqualTo($this->directory);
+    }
+
+    public function testSetDirectory()
+    {
+        $file = new Loader\FileLoader();
+
+        // Should remove trailing /
+        $file->setDirectory($this->directory.'/');
+        $this->assert
+            ->string($file->getDirectory())
+            ->isEqualTo($this->directory);
+
+        // Should remove trailing \
+        $file->setDirectory($this->directory.'\\');
+        $this->assert
+            ->string($file->getDirectory())
+            ->isEqualTo($this->directory);
+
+        // Should remove trailing DIRECTORY_SEPARATOR
+        $file->setDirectory($this->directory.DIRECTORY_SEPARATOR);
+        $this->assert
+            ->string($file->getDirectory())
+            ->isEqualTo($this->directory);
+
+        // Should remove all trailing \,/ and DIRECTORY_SEPARATOR
+        $file->setDirectory($this->directory.'/'.'\\'.DIRECTORY_SEPARATOR);
+        $this->assert
+            ->string($file->getDirectory())
+            ->isEqualTo($this->directory);
+
+        // Should throw exception if directory do not exist
+        $directory = $this->directory;
+        $this->assert
+            ->exception(function() use ($file, $directory) {
+                $file->setDirectory($directory.DIRECTORY_SEPARATOR.'unknowndirectory');
+            })
+            ->isInstanceOf('InvalidArgumentException')
+            ->hasMessage('Directory must be valid and writable');
+    }
 
     public function testLoad()
     {

@@ -1,0 +1,91 @@
+<?php
+
+namespace {{ namespace ~ ";" }}
+
+{% for import in imports %}
+use {{  import }};
+{% endfor %}
+
+/**
+ * Auto generated Mapper class for and by Boomgo.
+ *
+ * @author  Boomgo\Generator\MapperGenerator
+ */
+{{ abstract is defined ? "abstract " : "" }}class {{ map.getClassName }}Mapper {{ extends is defined ? "extends " ~ extends : "" }} {{ implements is defined ? "implements " ~ implements : "" }}
+{
+    public function unserialize(array $data)
+    {
+        $object = new {{ map.class }}();
+        $this->hydrate($object, $data);
+
+        return $object;
+    }
+
+    public function serialize({{ map.getClassName }} $object)
+    {
+        $data = array();
+
+        {%- for definition in map.definitions %}
+
+        $value = $object->{{ definition.accessor }}();
+        if (null != $value && !empty($value)) {
+
+        {%- if definition.isUserMapped %}
+
+            $mapper = new {{ definition.getMappedNamespace }}\Mapper\{{ definition.getMappedClassName }}Mapper();
+
+            {%- if definition.isDocumentMapped %}
+
+            $data['{{ definition.key }}'] = $mapper->serialize($value);
+
+            {%- elseif definition.isCollectionMapped %}
+
+            $data['{{ definition.key }}'] = $this->serializeEmbeddedCollection($mapper, $value);
+
+            {%- endif %}
+
+        {%- else %}
+
+            $data['{{ definition.key }}'] = $value;
+
+        {%- endif %}
+
+        }
+        {% endfor %}
+
+        return $data;
+    }
+
+    public function hydrate({{ map.getClassName }} $object, array $data)
+    {
+        {%- for definition in map.definitions %}
+
+        if (isset($data['{{ definition.key }}'])) {
+
+        {%- if definition.isUserMapped %}
+
+            $mapper = new {{ definition.getMappedNamespace }}\Mapper\{{ definition.getMappedClassName }}Mapper();
+
+            {%- if definition.isDocumentMapped %}
+
+            $embeddedObject = $mapper->unserialize($data['{{ definition.key }}']);
+            $object->{{ definition.mutator }}($embeddedObject);
+
+            {%- elseif definition.isCollectionMapped %}
+
+            $embeddedCollection = $this->unserializeEmbeddedCollection($mapper, $data['{{ definition.key }}']);
+            $object->{{ definition.mutator }}($embeddedCollection);
+
+            {%- endif %}
+
+        {%- else %}
+
+            $object->{{ definition.mutator }}($data['{{ definition.key }}']);
+
+        {%- endif %}
+
+        }
+        {% endfor %}
+
+    }
+}
