@@ -101,7 +101,7 @@ class StrictMapper extends MapperProvider implements MapperInterface
         $embedType = $definition['mapped']['type'];
 
         // Load embed map
-        $embedMap = $this->loadMap($definition['mapped']['class'], $map);
+        $embedMap = $map->getDepedency($definition['mapped']['class']);
 
         if ($embedType == 'document') {
             // Expect an hash (associative array), @todo maybe remove this check ?
@@ -109,7 +109,7 @@ class StrictMapper extends MapperProvider implements MapperInterface
                 throw new \RuntimeException('Attribute "'.$definition['attribute'].'" defines an embedded document and expects an associative array of value');
             }
 
-            $value = $this->toArray($embedMap, $value);
+            $value = $this->serialize($embedMap, $value);
 
         } elseif ($embedType == 'collection') {
             // Expect an array (numeric array), @todo maybe remove this check ?
@@ -121,7 +121,7 @@ class StrictMapper extends MapperProvider implements MapperInterface
 
             // Recursively serialize embed documents
             foreach ($value as $embedValue) {
-               $collection[] = $this->toArray($embedMap, $embedValue);
+               $collection[] = $this->serialize($embedMap, $embedValue);
             }
 
             $value = $collection;
@@ -154,7 +154,7 @@ class StrictMapper extends MapperProvider implements MapperInterface
         $embedType = $definition['mapped']['type'];
 
         // Load embed map
-        $embedMap = $this->loadMap($definition['mapped']['class']);
+        $embedMap = $map->getDepedency($definition['mapped']['class']);
 
         if ($embedType == 'document') {
             // Expect an hash (associative array), @todo maybe remove this check ?
