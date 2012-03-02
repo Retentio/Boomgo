@@ -10,28 +10,25 @@ namespace Boomgo\Tests\Units\Fixture;
 class AnnotedDocument
 {
     /**
-     * Identifier
-     * @Boomgo
+     * @Persistent
      * @var \MongoId
      */
     private $id;
 
     /**
-     * A mongo stored string
-     * @Boomgo
+     * @Persistent
      * @var string
      */
     private $string;
 
     /**
-     * A mongo number
-     * @Boomgo number
+     * @Persistent
+     * @var number
      */
     private $number;
 
     /**
-     * An embedded array
-     * @Boomgo
+     * @Persistent
      * @var array
      */
     private $array;
@@ -39,7 +36,7 @@ class AnnotedDocument
     /**
      * An single embedded EmbedDocument
      *
-     * @Boomgo
+     * @Persistent
      * @var Boomgo\Tests\Units\Fixture\AnnotedDocumentEmbed
      */
     private $document;
@@ -47,7 +44,7 @@ class AnnotedDocument
     /**
      * A embedded collection of EmbedDocument
      *
-     * @Boomgo
+     * @Persistent
      * @var array [Boomgo\Tests\Units\Fixture\AnnotedDocumentEmbed]
      */
     private $collection;

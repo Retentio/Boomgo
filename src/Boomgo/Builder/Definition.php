@@ -37,18 +37,18 @@ class Definition
      * @var array
      */
     static public $supportedTypes = array(
-        'int'     => false,
-        'integer' => false,
-        'bool'    => false,
-        'boolean' => false,
-        'float'   => false,
-        'double'  => false,
-        'real'    => false,
-        'string'  => false,
-        'number'  => false,
-        'mixed'   => false,
-        'array'   => true,
-        'object'  => false);
+        'int'     => 'scalar',
+        'integer' => 'scalar',
+        'bool'    => 'scalar',
+        'boolean' => 'scalar',
+        'float'   => 'scalar',
+        'double'  => 'scalar',
+        'real'    => 'scalar',
+        'string'  => 'scalar',
+        'number'  => 'scalar',
+        'mixed'   => 'composite',
+        'array'   => 'composite',
+        'object'  => 'composite');
 
     private $attribute;
 
@@ -143,6 +143,11 @@ class Definition
         $this->accessor = $value;
     }
 
+    public function isComposite()
+    {
+        return (isset(static::$supportedTypes[$this->type]) && static::$supportedTypes[$this->type] == 'composite');
+    }
+
     public function isMapped()
     {
         return (bool)$this->mappedClass;
@@ -199,7 +204,7 @@ class Definition
         $mappedClass = $data['mappedClass'];
         $isSupported = isset(static::$supportedTypes[$type]);
 
-        if ($isSupported && true === static::$supportedTypes[$type]
+        if ($isSupported && 'composite' === static::$supportedTypes[$type]
          && !empty($mappedClass)) {
             // Embedded collection: type => array, mappedClass => FQDN
 

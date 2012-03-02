@@ -89,7 +89,7 @@ class SimpleMapper extends MapperProvider implements MapperInterface
      * @param  mixed $object
      * @return array
      */
-    public function toArray($object)
+    public function serialize($object)
     {
         if (!is_object($object)) {
             throw new \InvalidArgumentException('Argument must be an object');

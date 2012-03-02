@@ -6,15 +6,13 @@ namespace Boomgo\Tests\Units\Fixture;
 class AnnotedDocumentEmbed
 {
     /**
-     * A mongo stored string
-     * @Boomgo
+     * @Persistent
      * @var string
      */
     private $string;
 
     /**
-     * An embedded array
-     * @Boomgo
+     * @Persistent
      * @var array
      */
     private $array;

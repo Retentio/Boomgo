@@ -37,7 +37,7 @@ interface MapperInterface
      * @param  array $array
      * @return object
      */
-    public function unserialize($array);
+    public function unserialize(array $array);
 
     /**
      * Hydrate a PHP object from a MongoDB array

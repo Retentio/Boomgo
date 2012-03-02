@@ -81,7 +81,7 @@ abstract class MapperProvider
     {
         $data = array();
         foreach ($collection as $object) {
-            $data[] = $mapper->serialize($mapper, $object)
+            $data[] = $mapper->serialize($mapper, $object);
         }
 
         return $data;

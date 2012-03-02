@@ -2,6 +2,7 @@
 
 namespace Boomgo\Builder;
 
+use Boomgo\Builder\Map;
 use TwigGenerator\Builder\Generator as TwigGenerator;
 
 class MapperGenerator
@@ -17,16 +18,21 @@ class MapperGenerator
     private $twigGenerator;
 
     /**
-     * @var string
+     * @var array
      */
-    private $generationPath;
+    private $options;
 
 
-    public function __construct(MapBuilder $mapBuilder, TwigGenerator $twigGenerator, $generationPath)
+    public function __construct(MapBuilder $mapBuilder, TwigGenerator $twigGenerator, array $options)
     {
         $this->setMapBuilder($mapBuilder);
         $this->setTwigGenerator($twigGenerator);
-        $this->setGenerationPath($generationPath);
+
+        if (!isset($options['namespace']) || !isset($options['namespace']['models']) || !isset($options['namespace']['mappers'])) {
+            throw new \InvalidArgumentException('Options "namespace model" and "namespace mapper" must be defined ');
+        }
+
+        $this->options = $options;
     }
 
     public function setMapBuilder(MapBuilder $mapBuilder)
@@ -52,15 +58,25 @@ class MapperGenerator
         return $this->twigGenerator;
     }
 
-
-    public function setGenerationPath($path)
+    /**
+     * Get outputname of a Mapper file
+     *
+     * @param  Map $fqdn Class FQDN
+     * @return string
+     */
+    private function getNames(Map $map)
     {
-        $this->generationPath = $path;
-    }
+        $names = array();
 
-    public function getGenerationPath()
-    {
-        return $this->generationPath;
+        $className = $map->getClassName();
+        $namespace = trim(str_replace($this->options['namespace']['models'], $this->options['namespace']['mappers'], $map->getNamespace()), '\\');
+
+        $reflectedClass = new \ReflectionClass($map->getClass());
+        $dirName = dirname(str_replace($this->options['namespace']['models'], $this->options['namespace']['mappers'], $reflectedClass->getFileName()));
+
+        $fileName = $className.'Mapper.php';
+
+        return array('className' => $className, 'fileName' => $fileName, 'namespace' => $namespace, 'dirName' => $dirName);
     }
 
     public function generate($resources)
@@ -68,13 +84,16 @@ class MapperGenerator
         $maps = $this->mapBuilder->build($resources);
 
         foreach ($maps as $map) {
+            $names = $this->getNames($map);
+
             $mapperBuilder = new MapperBuilder();
-            $mapperBuilder->setOutputName($map->getClassName().'.php');
             $this->twigGenerator->addBuilder($mapperBuilder);
-            $mapperBuilder->setVariable('namespace', trim($map->getNamespace(), '\\').'\\Mapper');
-            $mapperBuilder->setVariable('imports', array(trim($map->getNamespace(), '\\'), 'Boomgo\\Mapper'));
+            $mapperBuilder->setOutputName($names['fileName']);
+            $mapperBuilder->setVariable('namespace', $names['namespace']);
+            $mapperBuilder->setVariable('className', $names['className']);
+            $mapperBuilder->setVariable('imports', array(trim($map->getNamespace(), '\\')));
             $mapperBuilder->setVariable('map', $map);
-            $this->twigGenerator->writeOnDisk($this->generationPath);
+            $this->twigGenerator->writeOnDisk($names['dirName']);
         }
 
     }
