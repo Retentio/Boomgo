@@ -27,10 +27,10 @@ class AnnotationParser extends Test
     public function test__construct()
     {
         // Should be able to define the annotation though the constructor
-        $parser = new Parser\AnnotationParser('@MyHypeAnnot');
+        $parser = new Parser\AnnotationParser('@Boomgo', '@MyHypeAnnot');
 
         $this->assert
-            ->string($parser->getAnnotation())
+            ->string($parser->getLocalAnnotation())
             ->isIdenticalTo('@MyHypeAnnot');
     }
 
@@ -39,16 +39,16 @@ class AnnotationParser extends Test
         $parser = new Parser\AnnotationParser();
 
         // Should set and get annotation
-        $parser->setAnnotation('@MyHypeAnnot');
+        $parser->setLocalAnnotation('@MyHypeAnnot');
 
         $this->assert
-            ->string($parser->getAnnotation())
+            ->string($parser->getLocalAnnotation())
             ->isIdenticalTo('@MyHypeAnnot');
 
         // Should throw exception on invalid annotation
         $this->assert
             ->exception(function() use ($parser) {
-                $parser->setAnnotation('invalid');
+                $parser->setLocalAnnotation('invalid');
             })
             ->isInstanceOf('\InvalidArgumentException')
             ->hasMessage('Boomgo annotation tag should start with "@" character');

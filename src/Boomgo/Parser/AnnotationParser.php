@@ -24,43 +24,70 @@ use Boomgo\Formatter\FormatterInterface;
 class AnnotationParser implements ParserInterface
 {
     /**
-     * Boomgo annotation tag
+     * Boomgo global annotation tag
      * @var string
      */
-    private $annotation;
+    private $globalAnnotation;
+
+    private $localAnnotation;
 
     /**
      * Constructor
      *
      * @param string $annotation
      */
-    public function __construct($annotation = '@Boomgo')
+    public function __construct($globalTag = '@Boomgo', $localTag = '@Persistent')
     {
-        $this->setAnnotation($annotation);
+        $this->setGlobalAnnotation($globalTag);
+        $this->setLocalAnnotation($localTag);
     }
 
    /**
-     * Define the Boomgo annotation tag
+     * Define the global annotation tag
      *
-     * @param string $annotation
+     * @param string $tag
      */
-    public function setAnnotation($annotation)
+    public function setGlobalAnnotation($tag)
     {
-        if (!preg_match('#^@[a-zA-Z0-9]+$#', $annotation)) {
+        if (!preg_match('#^@[a-zA-Z0-9]+$#', $tag)) {
              throw new \InvalidArgumentException('Boomgo annotation tag should start with "@" character');
         }
 
-        $this->annotation = $annotation;
+        $this->globalAnnotation = $tag;
     }
 
     /**
-     * Return the defined Boomgo annotation tag
+     * Return the defined global annotation tag
      *
      * @return string
      */
-    public function getAnnotation()
+    public function getGlobalAnnotation()
     {
-        return $this->annotation;
+        return $this->globalAnnotation;
+    }
+
+    /**
+     * Define the local annotation tag
+     *
+     * @param string $tag
+     */
+    public function setLocalAnnotation($tag)
+    {
+        if (!preg_match('#^@[a-zA-Z0-9]+$#', $tag)) {
+             throw new \InvalidArgumentException('Boomgo annotation tag should start with "@" character');
+        }
+
+        $this->localAnnotation = $tag;
+    }
+
+    /**
+     * Return the local annotation tag
+     *
+     * @return string
+     */
+    public function getLocalAnnotation()
+    {
+        return $this->localAnnotation;
     }
 
     /**
@@ -115,7 +142,7 @@ class AnnotationParser implements ParserInterface
         $propertyName = $property->getName();
         $className = $property->getDeclaringClass()->getName();
 
-        $annotationTag = substr_count($property->getDocComment(), $this->getAnnotation());
+        $annotationTag = substr_count($property->getDocComment(), $this->getLocalAnnotation());
         if (0 < $annotationTag) {
             if (1 === $annotationTag) {
                 return true;
