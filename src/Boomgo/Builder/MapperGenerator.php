@@ -29,7 +29,7 @@ class MapperGenerator
         $this->setTwigGenerator($twigGenerator);
 
         if (!isset($options['namespace']) || !isset($options['namespace']['models']) || !isset($options['namespace']['mappers'])) {
-            throw new \InvalidArgumentException('Options "namespace model" and "namespace mapper" must be defined ');
+            throw new \InvalidArgumentException('Options "namespace model" and "namespace mapper" must be defined');
         }
 
         $this->options = $options;
