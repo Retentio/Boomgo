@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -24,7 +24,7 @@ use Boomgo\Formatter\FormatterInterface;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class SimpleMapper extends MapperProvider implements MapperInterface
+class SimpleMapper extends MapperProvider
 {
     /**
      * @var boolean

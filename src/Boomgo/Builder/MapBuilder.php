@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -14,14 +14,12 @@
 
 namespace Boomgo\Builder;
 
-use Boomgo\Builder\Map;
 use Boomgo\Formatter\FormatterInterface;
 use Boomgo\Parser\ParserInterface;
-use Symfony\Component\Finder\Finder,
-    Symfony\Component\Finder\SplFileInfo;
+use Symfony\Component\Finder\Finder;
 
 /**
- * Builder
+ * MapBuilder
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */

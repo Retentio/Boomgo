@@ -15,7 +15,7 @@ _In short, Boomgo offers a handy way to manipulate your MongoDB Documents with P
 Features
 --------
 
-* Build, cache & use a strict Map definition for your object.
+* Generate Mapper for your php object.
 * Hydrate PHP Object from a MongoDB results set.
 * Normalize PHP Object to mongo-storable array.
 * Handle hydration process of embedded document / collection.

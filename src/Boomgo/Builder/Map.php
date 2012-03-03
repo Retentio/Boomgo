@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -15,9 +15,7 @@
 namespace Boomgo\Builder;
 
 /**
- * Map pan
- *
- * Map master used to build the lighter exported map
+ * Map
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
