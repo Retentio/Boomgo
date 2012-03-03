@@ -17,6 +17,6 @@ class MapperGenerator extends Test
         $twigGenerator = new \TwigGenerator\Builder\Generator();
 
         $generator = new Builder\MapperGenerator($mapBuilder, $twigGenerator, array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
-        $generator->generate(array(__DIR__.'/../Fixture/AnnotedDocument.php', __DIR__.'/../Fixture/AnnotedDocumentEmbed.php'));
+        $generator->generate(array(__DIR__.'/../Fixture/Annoted/Document.php', __DIR__.'/../Fixture/Annoted/DocumentEmbed.php'));
     }
 }

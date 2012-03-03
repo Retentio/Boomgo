@@ -91,7 +91,17 @@ class AnnotationParser implements ParserInterface
     }
 
     /**
-     * Implement ParserInterface
+     * ParserInterface implementation
+     *
+     * {@inheritdoc}
+     */
+    public function getExtension()
+    {
+        return 'php';
+    }
+
+    /**
+     * ParserInterface implementation
      *
      * {@inheritdoc}
      */
@@ -101,7 +111,7 @@ class AnnotationParser implements ParserInterface
     }
 
     /**
-     * Implement ParserInterface
+     * ParserInterface implementation
      *
      * {@inheritdoc}
      */

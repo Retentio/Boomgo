@@ -24,6 +24,25 @@ use Boomgo\Builder as Src;
  */
 class Definition extends Test
 {
+    public function testIsValidNamespace()
+    {
+        // Should return true for valid FQDN
+        $valid = array('\\Namespace', '\\Another\\NameSpace', 'Another\\Na_me\\Space');
+        foreach ($valid as $namespace) {
+            $this->assert
+            ->boolean(Src\Definition::isValidNamespace($namespace))
+                ->isTrue();
+        }
+
+        // Should return false for invalid FQDN
+        $invalid = array('notnamespace', 'Not \\Namespace', '\\Not Name\\space');
+        foreach ($invalid as $namespace) {
+            $this->assert
+            ->boolean(Src\Definition::isValidNamespace($namespace))
+                ->isFalse();
+        }
+    }
+
     public function test__construct()
     {
         // Should throw an error if argument array (metadata) isn't provided
@@ -108,6 +127,84 @@ class Definition extends Test
             ->hasMessage('Mapped class "invalid_FQDN" is not a valid FQDN');
     }
 
+    public function test__toString()
+    {
+        // Should return the attribute
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->string($definition->__toString())
+                ->isEqualTo('attribute');
+    }
+
+    public function testGetAttribute()
+    {
+        // Should return the attribute
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->string($definition->getAttribute())
+                ->isEqualTo('attribute');
+    }
+
+    public function testGetKey()
+    {
+        // Should return the key
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->string($definition->getKey())
+                ->isEqualTo('key');
+    }
+
+    public function testGetMutator()
+    {
+        // Should return the mutator
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->string($definition->getMutator())
+                ->isEqualTo('mutator');
+    }
+
+    public function testGetAccessor()
+    {
+        // Should return the accessor
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->string($definition->getAccessor())
+                ->isEqualTo('accessor');
+    }
+
+    public function testIsComposite()
+    {
+        // Should return true for the default type "mixed"
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->boolean($definition->isComposite())
+                ->isTrue();
+
+        // Should return false for a supported type string
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'string'));
+        $this->assert
+            ->boolean($definition->isComposite())
+                ->isFalse();
+
+        // Should return false for a supported pseudo type number
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'number'));
+        $this->assert
+            ->boolean($definition->isComposite())
+                ->isFalse();
+
+        // Should return true for the supported type array
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'array'));
+        $this->assert
+            ->boolean($definition->isComposite())
+                ->isTrue();
+
+        // Should return true for the supported pseudo type object
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'object'));
+        $this->assert
+            ->boolean($definition->isComposite())
+                ->isTrue();
+    }
+
     public function testIsMapped()
     {
         // Should return true if type is a FQDN
@@ -133,6 +230,78 @@ class Definition extends Test
         $this->assert
             ->boolean($definition->isMapped())
                 ->isFalse();
+    }
+
+    public function testGetMappedType()
+    {
+        // Should return null
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->variable($definition->getMappedType())
+                ->isNull();
+
+        // Should return Boomgo\Builder\Definition::DOCUMENT (document) for a single embedded document
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedType())
+                ->isEqualTo(Src\Definition::DOCUMENT);
+
+        // Should return Boomgo\Builder\Definition::COLLECTION (collection) for an embedded collection
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedType())
+                ->isEqualTo(Src\Definition::COLLECTION);
+    }
+
+    public function testGetMappedClass()
+    {
+        // Should return null
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator'));
+        $this->assert
+            ->variable($definition->getMappedType())
+                ->isNull();
+
+        // Should return the FQDN of the single embedded document with the beginning \
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedClass())
+                ->isEqualTo('\\User\\Namespace\\Object');
+
+        // Should return the document FQDN of an embedded collection with the beginning \
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedClass())
+                ->isEqualTo('\\User\\Namespace\\Object');
+    }
+
+    public function testGetMappedClassName()
+    {
+        // Should return the short class name without namespace part for a single embedded document
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedClassName())
+                ->isEqualTo('Object');
+
+         // Should return the short class name without namespace part for an embedded collection
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedClassName())
+                ->isEqualTo('Object');
+    }
+
+    public function testGetMappedNamespace()
+    {
+        // Should return the namespace part without the class name for a single embedded document with the beginning \
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedNamespace())
+                ->isEqualTo('\\User\\Namespace');
+
+         // Should return the namespace part without the class name for an embedded collection with the beginning \
+        $definition = new Src\Definition(array('attribute' => 'attribute', 'key' => 'key', 'accessor' => 'accessor', 'mutator' => 'mutator', 'type' => 'array', 'mappedClass' => 'User\\Namespace\\Object'));
+        $this->assert
+            ->string($definition->getMappedNamespace())
+                ->isEqualTo('\\User\\Namespace');
     }
 
     public function testIsDocumentMapped()
@@ -265,24 +434,5 @@ class Definition extends Test
         $this->assert
             ->boolean($definition->isUserMapped())
                 ->isFalse();
-    }
-
-    public function testIsValidNamespace()
-    {
-        // Should return true for valid FQDN
-        $valid = array('\\Namespace', '\\Another\\NameSpace', 'Another\\Na_me\\Space');
-        foreach ($valid as $namespace) {
-            $this->assert
-            ->boolean(Src\Definition::isValidNamespace($namespace))
-                ->isTrue();
-        }
-
-        // Should return false for invalid FQDN
-        $invalid = array('notnamespace', 'Not \\Namespace', '\\Not Name\\space');
-        foreach ($invalid as $namespace) {
-            $this->assert
-            ->boolean(Src\Definition::isValidNamespace($namespace))
-                ->isFalse();
-        }
     }
 }

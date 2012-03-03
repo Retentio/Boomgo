@@ -21,6 +21,8 @@ namespace Boomgo\Parser;
  */
 interface ParserInterface
 {
+    public function getExtension();
+
     /**
      * Returns true if this class supports the given resource.
      *

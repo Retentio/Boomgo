@@ -100,6 +100,26 @@ class Definition
         return $this->key;
     }
 
+    public function getMutator()
+    {
+        return $this->mutator;
+    }
+
+    public function getAccessor()
+    {
+        return $this->accessor;
+    }
+
+    public function isComposite()
+    {
+        return (isset(static::$supportedTypes[$this->type]) && static::$supportedTypes[$this->type] == 'composite');
+    }
+
+    public function isMapped()
+    {
+        return (bool)$this->mappedClass;
+    }
+
     public function getMappedType()
     {
         return $this->mappedType;
@@ -121,36 +141,6 @@ class Definition
         $array = explode('\\', $this->mappedClass);
         unset($array[count($array)-1]);
         return implode('\\', $array);
-    }
-
-    public function getMutator()
-    {
-        return $this->mutator;
-    }
-
-    public function setMutator($value)
-    {
-        $this->mutator = $value;
-    }
-
-    public function getAccessor()
-    {
-        return $this->accessor;
-    }
-
-    public function setAccessor($value)
-    {
-        $this->accessor = $value;
-    }
-
-    public function isComposite()
-    {
-        return (isset(static::$supportedTypes[$this->type]) && static::$supportedTypes[$this->type] == 'composite');
-    }
-
-    public function isMapped()
-    {
-        return (bool)$this->mappedClass;
     }
 
     /**
@@ -233,26 +223,5 @@ class Definition
         $this->key = $data['key'];
         $this->accessor = $data['accessor'];
         $this->mutator = $data['mutator'];
-    }
-
-    public function toArray()
-    {
-        $array = array();
-        $array['attribute'] = $this->attribute;
-        $array['key'] = $this->key;
-        $array['type'] = $this->type;
-        $array['mutator'] = $this->mutator;
-        $array['accessor'] = $this->accessor;
-
-        if ($this->isMapped()) {
-            $array['mapped']['type'] = $this->mappedType;
-            $array['mapped']['class'] = $this->mappedClass;
-
-            if ($this->isUserMapped()) {
-                $array['mapped']['user'] = true;
-            }
-        }
-
-        return $array;
     }
 }

@@ -46,6 +46,34 @@ class Map extends Test
                 ->isEmpty();
     }
 
+    public function testGetClass()
+    {
+        // Should return the mapped FQDN with the first \
+        $map = new Src\Map('FQDN');
+        $this->assert
+            ->string($map->getClass())
+                ->isEqualTo('\FQDN');
+    }
+
+    public function testGetClassname()
+    {
+        // Should return the short class name without namespace part
+        $map = new Src\Map('Vendor\\Package\\Subpackage\\Class');
+        $this->assert
+            ->string($map->getClassName())
+                ->isEqualTo('Class');
+    }
+
+    public function testGetNamespace()
+    {
+        // Should return the namespace without the short class name part and with the first \
+        $map = new Src\Map('Vendor\\Package\\Subpackage\\Class');
+        $this->assert
+            ->string($map->getNamespace())
+                ->isEqualTo('\\Vendor\\Package\\Subpackage');
+    }
+
+
     public function testAddDefinition()
     {
         // Should append an item to mongoIndex and Definition

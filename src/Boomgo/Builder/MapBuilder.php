@@ -100,7 +100,6 @@ class MapBuilder
         $processed = array();
 
         foreach ($collection as $resource) {
-            $resource = ($resource instanceof SplFileInfo) ? $resource->getPathName() : $resource;
             if ($this->parser->supports($resource))
             {
                 $metadata = $this->parser->parse($resource);
@@ -108,10 +107,6 @@ class MapBuilder
 
                 $processed[$map->getClass()] = $map;
             }
-        }
-
-        foreach ($processed as $class => $map) {
-            $map = $this->buildDependencies($map, $processed, array($map->getClass() => true), $map);
         }
 
         return $processed;
@@ -129,13 +124,20 @@ class MapBuilder
         $collection = array();
 
         if (is_array($path)) {
-            $collection = $path;
+            foreach ($path as $resource) {
+                $subcollection = array();
+                $subcollection = $this->load($resource);
+                $collection = array_merge($collection, $subcollection);
+            }
         } elseif (is_dir($path)) {
-            $collection = $finder->files()->name('*')->in($path);
+            $files = $finder->files()->name('*.'.$this->parser->getExtension())->in($path);
+            foreach ($files as $file) {
+                $collection[] = $file->getPathName();
+            }
         } elseif (is_file($path)) {
             $collection = array($path);
         } else {
-            throw new \InvalidArgumentException('Argument must be an array or absolute directory or file path');
+            throw new \InvalidArgumentException('Argument must be an absolute directory or a file path or both in an array');
         }
 
         return $collection;
@@ -182,38 +184,5 @@ class MapBuilder
         $metadata['mutator'] = $this->formatter->getPhpMutator($metadata['attribute']);
 
         return new Definition($metadata);
-    }
-
-    /**
-     * Optimize dependencies
-     *
-     * @param  Map    $masterMap
-     * @param  array  $availableMaps
-     * @param  array  $dependencies
-     * @param  Map    $subMap
-     *
-     * @return Map    $masterMap
-     */
-    private function buildDependencies(Map $masterMap, array $availableMaps, array $dependencies, Map $subMap)
-    {
-        $definitions = $subMap->getDefinitions();
-        foreach ($definitions as $definition) {
-
-            if ($definition->isUserMapped()) {
-
-                if (!isset($dependencies[$definition->getMappedClass()])) {
-                    $dependencies[$definition->getMappedClass()] = true;
-
-                    if (isset($availableMaps[$definition->getMappedClass()])) {
-                        $masterMap->addDependency($availableMaps[$definition->getMappedClass()]);
-                        $this->buildDependencies($masterMap, $availableMaps, $dependencies, $availableMaps[$definition->getMappedClass()]);
-                    } else {
-                        throw new \RuntimeException (sprintf('Unable to build dependencie "%s" for the map "%s"', $definition->getMappedClass(), $masterMap->getClass()));
-                    }
-                }
-            }
-        }
-
-        return $masterMap;
     }
 }

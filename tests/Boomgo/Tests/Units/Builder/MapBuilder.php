@@ -24,74 +24,256 @@ use Boomgo\Builder;
  */
 class MapBuilder extends Test
 {
+    public function test__construct()
+    {
+        // Should define the parser and the formatter
+        $builder = $this->builderProvider();
+        $this->assert
+            ->object($builder->getParser())
+                ->isInstanceOf('\\Mock\\Parser\\Parser')
+            ->object($builder->getFormatter())
+                ->isInstanceOf('\\Mock\\Formatter\\Formatter');
+    }
+
+    public function testGetParser()
+    {
+        // Should return the parser
+        $builder = $this->builderProvider();
+        $this->assert
+            ->object($builder->getParser())
+                ->isInstanceOf('\\Mock\\Parser\\Parser');
+    }
+
+    public function testGetFormatter()
+    {
+        // Should return the formatter
+        $builder =  $this->builderProvider();
+        $this->assert
+            ->object($builder->getFormatter())
+                ->isInstanceOf('\\Mock\\Formatter\\Formatter');
+    }
+
     public function testBuild()
     {
-        $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
-        $this->mock('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
-        $this->mock('Boomgo\\Writer\\WriterInterface', '\\Mock\\Writer', 'Writer');
+        $fixtureDir = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture';
+        $annotedDir = $fixtureDir.DIRECTORY_SEPARATOR.'Annoted';
 
-        $fixtureMetadata = $this->metadataProvider();
+        // Should throw an exception if argument is a string and not a valid path or dir
+        $builder = $this->builderProvider();
+        $this->assert
+            ->exception(function() use ($builder) {
+                $builder->build('invalid path');
+            })
+            ->isInstanceOf('InvalidArgumentException')
+            ->hasMessage('Argument must be an absolute directory or a file path or both in an array');
 
-        $mockParser = new \Mock\Parser\Parser;
+        // Should throw an exception if argument is an array and an element is not a valid path or dir
+        $builder = $this->builderProvider();
+        $this->assert
+            ->exception(function() use ($builder) {
+                $builder->build(array(__FILE__, 'invalid path'));
+            })
+            ->isInstanceOf('InvalidArgumentException')
+            ->hasMessage('Argument must be an absolute directory or a file path or both in an array');
+
+
+        // Should  build Maps for an array of files
+        $builder = $this->builderProvider();
+        $processed = $builder->build(array($annotedDir.DIRECTORY_SEPARATOR.'Document.php', $annotedDir.DIRECTORY_SEPARATOR.'DocumentEmbed.php'));
+        $this->assert
+            ->array($processed)
+                ->hasSize(2)
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document']->getDefinitions())
+                ->hasSize(5)
+                ->hasKeys(array('id', 'string', 'array', 'document', 'collection'))
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed']->getDefinitions())
+                ->hasSize(2)
+                ->hasKeys(array('string', 'array'));
+
+        // Should build Maps for a directory
+        $builder = $this->builderProvider();
+        $processed = $builder->build($annotedDir.DIRECTORY_SEPARATOR);
+        $this->assert
+            ->array($processed)
+                ->hasSize(2)
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document']->getDefinitions())
+                ->hasSize(5)
+                ->hasKeys(array('id', 'string', 'array', 'document', 'collection'))
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed']->getDefinitions())
+                ->hasSize(2)
+                ->hasKeys(array('string', 'array'));
+
+        // Should build Maps for an array of directories
+        $builder = $this->builderProvider();
+        $processed = $builder->build(array($fixtureDir.DIRECTORY_SEPARATOR.'Annoted', $fixtureDir.DIRECTORY_SEPARATOR.'AnotherAnnoted'));
+        $this->assert
+            ->array($processed)
+                ->hasSize(3)
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document']->getDefinitions())
+                ->hasSize(5)
+                ->hasKeys(array('id', 'string', 'array', 'document', 'collection'))
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed']->getDefinitions())
+                ->hasSize(2)
+                ->hasKeys(array('string', 'array'))
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document']->getDefinitions())
+                ->hasSize(4)
+                ->hasKeys(array('id', 'string', 'array', 'document'));
+
+        // Should build Map for a filepath
+        $builder = $this->builderProvider();
+        $processed = $builder->build($annotedDir.DIRECTORY_SEPARATOR.'Document.php');
+        $this->assert
+            ->array($processed)
+                ->hasSize(1)
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document']->getDefinitions())
+                ->hasSize(5)
+                ->hasKeys(array('id', 'string', 'array', 'document', 'collection'));
+
+        // Should build Maps for a mix of Directories and filepath
+        $builder = $this->builderProvider();
+        $processed = $builder->build(array($fixtureDir.DIRECTORY_SEPARATOR.'Annoted', $fixtureDir.DIRECTORY_SEPARATOR.'AnotherAnnoted'.DIRECTORY_SEPARATOR.'Document.php'));
+        $this->assert
+            ->array($processed)
+                ->hasSize(3)
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document'])
+                ->isInstanceOf('\\Boomgo\\Builder\\Map')
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document']->getDefinitions())
+                ->hasSize(5)
+                ->hasKeys(array('id', 'string', 'array', 'document', 'collection'))
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed']->getDefinitions())
+                ->hasSize(2)
+                ->hasKeys(array('string', 'array'))
+            ->array($processed['\\Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document']->getDefinitions())
+                ->hasSize(4)
+                ->hasKeys(array('id', 'string', 'array', 'document'));
+
+        // Should throw exception on invalid metadata
+        $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'InvalidParser');
+        $invalidMetadata =  array(
+                'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document',
+                'definitions' => array(
+                    array(),
+                    array('attribute' => 'string', 'type' => 'string')));
+
+
+        $mockParser = new \Mock\Parser\InvalidParser;
         $mockParser->getMockController()->supports = function() { return true; };
-        $mockParser->getMockController()->parse = function($file) use ($fixtureMetadata) { return ($file == __FILE__) ? $fixtureMetadata['\\Fixture\\Class'] : $fixtureMetadata['\\Fixture\\Embed\\Class']; };
+        $mockParser->getMockController()->getExtension = function() { return 'php'; };
+        $mockParser->getMockController()->parse = function($file) use ($invalidMetadata) { return $invalidMetadata; };
 
         $mockFormatter = new \Mock\Formatter\Formatter;
-        $mockFormatter->getMockController()->toPhpAttribute = function($string) { return $string; };
+
+        $builder = new Builder\MapBuilder($mockParser, $mockFormatter);
+        $this->assert
+            ->exception(function() use ($builder) {
+                $builder->build(__FILE__); // random we do not care since parser is a mock
+            })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Invalid metadata should provide an attribute or a key');
+
+        // Should guess the attribute if only a key is provided
+        $keyMetadata =  array(
+                'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document',
+                'definitions' => array(
+                    array('key' => 'STRING', 'type' => 'string')));
+
+        $mockParser = new \Mock\Parser\InvalidParser;
+        $mockParser->getMockController()->supports = function() { return true; };
+        $mockParser->getMockController()->getExtension = function() { return 'php'; };
+        $mockParser->getMockController()->parse = function($file) use ($keyMetadata) { return $keyMetadata; };
+
+        $mockFormatter = new \Mock\Formatter\Formatter;
+        $mockFormatter->getMockController()->toPhpAttribute = function($string) { return strtolower($string); };
         $mockFormatter->getMockController()->toMongoKey = function($string) { return strtoupper($string); };
         $mockFormatter->getMockController()->getPhpAccessor = function($string) { return 'get'.ucfirst($string); };
         $mockFormatter->getMockController()->getPhpMutator = function($string) { return 'set'.ucfirst($string); };
 
         $builder = new Builder\MapBuilder($mockParser, $mockFormatter);
-
-        $processed = $builder->build(array(__FILE__, __DIR__.DIRECTORY_SEPARATOR.'Map.php'));
-        $map = $processed['\\Fixture\\Class'];
+        $processed = $builder->build(__FILE__); // random we do not care since parser is a mock
         $this->assert
-            ->object($map)
-                ->isInstanceOf('\\Boomgo\\Builder\\Map');
-
-        $definition = $map->getDefinition('document');
-        $this->assert
-            ->object($definition)
-                ->isInstanceOf('\\Boomgo\\Builder\\Definition');
-
-        $definition = $map->getDefinition('collection');
-        $this->assert
-            ->object($definition)
-                ->isInstanceOf('\\Boomgo\\Builder\\Definition');
-
-        $dependencies = $map->getDependencies();
-        $this->assert
-            ->array($dependencies)
+            ->array($processed)
                 ->hasSize(1)
-                ->hasKey('\\Fixture\\Embed\\Class');
-
-        $dependency = $map->getDependency('\\Fixture\\Embed\\Class');
-        $this->assert
-            ->object($dependency)
+            ->object($processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document'])
                 ->isInstanceOf('\\Boomgo\\Builder\\Map');
 
-
-        $definition = $dependency->getDefinition('string');
+        $definitions = $processed['\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document']->getDefinitions();
         $this->assert
-            ->object($definition)
-                ->isInstanceOf('\\Boomgo\\Builder\\Definition');
+            ->object($definitions['string'])
+            ->string($definitions['string']->getAttribute())
+                ->isEqualTo('string');
+
+    }
+
+    private function builderprovider()
+    {
+        if (!class_exists('\\Mock\\Parser\\Parser') && !class_exists('\\Mock\\Formatter\\Formatter')) {
+            $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
+            $this->mock('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
+        }
+
+        $fixtureMetadata = $this->metadataProvider();
+
+        $mockParser = new \Mock\Parser\Parser;
+        $mockParser->getMockController()->supports = function() { return true; };
+        $mockParser->getMockController()->getExtension = function() { return 'php'; };
+        $mockParser->getMockController()->parse = function($file) use ($fixtureMetadata) { return $fixtureMetadata[$file]; };
+
+        $mockFormatter = new \Mock\Formatter\Formatter;
+        $mockFormatter->getMockController()->toPhpAttribute = function($string) { return strtolower($string); };
+        $mockFormatter->getMockController()->toMongoKey = function($string) { return strtoupper($string); };
+        $mockFormatter->getMockController()->getPhpAccessor = function($string) { return 'get'.ucfirst($string); };
+        $mockFormatter->getMockController()->getPhpMutator = function($string) { return 'set'.ucfirst($string); };
+
+        return new Builder\MapBuilder($mockParser, $mockFormatter);
     }
 
     private function metadataProvider()
     {
+        $document = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture'.DIRECTORY_SEPARATOR.'Annoted'.DIRECTORY_SEPARATOR.'Document.php';
+        $embed = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture'.DIRECTORY_SEPARATOR.'Annoted'.DIRECTORY_SEPARATOR.'DocumentEmbed.php';
+        $another = __DIR__.DIRECTORY_SEPARATOR.'..'.DIRECTORY_SEPARATOR.'Fixture'.DIRECTORY_SEPARATOR.'AnotherAnnoted'.DIRECTORY_SEPARATOR.'Document.php';
+
         return array(
-            '\\Fixture\\Class' => array(
-                'class' => '\\Fixture\\Class',
+            $document => array(
+                'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document',
                 'definitions' => array(
+                    array('attribute' => 'id', 'type' => 'string'),
                     array('attribute' => 'string', 'type' => 'string'),
                     array('attribute' => 'array', 'type' => 'array'),
-                    array('attribute' => 'document', 'type' => '\\Fixture\\Embed\\Class'),
-                    array('attribute' => 'collection', 'type' => 'array', 'mappedClass' => '\\Fixture\\Embed\\Class' ))),
-            '\\Fixture\\Embed\\Class' => array(
-                'class' => '\\Fixture\\Embed\\Class',
+                    array('attribute' => 'document', 'type' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed'),
+                    array('attribute' => 'collection', 'type' => 'array', 'mappedClass' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed' ))),
+            $embed => array(
+                'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\DocumentEmbed',
                 'definitions' => array(
                     array('attribute' => 'string', 'type' => 'string'),
-                    array('attribute' => 'array', 'type' => 'array'))));
+                    array('attribute' => 'array', 'type' => 'array'))),
+            $another => array(
+                'class' => '\\Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document',
+                'definitions' => array(
+                    array('attribute' => 'id', 'type' => 'string'),
+                    array('attribute' => 'string', 'type' => 'string'),
+                    array('attribute' => 'array', 'type' => 'array'),
+                    array('attribute' => 'document', 'type' => '\\Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document')))
+            );
     }
 }
