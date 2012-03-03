@@ -26,24 +26,46 @@ class AnnotationParser extends Test
 {
     public function test__construct()
     {
-        // Should be able to define the annotation though the constructor
+        // Should be able to define the local and global annotation though the constructor
         $parser = new Parser\AnnotationParser('@Boomgo', '@MyHypeAnnot');
 
         $this->assert
             ->string($parser->getLocalAnnotation())
-            ->isIdenticalTo('@MyHypeAnnot');
+                ->isIdenticalTo('@MyHypeAnnot')
+            ->string($parser->getGlobalAnnotation())
+                ->isIdenticalTo('@Boomgo');
     }
 
-    public function testSetGetAnnotation()
+    public function testSetGetGlobalAnnotation()
     {
         $parser = new Parser\AnnotationParser();
 
-        // Should set and get annotation
+        // Should set and get global annotation
+        $parser->setGlobalAnnotation('@MyHypeAnnot');
+
+        $this->assert
+            ->string($parser->getGlobalAnnotation())
+                ->isIdenticalTo('@MyHypeAnnot');
+
+        // Should throw exception on invalid annotation
+        $this->assert
+            ->exception(function() use ($parser) {
+                $parser->setGlobalAnnotation('invalid');
+            })
+            ->isInstanceOf('\InvalidArgumentException')
+            ->hasMessage('Boomgo annotation tag should start with "@" character');
+    }
+
+    public function testSetGetLocalAnnotation()
+    {
+        $parser = new Parser\AnnotationParser();
+
+        // Should set and get local annotation
         $parser->setLocalAnnotation('@MyHypeAnnot');
 
         $this->assert
             ->string($parser->getLocalAnnotation())
-            ->isIdenticalTo('@MyHypeAnnot');
+                ->isIdenticalTo('@MyHypeAnnot');
 
         // Should throw exception on invalid annotation
         $this->assert
@@ -54,8 +76,64 @@ class AnnotationParser extends Test
             ->hasMessage('Boomgo annotation tag should start with "@" character');
     }
 
+    public function testGetExtension()
+    {
+        // Should return php as supported extension
+        $parser = new Parser\AnnotationParser();
+        $this->assert
+            ->string($parser->getExtension())
+                ->isEqualTo('php');
+    }
+
+    public function testSupports()
+    {
+        // Should return true for a php file
+        $parser = new Parser\AnnotationParser();
+        $this->assert
+            ->boolean($parser->supports(__FILE__))
+                ->isTrue();
+
+        // Should return false for a non php file
+        $unsupported = __DIR__.DIRECTORY_SEPARATOR.'unsupported';
+        touch($unsupported);
+
+        $this->assert
+            ->boolean($parser->supports($unsupported))
+                ->isFalse();
+
+        unlink($unsupported);
+    }
+
     public function testParse()
     {
+        // Should throw exception if no namespace is defined in the file
+        $parser = new Parser\AnnotationParser();
+        $this->assert
+            ->exception(function() use ($parser) {
+                $parser->parse(__DIR__.'/../Fixture/NoNamespace.php');
+            })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Unable to find namespace or class declaration');
+
+        // Should throw exception if Boomgo local annotation is not unique per property
+        $parser = new Parser\AnnotationParser();
+        $this->assert
+            ->exception(function() use ($parser) {
+                $parser->parse(__DIR__.'/../Fixture/AnnotationInvalidBoomgo.php');
+            })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('Boomgo annotation tag should occur only once for "Boomgo\Tests\Units\Fixture\AnnotationInvalidBoomgo->invalidAnnotation"');
+
+        // Should throw exception if a Boomgo property contains more than on @var tag
+        $parser = new Parser\AnnotationParser();
+        $this->assert
+            ->exception(function() use ($parser) {
+                $parser->parse(__DIR__.'/../Fixture/AnnotationInvalidVar.php');
+            })
+            ->isInstanceOf('RuntimeException')
+            ->hasMessage('"@var" tag is not unique for "Boomgo\Tests\Units\Fixture\AnnotationInvalidVar->invalidVar"');
+
+        // Should parse an annoted class
         $parser = new Parser\AnnotationParser();
 
         $metadata = $parser->parse(__DIR__.'/../Fixture/Annotation.php');

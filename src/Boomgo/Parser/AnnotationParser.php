@@ -119,7 +119,7 @@ class AnnotationParser implements ParserInterface
     {
         // Regexp instead of tokens because of the bad perf @link > https://gist.github.com/1886076
         if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
-            throw new \RuntimeException('Unable to find namespace declaration');
+            throw new \RuntimeException('Unable to find namespace or class declaration');
         }
 
         $fqcn = $captured[1].'\\'.$captured[2];
@@ -180,7 +180,7 @@ class AnnotationParser implements ParserInterface
         $occurence = (int)substr_count($docComment, $tag);
 
         if (1 < $occurence) {
-            throw new \RuntimeException(sprintf('"@var" tag is not unique', $tag));
+            throw new \RuntimeException(sprintf('"@var" tag is not unique for "%s->%s"', $property->getDeclaringClass()->getName(), $property->getName()));
         }
 
         $metadata['attribute'] = $property->getName();

@@ -5,6 +5,11 @@ namespace Boomgo\Tests\Units\Fixture;
 class Annotation
 {
     /**
+     * @var type
+     */
+    public $nopersistent;
+
+    /**
      * @Persistent
      */
     public $novar;
