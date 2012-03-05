@@ -52,15 +52,35 @@ class MapperGenerator extends Test
 
     public function testGenerate()
     {
-        $formatter = new \Boomgo\Formatter\Underscore2CamelFormatter();
-        $parser = new \Boomgo\Parser\AnnotationParser();
+        $this->mockFactory();
+        $mockParser = new \Mock\Parser\Parser();
+        $mockFormatter = new \Mock\Formatter\Formatter();
+        $mockMapBuilder = new \Mock\Builder\MapBuilder($mockParser, $mockFormatter);
+        $mockTwigGenerator = new \Mock\Builder\TwigGenerator();
 
-        $mapBuilder = new \Boomgo\Builder\MapBuilder($parser, $formatter);
+        $this->mock('Boomgo\\Builder\\Map', '\\Mock\\Builder', 'Map');
+        $mockMap = new \Mock\Builder\Map('Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted\\Document');
+        $mockMap->getMockController()->getClassName = function() { return 'Document'; };
+        $mockMap->getMockController()->getNamespace = function() { return 'Boomgo\\Tests\\Units\\Fixture\\AnotherAnnoted'; };
 
-        $twigGenerator = new \TwigGenerator\Builder\Generator();
+        $mockMapBuilder->getMockController()->build = function() use ($mockMap) { return array($mockMap); };
+        $mockTwigGenerator->getMockController()->writeOnDisk = function() {};
 
-        $generator = new Builder\MapperGenerator($mapBuilder, $twigGenerator, array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
-        $generator->generate(array(__DIR__.'/../Fixture/Annoted/Document.php', __DIR__.'/../Fixture/Annoted/DocumentEmbed.php'));
+        $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
+        $this->assert
+            ->variable($mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted/Document.php')))
+            ->mock($mockTwigGenerator)
+                ->call('writeOnDisk')
+                    ->once();
+
+        // @TODO test generated code (functional test)
+        // $formatter = new \Boomgo\Formatter\Underscore2CamelFormatter();
+        // $parser = new \Boomgo\Parser\AnnotationParser();
+        // $mapBuilder = new \Boomgo\Builder\MapBuilder($parser, $formatter);
+        // $twigGenerator = new \TwigGenerator\Builder\Generator();
+        // $generator = new Builder\MapperGenerator($mapBuilder, $twigGenerator, array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
+        // $generator->generate(array(__DIR__.'/../Fixture/Annoted/Document.php', __DIR__.'/../Fixture/Annoted/DocumentEmbed.php'));
+
     }
 
     private function mockFactory()
