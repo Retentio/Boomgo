@@ -7,33 +7,6 @@ use Boomgo\Builder;
 
 class MapperGenerator extends Test
 {
-    public function test__construct()
-    {
-        $this->mockFactory();
-        $mockParser = new \Mock\Parser\Parser();
-        $mockFormatter = new \Mock\Formatter\Formatter();
-        $mockMapBuilder = new \Mock\Builder\MapBuilder($mockParser, $mockFormatter);
-        $mockTwigGenerator = new \Mock\Builder\TwigGenerator();
-
-        // Should throw exception if options namespace models & mappers aren't defined.
-        $this->assert
-            ->exception(function() use ($mockMapBuilder, $mockTwigGenerator) {
-                $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, array());
-            })
-                ->isInstanceOf('InvalidArgumentException')
-                ->hasMessage('Options "namespace model" and "namespace mapper" must be defined')
-             ->exception(function() use ($mockMapBuilder, $mockTwigGenerator) {
-                $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, array('namespace' => array('models' => true)));
-            })
-                ->isInstanceOf('InvalidArgumentException')
-                ->hasMessage('Options "namespace model" and "namespace mapper" must be defined')
-             ->exception(function() use ($mockMapBuilder, $mockTwigGenerator) {
-                $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, array('namespace' => array('mappers' => true)));
-            })
-                ->isInstanceOf('InvalidArgumentException')
-                ->hasMessage('Options "namespace model" and "namespace mapper" must be defined');
-    }
-
     public function testGetMapBuilder()
     {
         $mapperGenerator = $this->MapperGeneratorProvider(array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
@@ -68,7 +41,7 @@ class MapperGenerator extends Test
 
         $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
         $this->assert
-            ->variable($mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted/Document.php')))
+            ->variable($mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted/Document.php'), '/Mapper', '\\Mapper'))
             ->mock($mockTwigGenerator)
                 ->call('writeOnDisk')
                     ->once();

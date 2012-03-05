@@ -16,7 +16,6 @@ namespace Boomgo\Builder;
 
 use Boomgo\Formatter\FormatterInterface;
 use Boomgo\Parser\ParserInterface;
-use Symfony\Component\Finder\Finder;
 
 /**
  * MapBuilder
@@ -88,19 +87,18 @@ class MapBuilder
     }
 
     /**
-     * Build Map(s) for an absolute directory or file path
+     * Build Map(s) for an array of file
      *
-     * @param string $path
+     * @param array $files
      */
-    public function build($path)
+    public function build($files)
     {
-        $collection = $this->load($path);
         $processed = array();
 
-        foreach ($collection as $resource) {
-            if ($this->parser->supports($resource))
+        foreach ($files as $file) {
+            if ($this->parser->supports($file))
             {
-                $metadata = $this->parser->parse($resource);
+                $metadata = $this->parser->parse($file);
                 $map = $this->buildMap($metadata);
 
                 $processed[$map->getClass()] = $map;
@@ -108,37 +106,6 @@ class MapBuilder
         }
 
         return $processed;
-    }
-
-    /**
-     * Return a collection of resource
-     *
-     * @param  string $path
-     * @return array
-     */
-    private function load($path)
-    {
-        $finder = new Finder();
-        $collection = array();
-
-        if (is_array($path)) {
-            foreach ($path as $resource) {
-                $subcollection = array();
-                $subcollection = $this->load($resource);
-                $collection = array_merge($collection, $subcollection);
-            }
-        } elseif (is_dir($path)) {
-            $files = $finder->files()->name('*.'.$this->parser->getExtension())->in($path);
-            foreach ($files as $file) {
-                $collection[] = $file->getPathName();
-            }
-        } elseif (is_file($path)) {
-            $collection = array($path);
-        } else {
-            throw new \InvalidArgumentException('Argument must be an absolute directory or a file path or both in an array');
-        }
-
-        return $collection;
     }
 
     /**

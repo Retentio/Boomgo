@@ -15,6 +15,7 @@
 namespace Boomgo\Builder;
 
 use Boomgo\Builder\Map;
+use Symfony\Component\Finder\Finder;
 use TwigGenerator\Builder\Generator as TwigGenerator;
 
 /**
@@ -40,16 +41,10 @@ class MapperGenerator
     private $options;
 
 
-    public function __construct(MapBuilder $mapBuilder, TwigGenerator $twigGenerator, array $options)
+    public function __construct(MapBuilder $mapBuilder, TwigGenerator $twigGenerator)
     {
         $this->setMapBuilder($mapBuilder);
         $this->setTwigGenerator($twigGenerator);
-
-        if (!isset($options['namespace']) || !isset($options['namespace']['models']) || !isset($options['namespace']['mappers'])) {
-            throw new \InvalidArgumentException('Options "namespace model" and "namespace mapper" must be defined');
-        }
-
-        $this->options = $options;
     }
 
     public function setMapBuilder(MapBuilder $mapBuilder)
@@ -76,41 +71,54 @@ class MapperGenerator
     }
 
     /**
-     * Get outputname of a Mapper file
+     * Return a collection of resource
      *
-     * @param  Map $fqdn Class FQDN
-     * @return string
+     * @param  string $path
+     * @return array
      */
-    private function getNames(Map $map)
+    private function load($resources)
     {
-        $names = array();
+        $finder = new Finder();
+        $collection = array();
 
-        $className = $map->getClassName();
-        $namespace = trim(str_replace($this->options['namespace']['models'], $this->options['namespace']['mappers'], $map->getNamespace()), '\\');
+        if (is_array($resources)) {
+            foreach ($resources as $resource) {
+                $subcollection = array();
+                $subcollection = $this->load($resource);
+                $collection = array_merge($collection, $subcollection);
+            }
+        } elseif (is_dir($resources)) {
+            $files = $finder->files()->name('*.'.$this->getMapBuilder()->getParser()->getExtension())->in($resources);
+            foreach ($files as $file) {
+                $collection[] = $file->getPathName();
+            }
+        } elseif (is_file($resources)) {
+            $collection = array($resources);
+        } else {
+            throw new \InvalidArgumentException('Argument must be an absolute directory or a file path or both in an array');
+        }
 
-        $reflectedClass = new \ReflectionClass($map->getClass());
-        $dirName = dirname(str_replace($this->options['namespace']['models'], $this->options['namespace']['mappers'], $reflectedClass->getFileName()));
-
-        $fileName = $className.'Mapper.php';
-
-        return array('className' => $className, 'fileName' => $fileName, 'namespace' => $namespace, 'dirName' => $dirName);
+        return $collection;
     }
 
-    public function generate($resources)
+    public function generate($sources, $namespace, $directory)
     {
-        $maps = $this->mapBuilder->build($resources);
+        $files = $this->load($sources);
+        $maps = $this->mapBuilder->build($files);
 
         foreach ($maps as $map) {
-            $names = $this->getNames($map);
+            $modelClassName = $map->getClassName();
+            $mapperClassName = $modelClassName.'Mapper';
+            $mapperFileName = $mapperClassName.'.php';
 
             $mapperBuilder = new MapperBuilder();
             $this->twigGenerator->addBuilder($mapperBuilder);
-            $mapperBuilder->setOutputName($names['fileName']);
-            $mapperBuilder->setVariable('namespace', $names['namespace']);
-            $mapperBuilder->setVariable('className', $names['className']);
+            $mapperBuilder->setOutputName($mapperFileName);
+            $mapperBuilder->setVariable('namespace', $namespace);
+            $mapperBuilder->setVariable('className', $mapperClassName);
             $mapperBuilder->setVariable('imports', array(trim($map->getNamespace(), '\\')));
             $mapperBuilder->setVariable('map', $map);
-            $this->twigGenerator->writeOnDisk($names['dirName']);
+            $this->twigGenerator->writeOnDisk($directory);
         }
 
     }

@@ -125,6 +125,13 @@ class AnnotationParser implements ParserInterface
         $fqcn = $captured[1].'\\'.$captured[2];
         $metadata = array();
 
+        try {
+            $reflectedClass = new \ReflectionClass($fqcn);
+        } catch(\Exception $exception) {
+            require $filepath;
+            $reflectedClass = new \ReflectionClass($fqcn);
+        }
+
         $reflectedClass = new \ReflectionClass($fqcn);
         $metadata['class'] = $reflectedClass->getName();
 
