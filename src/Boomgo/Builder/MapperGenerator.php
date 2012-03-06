@@ -70,40 +70,9 @@ class MapperGenerator
         return $this->twigGenerator;
     }
 
-    /**
-     * Return a collection of resource
-     *
-     * @param  string $path
-     * @return array
-     */
-    private function load($resources)
-    {
-        $finder = new Finder();
-        $collection = array();
-
-        if (is_array($resources)) {
-            foreach ($resources as $resource) {
-                $subcollection = array();
-                $subcollection = $this->load($resource);
-                $collection = array_merge($collection, $subcollection);
-            }
-        } elseif (is_dir($resources)) {
-            $files = $finder->files()->name('*.'.$this->getMapBuilder()->getParser()->getExtension())->in($resources);
-            foreach ($files as $file) {
-                $collection[] = $file->getPathName();
-            }
-        } elseif (is_file($resources)) {
-            $collection = array($resources);
-        } else {
-            throw new \InvalidArgumentException('Argument must be an absolute directory or a file path or both in an array');
-        }
-
-        return $collection;
-    }
-
     public function generate($sources, $namespace, $directory)
     {
-        $files = $this->load($sources);
+        $files = $this->load($sources, '.'.$this->getMapBuilder()->getParser()->getExtension());
         $maps = $this->mapBuilder->build($files);
 
         foreach ($maps as $map) {
@@ -120,6 +89,36 @@ class MapperGenerator
             $mapperBuilder->setVariable('map', $map);
             $this->twigGenerator->writeOnDisk($directory);
         }
+    }
 
+    /**
+     * Return a collection of files
+     *
+     * @param  mixed $resource
+     * @return array
+     */
+    public function load($resources, $extension = '')
+    {
+        $finder = new Finder();
+        $collection = array();
+
+        if (is_array($resources)) {
+            foreach ($resources as $resource) {
+                $subcollection = array();
+                $subcollection = $this->load($resource);
+                $collection = array_merge($collection, $subcollection);
+            }
+        } elseif (is_dir($resources)) {
+            $files = $finder->files()->name('*'.$extension)->in($resources);
+            foreach ($files as $file) {
+                $collection[] = realpath($file->getPathName());
+            }
+        } elseif (is_file($resources)) {
+            $collection = array(realpath($resources));
+        } else {
+            throw new \InvalidArgumentException('Argument must be an absolute directory or a file path or both in an array');
+        }
+
+        return $collection;
     }
 }

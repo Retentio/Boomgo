@@ -117,21 +117,14 @@ class AnnotationParser implements ParserInterface
      */
     public function parse($filepath)
     {
-        // Regexp instead of tokens because of the bad perf @link > https://gist.github.com/1886076
+        // Regexp instead of tokenizer because of the bad perf @link > https://gist.github.com/1886076
         if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
             throw new \RuntimeException('Unable to find namespace or class declaration');
         }
 
         $fqcn = $captured[1].'\\'.$captured[2];
+
         $metadata = array();
-
-        try {
-            $reflectedClass = new \ReflectionClass($fqcn);
-        } catch(\Exception $exception) {
-            require $filepath;
-            $reflectedClass = new \ReflectionClass($fqcn);
-        }
-
         $reflectedClass = new \ReflectionClass($fqcn);
         $metadata['class'] = $reflectedClass->getName();
 

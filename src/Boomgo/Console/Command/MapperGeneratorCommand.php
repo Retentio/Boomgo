@@ -35,24 +35,56 @@ class MapperGeneratorCommand extends Command
 
         $this->setDescription('Mapper generator command');
         $this->setHelp('boomgo:generate Generate mapper');
-        $this->addArgument('source', InputArgument::REQUIRED, 'Define the source directory or file');
-        $this->addArgument('namespace', InputArgument::REQUIRED, 'Define the mapper namespace');
-        $this->addArgument('directory', InputArgument::REQUIRED, 'Define the mappers directory');
-        $this->addArgument('formatter', InputArgument::OPTIONAL, 'Define the formatter', 'Underscore2CamelFormatter');
-        $this->addArgument('parser', InputArgument::OPTIONAL, 'Define the parser', 'AnnotationParser');
+        $this->addArgument('config', InputArgument::REQUIRED, 'Configuration file');
     }
 
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        $formatterClass = '\\Boomgo\\Formatter\\'.$input->getArgument('formatter');
-        $parserClass = '\\Boomgo\\Parser\\'.$input->getArgument('parser');
-        $formatter = new $formatterClass;
-        $parser = new $parserClass;
+        if (!file_exists($input->getArgument('config'))) {
+            throw new \InvalidArgumentException('Unknown configuration file');
+        }
 
-        $mapBuilder = new MapBuilder($parser, $formatter);
-        $twigGenerator = new Generator();
-        $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
-        $mapperGenerator->generate($input->getArgument('source'), $input->getArgument('directory'),  $input->getArgument('namespace'));
+        $config = json_decode(file_get_contents($input->getArgument('config')), true);
+        $baseDir = dirname($input->getArgument('config'));
+
+        foreach ($config['mapping'] as $mapping) {
+            $parserClass = (strpos($mapping['parser'], '\\') === false) ? '\\Boomgo\\Parser\\'.ucfirst($mapping['parser']).'Parser' : $mapping['parser'];
+            $formatterClass = (strpos($mapping['formatter'], '\\') === false) ? '\\Boomgo\\Formatter\\'.ucfirst($mapping['formatter']).'Formatter' : $mapping['formatter'];
+
+            $formatter = new $formatterClass;
+            $parser = new $parserClass;
+
+            $mapBuilder = new MapBuilder($parser, $formatter);
+            $twigGenerator = new Generator();
+            $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
+
+            if ($parser instanceof \Boomgo\Parser\AnnotationParser) {
+                if (!isset($mapping['autoloader'])) {
+                    throw new \RuntimeException('Annotation parser require an autoloader');
+                }
+
+                $autoloader = ($this->isAbsolutePath($mapping['autoloader'])) ? $mapping['autoloader'] : $baseDir.DIRECTORY_SEPARATOR.$mapping['autoloader'];
+
+                require $autoloader;
+            }
+
+            $mapperGenerator->generate($mapping['sources'], $mapping['mappers']['namespace'], $mapping['mappers']['directory']);
+        }
+    }
+
+    private function isAbsolutePath($file)
+    {
+        if ($file[0] == '/' || $file[0] == '\\'
+            || (strlen($file) > 3 && ctype_alpha($file[0])
+                && $file[1] == ':'
+                && ($file[2] == '\\' || $file[2] == '/')
+            )
+            || null !== parse_url($file, PHP_URL_SCHEME)
+        ) {
+            return true;
+        }
+
+        return false;
     }
 }

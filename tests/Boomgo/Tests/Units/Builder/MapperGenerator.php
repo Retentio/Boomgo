@@ -9,7 +9,7 @@ class MapperGenerator extends Test
 {
     public function testGetMapBuilder()
     {
-        $mapperGenerator = $this->MapperGeneratorProvider(array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
+        $mapperGenerator = $this->MapperGeneratorProvider();
         $this->assert
             ->object($mapperGenerator->getMapBuilder())
                 ->isInstanceOf('Boomgo\\Builder\\MapBuilder');
@@ -17,10 +17,66 @@ class MapperGenerator extends Test
 
     public function testGetTwigGenerator()
     {
-        $mapperGenerator = $this->MapperGeneratorProvider(array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
+        $mapperGenerator = $this->MapperGeneratorProvider();
         $this->assert
             ->object($mapperGenerator->getTwigGenerator())
                 ->isInstanceOf('TwigGenerator\\Builder\\Generator');
+    }
+
+    public function testLoad()
+    {
+        // Should throw an exception if argument is a string and not a valid file or directory
+        $mapperGenerator = $this->MapperGeneratorProvider();
+        $this->assert
+            ->exception(function() use ($mapperGenerator) {
+                $mapperGenerator->load('invalid path');
+            })
+            ->isInstanceOf('InvalidArgumentException')
+            ->hasMessage('Argument must be an absolute directory or a file path or both in an array');
+
+        // Should throw an exception if argument is an array and an element is not a valid file or directory
+        $mapperGenerator = $this->MapperGeneratorProvider();
+        $this->assert
+            ->exception(function() use ($mapperGenerator) {
+                $mapperGenerator->load(array(__FILE__, 'invalid path'));
+            })
+            ->isInstanceOf('InvalidArgumentException')
+            ->hasMessage('Argument must be an absolute directory or a file path or both in an array');
+
+
+        // Should return an array containing the realpath of a filename when providing a filename
+        $mapperGenerator = $this->MapperGeneratorProvider();
+        $this->assert
+            ->array($mapperGenerator->load(__DIR__.'/../Fixture/Annoted/Document.php'))
+                ->hasSize(1)
+                ->isIdenticalTo(array(realpath(__DIR__.'/../Fixture/Annoted/Document.php')));
+
+        // Should return an array containing many files realpath when providing a directory
+        $mapperGenerator = $this->MapperGeneratorProvider();
+        $this->assert
+            ->array($mapperGenerator->load(__DIR__.'/../Fixture/Annoted'))
+                ->hasSize(2)
+                ->isIdenticalTo (array(realpath(__DIR__.'/../Fixture/Annoted/Document.php'), realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php')));
+
+        // Should return an array containing many files realpath when providing an array of directory
+        $mapperGenerator = $this->MapperGeneratorProvider();
+        $this->assert
+            ->array($mapperGenerator->load(array(__DIR__.'/../Fixture/Annoted', __DIR__.'/../Fixture/AnotherAnnoted')))
+                ->hasSize(3)
+                ->isIdenticalTo(array(
+                    realpath(__DIR__.'/../Fixture/Annoted/Document.php'),
+                    realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php'),
+                    realpath(__DIR__.'/../Fixture/AnotherAnnoted/Document.php')));
+
+        // Should return an array containing many files realpath when providing an array mixed with directory and file
+        $mapperGenerator = $this->MapperGeneratorProvider();
+        $this->assert
+            ->array($mapperGenerator->load(array(__DIR__.'/../Fixture/Annoted', __DIR__.'/../Fixture/AnotherAnnoted/Document.php')))
+                ->hasSize(3)
+                ->isIdenticalTo(array(
+                    realpath(__DIR__.'/../Fixture/Annoted/Document.php'),
+                    realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php'),
+                    realpath(__DIR__.'/../Fixture/AnotherAnnoted/Document.php')));
     }
 
     public function testGenerate()
@@ -39,7 +95,7 @@ class MapperGenerator extends Test
         $mockMapBuilder->getMockController()->build = function() use ($mockMap) { return array($mockMap); };
         $mockTwigGenerator->getMockController()->writeOnDisk = function() {};
 
-        $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, array('namespace' => array('models' => 'Fixture', 'mappers' => 'Mapper')));
+        $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator);
         $this->assert
             ->variable($mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted/Document.php'), '/Mapper', '\\Mapper'))
             ->mock($mockTwigGenerator)
@@ -67,7 +123,7 @@ class MapperGenerator extends Test
         }
     }
 
-    private function MapperGeneratorProvider(array $options = array())
+    private function MapperGeneratorProvider()
     {
         $this->mockFactory();
 
@@ -76,6 +132,6 @@ class MapperGenerator extends Test
         $mockMapBuilder = new \Mock\Builder\MapBuilder($mockParser, $mockFormatter);
         $mockTwigGenerator = new \Mock\Builder\TwigGenerator();
 
-        return new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator, $options);
+        return new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator);
     }
 }
