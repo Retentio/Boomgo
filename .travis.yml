@@ -4,7 +4,7 @@ phps:
   - 5.4
 before_script:
   - wget http://getcomposer.org/composer.phar
-  - php composer.phar install --install-suggest
+  - php composer.phar install --install-suggests
 script: php vendor/bin/atoum -c .atoum.php -d tests
 branches:
   only:
