@@ -23,13 +23,8 @@
         "symfony/console": "dev-master",
         "cedriclombardot/twig-generator": "dev-master"
     },
-    "recommend": {
-        "mageekguy/atoum": "dev-master"
-    },
     "autoload": {
-        "psr-0": {
-            "Boomgo": "src/"
-        }
+        "psr-0": { "Boomgo": "src/" }
     },
     "bin": ["bin/boomgo"]
 }
