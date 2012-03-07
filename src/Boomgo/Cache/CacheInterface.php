@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -22,20 +22,12 @@ namespace Boomgo\Cache;
 interface CacheInterface
 {
     /**
-     * Cache data
-     *
-     * @param  string  $identifier Unique cache identifier
-     * @param  mixed   $data       Data to be cached
-     * @param  integer $ttl        Time To Live in second
-     */
-    public function save($identifier, $data, $ttl = 0);
-
-    /**
      * Check if a cached entry exists
      *
      * @param  string  $identifier Unique cache identifier
+     * @return boolean
      */
-    public function contains($identifier);
+    public function has($identifier);
 
     /**
      * Return a cached data
@@ -43,12 +35,26 @@ interface CacheInterface
      * @param  string  $identifier Unique cache identifier
      * @return mixed
      */
-    public function fetch($identifier);
+    public function get($identifier);
+
+    /**
+     * Cache data
+     *
+     * @param  string  $identifier Unique cache identifier
+     * @param  mixed   $data       Data to be cached
+     * @param  integer $ttl        Time To Live in second
+     */
+    public function add($identifier, $data, $ttl = 0);
 
     /**
      * Delete a cached entry
      *
      * @param  string  $identifier Unique cache identifier
      */
-    public function delete($identifier);
+    public function remove($identifier);
+
+    /**
+     * Clear all cache
+     */
+    public function clear();
 }

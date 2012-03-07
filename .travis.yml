@@ -5,7 +5,10 @@ phps:
 before_script:
   - wget http://getcomposer.org/composer.phar
   - php composer.phar install
-script: php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -d tests
+script: php vendor/bin/atoum -c .atoum.php -d tests
+branches:
+  only:
+    - master
 notifications:
   email:
     - ludo.fleury@gmail.com

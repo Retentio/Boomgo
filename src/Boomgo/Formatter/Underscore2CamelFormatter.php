@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -56,9 +56,10 @@ class Underscore2CamelFormatter implements FormatterInterface
      * @param  boolean $fromMongo True if an underscored mongo key is provided, false: for a camelCase php attribute
      * @return string
      */
-    public function getPhpAccessor($string, $fromMongo = true)
+    public function getPhpAccessor($string, $type = 'mixed', $fromMongo = true)
     {
-        return 'get'.(($fromMongo) ? $this->camelize($string, false) : ucfirst($string));
+        $prefix = (($type == 'bool' || $type == 'boolean') ? 'is' : 'get');
+        return $prefix.(($fromMongo) ? $this->camelize($string, false) : ucfirst($string));
     }
 
     /**
@@ -68,7 +69,7 @@ class Underscore2CamelFormatter implements FormatterInterface
      * @param  boolean $fromMongo True if an underscored mongo key is provided, false: for a camelCase php attribute
      * @return string
      */
-    public function getPhpMutator($string, $fromMongo = true)
+    public function getPhpMutator($string, $type = 'mixed', $fromMongo = true)
     {
         return 'set'.(($fromMongo) ? $this->camelize($string, false) : ucfirst($string));
     }

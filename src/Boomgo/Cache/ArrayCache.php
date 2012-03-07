@@ -15,20 +15,28 @@
 namespace Boomgo\Cache;
 
 /**
- * No cache
- *
- * Dummy cache implementation usefull for dev environment.
+ * Array cache
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class NoCache implements CacheInterface
+class ArrayCache implements CacheInterface
 {
+    /**
+     * @var array
+     */
+    private $data;
+
+    public function __construct()
+    {
+        $this->data = array();
+    }
+
     /**
      * {@inheritdoc}
      */
     public function has($identifier)
     {
-        return false;
+        return isset($this->data[$identifier]);
     }
 
     /**
@@ -36,7 +44,7 @@ class NoCache implements CacheInterface
      */
     public function get($identifier)
     {
-        return null;
+        return ($this->has($identifier)) ? $this->data[$identifier] : null;
     }
 
     /**
@@ -44,6 +52,7 @@ class NoCache implements CacheInterface
      */
     public function add($identifier, $data, $ttl = 0)
     {
+        $this->data[$identifier] = $data;
     }
 
     /**
@@ -51,6 +60,7 @@ class NoCache implements CacheInterface
      */
     public function remove($identifier)
     {
+        unset($this->data[$identifier]);
     }
 
     /**
@@ -58,5 +68,6 @@ class NoCache implements CacheInterface
      */
     public function clear()
     {
+        $this->data = array();
     }
 }

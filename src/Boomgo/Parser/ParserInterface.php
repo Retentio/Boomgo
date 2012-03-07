@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -14,9 +14,6 @@
 
 namespace Boomgo\Parser;
 
-use Boomgo\Cache\CacheInterface;
-use Boomgo\Formatter\FormatterInterface;
-
 /**
  * ParserInterface
  *
@@ -24,9 +21,22 @@ use Boomgo\Formatter\FormatterInterface;
  */
 interface ParserInterface
 {
-    public function setFormatter(FormatterInterface $formatter);
+    public function getExtension();
 
-    public function getFormatter();
+    /**
+     * Returns true if this class supports the given resource.
+     *
+     * @param  resource $resource
+     * @param  string   $type
+     * @return boolean
+     */
+    public function supports($resource);
 
-    public function buildMap($class, $dependenciesGraph = null);
+    /**
+     * Extract and return an array of metadata from a resource
+     *
+     * @param  string $filepath
+     * @return array
+     */
+    public function parse($filepath);
 }

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -14,8 +14,6 @@
 
 namespace Boomgo\Parser;
 
-use Boomgo\Mapper\Map;
-use Boomgo\Cache\CacheInterface;
 use Boomgo\Formatter\FormatterInterface;
 
 /**
@@ -23,115 +21,134 @@ use Boomgo\Formatter\FormatterInterface;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class AnnotationParser extends ParserProvider implements ParserInterface
+class AnnotationParser implements ParserInterface
 {
     /**
+     * Boomgo global annotation tag
      * @var string
      */
-    private $annotation;
+    private $globalAnnotation;
+
+    private $localAnnotation;
 
     /**
-     * Initialize
+     * Constructor
      *
-     * @param FormmatterInterface $formatter
      * @param string $annotation
      */
-    public function __construct(FormatterInterface $formatter, $annotation = '@Boomgo')
+    public function __construct($globalTag = '@Boomgo', $localTag = '@Persistent')
     {
-        parent::__construct($formatter);
-        $this->setAnnotation($annotation);
+        $this->setGlobalAnnotation($globalTag);
+        $this->setLocalAnnotation($localTag);
     }
 
    /**
-     * Define the annotation for the mapper instance
+     * Define the global annotation tag
      *
-     * @param string $annotation
+     * @param string $tag
      */
-    public function setAnnotation($annotation)
+    public function setGlobalAnnotation($tag)
     {
-        if (!preg_match('#^@[a-zA-Z]+$#', $annotation)) {
-             throw new \InvalidArgumentException('Annotation should start with @ char');
+        if (!preg_match('#^@[a-zA-Z0-9]+$#', $tag)) {
+             throw new \InvalidArgumentException('Boomgo annotation tag should start with "@" character');
         }
 
-        $this->annotation = $annotation;
+        $this->globalAnnotation = $tag;
     }
 
     /**
-     * Return the annotation defined for the mapper instance
+     * Return the defined global annotation tag
      *
      * @return string
      */
-    public function getAnnotation()
+    public function getGlobalAnnotation()
     {
-        return $this->annotation;
+        return $this->globalAnnotation;
     }
 
     /**
-     * Return the data map
+     * Define the local annotation tag
      *
-     * @param  string $class
-     * @param  array  $dependenciesGraph
-     * @return array
+     * @param string $tag
      */
-    public function buildMap($class, $dependenciesGraph = null)
+    public function setLocalAnnotation($tag)
     {
-        $dependenciesGraph = $this->updateDependencies($class, $dependenciesGraph);
+        if (!preg_match('#^@[a-zA-Z0-9]+$#', $tag)) {
+             throw new \InvalidArgumentException('Boomgo annotation tag should start with "@" character');
+        }
 
-        $reflectedClass = new \ReflectionClass($class);
+        $this->localAnnotation = $tag;
+    }
 
-        $map = new Map($class);
+    /**
+     * Return the local annotation tag
+     *
+     * @return string
+     */
+    public function getLocalAnnotation()
+    {
+        return $this->localAnnotation;
+    }
+
+    /**
+     * ParserInterface implementation
+     *
+     * {@inheritdoc}
+     */
+    public function getExtension()
+    {
+        return 'php';
+    }
+
+    /**
+     * ParserInterface implementation
+     *
+     * {@inheritdoc}
+     */
+    public function supports($resource, $type = null)
+    {
+        return is_string($resource) && 'php' === pathinfo($resource, PATHINFO_EXTENSION) && (!$type || 'annotation' === $type);
+    }
+
+    /**
+     * ParserInterface implementation
+     *
+     * {@inheritdoc}
+     */
+    public function parse($filepath)
+    {
+        // Regexp instead of tokenizer because of the bad perf @link > https://gist.github.com/1886076
+        if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
+            throw new \RuntimeException('Unable to find namespace or class declaration');
+        }
+
+        $fqcn = $captured[1].'\\'.$captured[2];
+
+        $metadata = array();
+
+        try {
+            $reflectedClass = new \ReflectionClass($fqcn);
+        } catch (\ReflectionException $exception) {
+            $this->registerAutoload($fqcn, $filepath);
+            $reflectedClass = new \ReflectionClass($fqcn);
+        }
+
+        $metadata['class'] = $reflectedClass->getName();
 
         $reflectedProperties = $reflectedClass->getProperties();
-
         foreach ($reflectedProperties as $reflectedProperty) {
 
             if ($this->isBoomgoProperty($reflectedProperty)) {
-
-                $attributeName = $reflectedProperty->getName();
-                $keyName = $this->formatter->toMongoKey($attributeName);
-                $accessorName = null;
-                $mutatorName = null;
-                $embedType = null;
-                $embedMap = null;
-
-                if (!$reflectedProperty->isPublic()) {
-                    $accessorName = $this->formatter->getPhpAccessor($attributeName, false);
-                    $mutatorName = $this->formatter->getPhpMutator($attributeName, false);
-
-                    if (!$reflectedClass->hasMethod($accessorName) ||
-                        !$reflectedClass->hasMethod($mutatorName)) {
-                        throw new \RuntimeException('Missing accessor/mutator for a private Boomgo property :'.$attributeName);
-                    }
-
-                    $reflectedAccessor = $reflectedClass->getMethod($accessorName);
-                    $reflectedMutator = $reflectedClass->getMethod($mutatorName);
-
-                    if (!$this->isValidAccessor($reflectedAccessor) ||
-                        !$this->isValidMutator($reflectedMutator)) {
-                        throw new \RuntimeException('Invalid accessor/mutator for a private Boomgo property :'.$attributeName);
-                    }
-                }
-
-                $metadata = $this->parseMetadata($reflectedProperty);
-
-                if (!empty($metadata)) {
-                    list($embedType,$embedClass) = $metadata;
-                    if ($this->isNativeSupported($embedClass)) {
-                        $nativeMapClass = 'Boomgo\\Mapper\\Map'.$embedClass;
-                        $embedMap = new $nativeMapClass;
-                    } else {
-                        $embedMap = $this->buildMap($embedClass, $dependenciesGraph);
-                    }
-                }
-
-                $map->add($keyName, $attributeName, $accessorName, $mutatorName, $embedType, $embedMap);
+                $propertyMetadata = $this->parseMetadata($reflectedProperty);
+                $metadata['definitions'][$reflectedProperty->getName()] = $propertyMetadata;
             }
         }
-        return $map;
+
+        return $metadata;
     }
 
     /**
-     * Check if an object property should be persisted.
+     * Check if an object property has to be processed by Boomgo
      *
      * @param  ReflectionProperty $property the property to check
      * @throws RuntimeException If annotation is malformed
@@ -139,13 +156,16 @@ class AnnotationParser extends ParserProvider implements ParserInterface
      */
     private function isBoomgoProperty(\ReflectionProperty $property)
     {
-        $boomgoAnnot = substr_count($property->getDocComment(), $this->getAnnotation());
+        $propertyName = $property->getName();
+        $className = $property->getDeclaringClass()->getName();
 
-        if (0 < $boomgoAnnot) {
-            if (1 === $boomgoAnnot) {
+        $annotationTag = substr_count($property->getDocComment(), $this->getLocalAnnotation());
+        if (0 < $annotationTag) {
+            if (1 === $annotationTag) {
                 return true;
             }
-            throw new \RuntimeException('Boomgo annotation should occur only once');
+
+            throw new \RuntimeException(sprintf('Boomgo annotation tag should occur only once for "%s->%s"', $className, $propertyName));
         }
 
         return false;
@@ -154,46 +174,63 @@ class AnnotationParser extends ParserProvider implements ParserInterface
     /**
      * Parse Boomgo metadata
      *
+     * Extract metadata from the optional var tag
+     *
      * @param  \ReflectionProperty $property
      * @return array
      */
     private function parseMetadata(\ReflectionProperty $property)
     {
         $metadata = array();
+        $tag = '@var';
+        $docComment = $property->getDocComment();
+        $occurence = (int)substr_count($docComment, $tag);
 
-        preg_match('#'.$this->getAnnotation().'\s*([a-zA-Z]*)\s*([a-zA-Z\\\\]*)\s*\v*#', $property->getDocComment(), $metadata);
-
-        if (empty($metadata) || sizeof($metadata) > 3 ||
-            (!empty($metadata[1]) && empty($metadata[2]))) {
-            throw new \RuntimeException('Malformed metadata');
+        if (1 < $occurence) {
+            throw new \RuntimeException(sprintf('"@var" tag is not unique for "%s->%s"', $property->getDeclaringClass()->getName(), $property->getName()));
         }
 
-        array_shift($metadata);
+        $metadata['attribute'] = $property->getName();
 
-        return $metadata[1] ? $metadata : array();
+        // Grep type and optional namespaces
+        preg_match('#@var\h+([a-zA-Z0-9\\\\_]+)(?:\h+\[([a-zA-Z0-9\\\\\s,_]+)\]\h*|.*)\v#', $docComment, $captured);
+
+        if (!empty($captured)) {
+
+            // Format var metadata
+            $metadata['type'] = $captured[1];
+
+            if (isset($captured[2])) {
+                $metadata['mappedClass'] = trim($captured[2]);
+            }
+        }
+
+        return $metadata;
     }
 
-    /**
-     * Check if the getter is public and has no required argument.
-     *
-     * @param  ReflectionMethod $method the method to check
-     * @return Boolean True if the getter is valid
-     */
-    private function isValidAccessor(\ReflectionMethod $method)
+    private function registerAutoload($fqcn, $path)
     {
-        return ($method->isPublic() &&
-                0 === $method->getNumberOfRequiredParameters());
-    }
+        $namespace = str_replace(strrchr($fqcn, '\\'), '', $fqcn);
+        $psr0 = str_replace('\\', DIRECTORY_SEPARATOR, $namespace);
 
-    /**
-     * Check if the setter is public and has one required argument.
-     *
-     * @param  ReflectionMethod $method the method to check
-     * @return Boolean True if the setter is valid
-     */
-    private function isValidMutator(\ReflectionMethod $method)
-    {
-        return ($method->isPublic() &&
-                1 === $method->getNumberOfRequiredParameters());
+        // A part of the namespace should match a part of the path (PSR-0 standard)
+        if (substr_count($path, $psr0) == 0) {
+            throw new \RuntimeException('Boomgo annotation parser support only PSR-0 project structure');
+        }
+
+        $baseDirectory = str_replace($psr0, '', dirname($path));
+        $partNamespace = explode('\\', $namespace);
+        $baseNamespace = $partNamespace[0];
+
+        spl_autoload_register(function($class) use ($baseNamespace, $baseDirectory) {
+            if (0 === strpos($class, $baseNamespace)) {
+                $path = $baseDirectory.str_replace('\\', DIRECTORY_SEPARATOR, $class).'.php';
+                if (!stream_resolve_include_path($path)) {
+                    return false;
+                }
+                require_once $path;
+                return true;
+            }
+        });
     }
 }

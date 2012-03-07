@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -24,7 +24,7 @@ use Boomgo\Formatter\FormatterInterface;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-class SimpleMapper extends MapperProvider implements MapperInterface
+class SimpleMapper extends MapperProvider
 {
     /**
      * @var boolean
@@ -89,7 +89,7 @@ class SimpleMapper extends MapperProvider implements MapperInterface
      * @param  mixed $object
      * @return array
      */
-    public function toArray($object)
+    public function serialize($object)
     {
         if (!is_object($object)) {
             throw new \InvalidArgumentException('Argument must be an object');

@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -42,7 +42,7 @@ class TransparentFormatter implements FormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function getPhpAccessor($string, $fromMongo = true)
+    public function getPhpAccessor($string, $type = 'mixed', $fromMongo = true)
     {
         return 'get'.$string;
     }
@@ -50,7 +50,7 @@ class TransparentFormatter implements FormatterInterface
     /**
      * {@inheritdoc}
      */
-    public function getPhpMutator($string, $fromMongo = true)
+    public function getPhpMutator($string, $type ='mixed', $fromMongo = true)
     {
         return 'set'.$string;
     }

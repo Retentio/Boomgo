@@ -1,7 +1,7 @@
 <?php
 
 /**
- * This file is part of the Boomgo PHP ODM.
+ * This file is part of the Boomgo PHP ODM for MongoDB.
  *
  * http://boomgo.org
  * https://github.com/Retentio/Boomgo
@@ -56,9 +56,7 @@ abstract class MapperProvider
         if (null === $data || is_scalar($data)) {
             return $data;
         }
-        if (is_object($data)) {
-            return $this->toArray($data);
-        }
+
         if (is_array($data)) {
             foreach ($data as $key => $val) {
                 $data[$key] = $this->normalize($val);
@@ -66,6 +64,45 @@ abstract class MapperProvider
 
             return $data;
         }
+
         throw new \RuntimeException('An unexpected value could not be normalized: '.var_export($data, true));
+    }
+
+    /**
+     * Serialize an embedded collection
+     *
+     * Return a collection of hydrated objects
+     *
+     * @param  MapperInterface $mapper
+     * @param  array           $collection
+     * @return array
+     */
+    protected function serializeEmbeddedCollection(MapperInterface $mapper, array $collection)
+    {
+        $data = array();
+        foreach ($collection as $object) {
+            $data[] = $mapper->serialize($mapper, $object);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Unserialize an embedded collection
+     *
+     * Return a collection of serialized objects (arrays)
+     *
+     * @param  MapperInterface $mapper
+     * @param  array           $data
+     * @return array
+     */
+    protected function unserializeEmbeddedCollection(MapperInterface $mapper, array $data)
+    {
+        $collection = array();
+        foreach ($data as $document) {
+            $collection[] = $mapper->unserialize($mapper, $data);
+        }
+
+        return $collection;
     }
 }
