@@ -31,6 +31,5 @@
             "Boomgo": "src/"
         }
     },
-    "bin": ["bin/boomgo"],
-    "target-dir": "boomgo"
+    "bin": ["bin/boomgo"]
 }
