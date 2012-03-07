@@ -15,8 +15,9 @@
 namespace Boomgo\Console\Command;
 
 use Symfony\Component\Console\Command\Command,
-    Symfony\Component\Console\Input\InputArgument,
     Symfony\Component\Console\Input\InputInterface,
+    Symfony\Component\Console\Input\InputArgument,
+    Symfony\Component\Console\Input\InputOption,
     Symfony\Component\Console\Output\OutputInterface;
 use Boomgo\Builder\MapBuilder,
     Boomgo\Builder\MapperGenerator;
@@ -34,43 +35,39 @@ class MapperGeneratorCommand extends Command
         parent::__construct($name);
 
         $this->setDescription('Mapper generator command');
-        $this->setHelp('boomgo:generate Generate mapper');
-        $this->addArgument('config', InputArgument::REQUIRED, 'Configuration file');
+        $this->setHelp('boomgo:generate-mapper Generate mappers');
+        $this->addArgument('sources-directory', InputArgument::REQUIRED, 'Sources directory');
+        $this->addArgument('mappers-namespace', InputArgument::REQUIRED, 'Mappers namespace');
+        $this->addArgument('mappers-directory', InputArgument::OPTIONAL, 'Mappers directory, default aside of the source directory', null);
+        $this->addOption('parser', 'p', InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
+        $this->addOption('formatter', 'f', InputOption::VALUE_OPTIONAL, 'Mapping formatter','Underscore2Camel');
     }
 
 
     protected function execute(InputInterface $input, OutputInterface $output)
     {
-        if (!file_exists($input->getArgument('config'))) {
-            throw new \InvalidArgumentException('Unknown configuration file');
+        $params = array();
+        $params = array_merge($input->getArguments(), $input->getOptions());
+
+        if (!is_dir($params['sources-directory'])) {
+            throw new \InvalidArgumentException('Invalid sources directory');
         }
 
-        $config = json_decode(file_get_contents($input->getArgument('config')), true);
-        $baseDir = dirname($input->getArgument('config'));
+        $parserClass = (strpos($params['parser'], '\\') === false) ? '\\Boomgo\\Parser\\'.ucfirst($params['parser']).'Parser' : $params['parser'];
+        $formatterClass = (strpos($params['formatter'], '\\') === false) ? '\\Boomgo\\Formatter\\'.ucfirst($params['formatter']).'Formatter' : $params['formatter'];
 
-        foreach ($config['mapping'] as $mapping) {
-            $parserClass = (strpos($mapping['parser'], '\\') === false) ? '\\Boomgo\\Parser\\'.ucfirst($mapping['parser']).'Parser' : $mapping['parser'];
-            $formatterClass = (strpos($mapping['formatter'], '\\') === false) ? '\\Boomgo\\Formatter\\'.ucfirst($mapping['formatter']).'Formatter' : $mapping['formatter'];
+        $formatter = new $formatterClass;
+        $parser = new $parserClass;
 
-            $formatter = new $formatterClass;
-            $parser = new $parserClass;
+        $mapBuilder = new MapBuilder($parser, $formatter);
+        $twigGenerator = new Generator();
+        $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
 
-            $mapBuilder = new MapBuilder($parser, $formatter);
-            $twigGenerator = new Generator();
-            $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
-
-            if ($parser instanceof \Boomgo\Parser\AnnotationParser) {
-                if (!isset($mapping['autoloader'])) {
-                    throw new \RuntimeException('Annotation parser require an autoloader');
-                }
-
-                $autoloader = ($this->isAbsolutePath($mapping['autoloader'])) ? $mapping['autoloader'] : $baseDir.DIRECTORY_SEPARATOR.$mapping['autoloader'];
-
-                require $autoloader;
-            }
-
-            $mapperGenerator->generate($mapping['sources'], $mapping['mappers']['namespace'], $mapping['mappers']['directory']);
+        if (null === $params['mappers-directory']) {
+            $params['mappers-directory'] = str_replace(strrchr($params['sources-directory'], DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR.'Mappers', $params['sources-directory']);
         }
+
+        $mapperGenerator->generate($params['sources-directory'], $params['mappers-namespace'], $params['mappers-directory']);
     }
 
     private function isAbsolutePath($file)

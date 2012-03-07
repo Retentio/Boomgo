@@ -125,7 +125,14 @@ class AnnotationParser implements ParserInterface
         $fqcn = $captured[1].'\\'.$captured[2];
 
         $metadata = array();
-        $reflectedClass = new \ReflectionClass($fqcn);
+
+        try {
+            $reflectedClass = new \ReflectionClass($fqcn);
+        } catch (\ReflectionException $exception) {
+            $this->registerAutoload($fqcn, $filepath);
+            $reflectedClass = new \ReflectionClass($fqcn);
+        }
+
         $metadata['class'] = $reflectedClass->getName();
 
         $reflectedProperties = $reflectedClass->getProperties();
@@ -199,5 +206,31 @@ class AnnotationParser implements ParserInterface
         }
 
         return $metadata;
+    }
+
+    private function registerAutoload($fqcn, $path)
+    {
+        $namespace = str_replace(strrchr($fqcn, '\\'), '', $fqcn);
+        $psr0 = str_replace('\\', DIRECTORY_SEPARATOR, $namespace);
+
+        // A part of the namespace should match a part of the path (PSR-0 standard)
+        if (substr_count($path, $psr0) == 0) {
+            throw new \RuntimeException('Boomgo annotation parser support only PSR-0 project structure');
+        }
+
+        $baseDirectory = str_replace($psr0, '', dirname($path));
+        $partNamespace = explode('\\', $namespace);
+        $baseNamespace = $partNamespace[0];
+
+        spl_autoload_register(function($class) use ($baseNamespace, $baseDirectory) {
+            if (0 === strpos($class, $baseNamespace)) {
+                $path = $baseDirectory.str_replace('\\', DIRECTORY_SEPARATOR, $class).'.php';
+                if (!stream_resolve_include_path($path)) {
+                    return false;
+                }
+                require_once $path;
+                return true;
+            }
+        });
     }
 }
