@@ -64,7 +64,7 @@ class MapperGeneratorCommand extends Command
         $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
 
         if (null === $params['mappers-directory']) {
-            $params['mappers-directory'] = str_replace(strrchr($params['sources-directory'], DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR.'Mappers', $params['sources-directory']);
+            $params['mappers-directory'] = str_replace(strrchr($params['sources-directory'], DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR.'Mapper', $params['sources-directory']);
         }
 
         $mapperGenerator->generate($params['sources-directory'], $params['mappers-namespace'], $params['mappers-directory']);
