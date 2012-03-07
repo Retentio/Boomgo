@@ -3,8 +3,8 @@
 
 if (is_file(__DIR__.'/../vendor/.composer/autoload.php')) {
     require_once __DIR__.'/../vendor/.composer/autoload.php';
-} elseif (is_file(__DIR__.'/../.composer/autoload.php')) {
-    require_once __DIR__.'/../.composer/autoload.php';
+} elseif (is_file(__DIR__.'/../../../.composer/autoload.php')) {
+    require_once __DIR__.'/../../../.composer/autoload.php';
 } else {
     throw new \RuntimeException('You must set up the project dependencies, run the following commands:'.PHP_EOL.
         'curl -s http://getcomposer.org/installer | php'.PHP_EOL.
@@ -12,5 +12,3 @@ if (is_file(__DIR__.'/../vendor/.composer/autoload.php')) {
 }
 
 require_once __DIR__ . '/../src/Boomgo/console.php';
-
-?>
