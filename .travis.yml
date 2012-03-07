@@ -9,7 +9,6 @@ script: php vendor/bin/atoum -c .atoum.php -d tests
 branches:
   only:
     - master
-    - refacto
 notifications:
   email:
     - ludo.fleury@gmail.com
