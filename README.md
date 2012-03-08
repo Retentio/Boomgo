@@ -232,6 +232,9 @@ $object = $mapper->unserialize($result);
 ?>
 ```
 
+To see the full list of supported type/pseudo type in the @var tag you can look at [Boomgo\Builder\Definition](https://github.com/Retentio/Boomgo/blob/master/src/Boomgo/Builder/Definition.php#L39)
+Note that Boomgo won't cast or validate anything, it's only used in the mapping process for normalization & nested documents/collections.
+
 Limitations
 -----------
 
@@ -244,8 +247,9 @@ If you're looking for full-featured php ODM, you should look at [Mandango](https
 Known issues
 ------------
 
-* Boomgo formatters need improvement/refacto
+* Only MongoId native type is supported, yet it's really easy to add and test other native type.
 * Boomgo doesn't fit totally the PSR-0 (actually do not handle underscored class name)
+* Boomgo formatters need improvement/refacto
 
 
 Roadmap
@@ -258,6 +262,7 @@ Roadmap
 * Provide more alternatives for mappers generation (like flat file structures).
 * Document classes generation (getters & setters, JsonSerializable interface from php 5.4).
 * Json document preview.
+* Dynamic mapping using live discrimination.
 
 Feel free to contribute !
 
