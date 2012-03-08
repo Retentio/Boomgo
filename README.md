@@ -25,7 +25,7 @@ Requirements
 ------------
 
 Boomgo was built with a lot of love (including best practices & standards).
-It will only work for **PHP 5.3+ projects** which use a **structure matching [PSR-0](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md)**.
+It will only work for **PHP 5.3+ projects** which use a **structure matching** [PSR-0](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md).
 Furthermore, [composer](http://getcomposer.org/) usage is strongly encouraged.
 
 Installation
@@ -51,7 +51,7 @@ $ php composer.phar install
 Usage
 -----
 
-At the moment, Boomgo supports only annotation definition. Yet it uses only a single tag: by default "@Persistent" (you can change it).
+At the moment, Boomgo supports only annotation definition. Yet **it uses only a single tag**: by default "@Persistent" (you can change it).
 To persist some attributes of your model, Boomgo needs 3 things :
 
 1. A dedicated & unique namespace part for your persisted classes (default "Document").
