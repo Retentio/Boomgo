@@ -35,10 +35,12 @@ class MapperGeneratorCommand extends Command
         parent::__construct($name);
 
         $this->setDescription('Mapper generator command');
-        $this->setHelp('boomgo:generate-mapper Generate mappers');
-        $this->addArgument('sources-directory', InputArgument::REQUIRED, 'Sources directory');
-        $this->addArgument('mappers-namespace', InputArgument::REQUIRED, 'Mappers namespace');
-        $this->addArgument('mappers-directory', InputArgument::OPTIONAL, 'Mappers directory, default aside of the source directory', null);
+        $this->setHelp('generate:mappers Generate mappers');
+        $this->addArgument('mapping-directory', InputArgument::REQUIRED, 'Mapping sources absolute directory path');
+        $this->addArgument('models-namespace', InputArgument::REQUIRED, 'Base model/document namespace');
+        $this->addArgument('models-directory', InputArgument::REQUIRED, 'Base model/document directory');
+        $this->addArgument('mappers-namespace', InputArgument::OPTIONAL, 'Base Mappers namespace', null);
+        $this->addArgument('mappers-directory', InputArgument::OPTIONAL, 'Base Mappers directory, default aside of the source directory', null);
         $this->addOption('parser', 'p', InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
         $this->addOption('formatter', 'f', InputOption::VALUE_OPTIONAL, 'Mapping formatter','Underscore2Camel');
     }
@@ -49,8 +51,8 @@ class MapperGeneratorCommand extends Command
         $params = array();
         $params = array_merge($input->getArguments(), $input->getOptions());
 
-        if (!is_dir($params['sources-directory'])) {
-            throw new \InvalidArgumentException('Invalid sources directory');
+        if (!is_dir($params['mapping-directory'])) {
+            throw new \InvalidArgumentException('Invalid mapping sources directory');
         }
 
         $parserClass = (strpos($params['parser'], '\\') === false) ? '\\Boomgo\\Parser\\'.ucfirst($params['parser']).'Parser' : $params['parser'];
@@ -63,11 +65,7 @@ class MapperGeneratorCommand extends Command
         $twigGenerator = new Generator();
         $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
 
-        if (null === $params['mappers-directory']) {
-            $params['mappers-directory'] = str_replace(strrchr($params['sources-directory'], DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR.'Mapper', $params['sources-directory']);
-        }
-
-        $mapperGenerator->generate($params['sources-directory'], $params['mappers-namespace'], $params['mappers-directory']);
+        $mapperGenerator->generate($params['mapping-directory'], $params['models-namespace'], $params['models-directory'], $params['mappers-namespace'], $params['mappers-directory']);
     }
 
     private function isAbsolutePath($file)

@@ -35,12 +35,6 @@ class MapperGenerator
      */
     private $twigGenerator;
 
-    /**
-     * @var array
-     */
-    private $options;
-
-
     public function __construct(MapBuilder $mapBuilder, TwigGenerator $twigGenerator)
     {
         $this->setMapBuilder($mapBuilder);
@@ -70,24 +64,45 @@ class MapperGenerator
         return $this->twigGenerator;
     }
 
-    public function generate($sources, $namespace, $directory)
+    /**
+     * Generate mappers
+     *
+     * @param  string $sources   Mapping source directory
+     * @param  string $namespace Base mappers namespace
+     * @param  string $directory Base mappers directory
+     */
+    public function generate($sources, $baseModelNamespace, $baseModelDirectory, $baseMapperNamespace = null, $baseMapperDirectory = null)
     {
+        if (null === $baseMapperNamespace) {
+            $baseMapperNamespace = str_replace(strrchr($baseModelNamespace, '\\'), '\\'.'Mapper', $baseModelNamespace);;
+        }
+
+        if (null === $baseMapperDirectory) {
+            $baseMapperDirectory = str_replace(strrchr($baseModelDirectory, DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR.'Mapper', $baseModelDirectory);
+        }
+
         $files = $this->load($sources, '.'.$this->getMapBuilder()->getParser()->getExtension());
         $maps = $this->mapBuilder->build($files);
 
         foreach ($maps as $map) {
             $modelClassName = $map->getClassName();
+            $modelNamespace = trim($map->getNamespace(), '\\');
+            $modelExtraNamespace = trim(str_replace($baseModelNamespace, '', $modelNamespace), '\\');
+            $modelExtraDirectory = str_replace('\\', DIRECTORY_SEPARATOR, $modelExtraNamespace);
+
+            $mapperNamespace = $baseMapperNamespace.'\\'.$modelExtraNamespace;
+            $mapperDirectory = $baseMapperDirectory.DIRECTORY_SEPARATOR.$modelExtraDirectory;
             $mapperClassName = $modelClassName.'Mapper';
             $mapperFileName = $mapperClassName.'.php';
 
             $mapperBuilder = new MapperBuilder();
             $this->twigGenerator->addBuilder($mapperBuilder);
             $mapperBuilder->setOutputName($mapperFileName);
-            $mapperBuilder->setVariable('namespace', $namespace);
+            $mapperBuilder->setVariable('namespace', $mapperNamespace);
             $mapperBuilder->setVariable('className', $mapperClassName);
-            $mapperBuilder->setVariable('imports', array(trim($map->getNamespace(), '\\')));
+            $mapperBuilder->setVariable('imports', array($modelNamespace));
             $mapperBuilder->setVariable('map', $map);
-            $this->twigGenerator->writeOnDisk($directory);
+            $this->twigGenerator->writeOnDisk($mapperDirectory);
         }
     }
 
