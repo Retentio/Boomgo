@@ -73,6 +73,10 @@ class MapperGenerator
      */
     public function generate($sources, $baseModelsNamespace, $baseMappersNamespace, $baseModelsDirectory)
     {
+        $baseModelsNamespace = trim($baseModelsNamespace, '\\');
+        $baseMappersNamespace = trim($baseMappersNamespace, '\\');
+        $baseModelsDirectory = rtrim($baseModelsDirectory, DIRECTORY_SEPARATOR);
+
         $part = str_replace('\\' , DIRECTORY_SEPARATOR, $baseModelsNamespace);
 
         if (str_replace($part, '', $baseModelsDirectory).$part !== $baseModelsDirectory) {

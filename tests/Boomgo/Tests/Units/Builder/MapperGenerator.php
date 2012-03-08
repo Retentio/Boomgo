@@ -95,9 +95,18 @@ class MapperGenerator extends Test
         $mockMapBuilder->getMockController()->build = function() use ($mockMap) { return array($mockMap); };
         $mockTwigGenerator->getMockController()->writeOnDisk = function() {};
 
+        // Should throw exception when model directory and model namespace don't respect PSR-0
         $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator);
         $this->assert
-            ->variable($mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted/Document.php'), '/Mapper', '\\Mapper'))
+            ->exception(function () use ($mapperGenerator) {
+                $mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted.php'), 'Document', 'Mapper', '/Fixture');
+            })
+            ->isInstanceOf('InvalidArgumentException')
+            ->hasMessage('Boomgo support only PSR-O structure, your namespace "Document" doesn\'t reflect your directory structure "/Fixture"');
+
+        $mapperGenerator = new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator);
+        $this->assert
+            ->variable($mapperGenerator->generate(array(__DIR__.'/../Fixture/AnotherAnnoted/Document.php'), 'Fixture', 'Mapper', __DIR__.'/../Fixture/'))
             ->mock($mockTwigGenerator)
                 ->call('writeOnDisk')
                     ->once();
