@@ -15,20 +15,171 @@ _In short, Boomgo offers a handy way to manipulate your MongoDB Documents with P
 Features
 --------
 
-* Generate Mapper for your php object.
+Boomgo generate Mappers for your php object, which allow you to:
+
 * Hydrate PHP Object from a MongoDB results set.
-* Normalize PHP Object to mongo-storable array.
+* Serialize PHP Object to mongo-storable array.
 * Handle hydration process of embedded document / collection.
-* Provide live hydration with schemaless style
+
+Requirements
+------------
+
+Boomgo was built with a lot of love (including best practices & standards).
+It will only work for **PHP 5.3+ projects** which use a **structure matching [PSR-0](https://github.com/php-fig/fig-standards/blob/master/accepted/PSR-0.md)**.
+Furthermore, [composer](http://getcomposer.org/) usage is strongly encouraged.
 
 Installation
 ------------
-This project is under heavy development, you can fork or clone the repository.
-If you want to use it right now (at your own risk) you could also use composer:
+
+### Composer
+
+First, in your composer.json, add the requirement line for Boomgo.
+
+```javascript
+    "require": {
+        "retentio/boomgo": "dev-master"
+    }
+```
+
+Then get composer and run the install command.
 
 ```bash
-$ wget http://getcomposer.org/composer.phar
+$ wget -nc http://getcomposer.org/composer.phar
 $ php composer.phar install
+```
+
+Usage
+-----
+
+At the moment Boomgo support only annotation definition. Yet it uses only a single tag: by default "@Persistent" (you can change it).
+To persist some attributes of your model, Boomgo needs 3 things :
+
+1. A dedicated & unique namespace part for your persistent classes (default "Document").
+1. The "@Persistent" tag in the property docblock.
+2. Getter & Setter for this property.
+
+
+### Simple persistence
+
+```php
+<?php
+
+namespace VendorName\Project\Document;
+
+class MyPersistedClass
+{
+
+    /**
+     * @Persistent
+     */
+    private $myField
+
+    public function $getMyField()
+    {
+        return $this->myField;
+    }
+
+    public function setMyField($value)
+    {
+        $this->myField = $value;
+    }
+}
+
+?>
+```
+
+Then, you can generate your mapper with the command (if you used composer):
+
+```bash
+$ vendor/bin/boomgo generate:mappers path/to/your/document/folder
+```
+
+Boomgo will generate (default: aside of your document folder) a mapper class called `VendorName\Project\Mapper\MyPersistedClassMapper`.
+The mapper expose 3 methods:
+
+* `->serialize($yourObject)`
+* `->unserialize($yourArray)`
+* '->hydrate($yourObject, $yourArray)'
+
+Then, the usage become really simple:
+
+```php
+<?php
+
+// Create your connection with the native mongoDB php driver
+$mongo = new \Mongo("mongodb://127.0.0.1:27017");
+
+// Create your object
+$object = new \VendorName\Project\Document\MyPersistedClass();
+$object->setMyField('my value');
+
+// Create the mapper
+$mapper = new \VendorName\Project\Mapper\MyPersistedClassMapper();
+
+// Serialize your object to a mongoable array
+$mongoableArray = $mapper->serialize($object);
+
+// Save with the native php driver
+$mongo->selectDB('my_db')
+    ->selectCollection('my_collection')
+    ->save($mongoableArray);
+
+// Fetch a result with the native driver
+$result = $mongo->selectDB('my_db')
+    ->selectCollection('my_collection')
+    ->findOne(array('myField' => 'my value'));
+
+// Unserialize the result to an object
+$object = $mapper->unserialize($result);
+$object->getMyField();
+
+// You could also hydrate an existing object from a result
+$object = new \VendorName\Project\Document\MyPersistedClass();
+$mapper->hydrate($object, $result);
+
+?>
+```
+
+### Advanced persistence
+
+Boomgo handles **native PHP Mongo types** (MongoId, etc.), **embedded document** and **nested collection**.
+Since, Boomgo love simple & efficient things, so annotation are not used for that. Instead it rely on... docblock with the famous under-used @var tag.
+
+```php
+<?php
+
+namespace VendorName\Project\Document;
+
+class DocumentClass
+{
+    /**
+     * @Persistent
+     * @var \MongoId
+     */
+    private $id
+
+    /**
+     * @Persistent
+     * @var string
+     */
+    private $myField
+
+    /**
+     * @Persistent
+     * @var VendorName\Project\EmbeddedDocument
+     */
+    private $embeddedDocument // a single embedded document
+
+    /**
+     * @Persistent
+     * @var array [VendorName\Project\EmbeddedDocument]
+     */
+    private $embeddedCollection // many embedded document the [ ] chars are mandatory
+
+    // getters & setters
+}
+
+?>
 ```
 
 Limitations
@@ -43,157 +194,26 @@ If you're looking for full-featured php ODM, you should look at [Mandango](https
 Roadmap
 -------
 
-Improve unit tests (refacto and upgrade coverage), Add a CLI cache warmer, more formatters, more parsers (yml, xml and json). Feel free to contribute !
+Add functional tests, more parsers (yml, xml and json), ActiveRecord implementation. Feel free to contribute !
 
-Example
--------
-
-Suppose this class (and the embed classes) :
-
-```php
-<?php
-
-class MyDocumentClass
-{
-
-    /**
-     * A custom field not persisted (no annotation)
-     */
-    private $myCustomField
-
-    /**
-     * A persisted field
-     *
-     * @Boomgo
-     */
-    private $myField
-
-    /**
-     * A persisted embed document
-     *
-     * @Boomgo Document My\Namespace\MyEmbedDocument
-     */
-    private $myEmbedDocument
-
-    /**
-     * A persisted embed collection of document
-     * it should be an array of the same document type
-     * Boomgo do not support dynamic mapping
-     *
-     * @Boomgo Collection My\Other\Namespace\MyOtherEmbedDocument
-     */
-    private $myEmbedCollection
-
-    // Some getters/setters to allow acces to the private properties
-
-    public function getMyField()
-    {
-        return $this->myField;
-    }
-
-    public function setMyField($value)
-    {
-        $this->myField = $value
-    }
-
-    public function getMyEmbedDocument()
-    {
-        return $this->myEmbedDocument;
-    }
-
-    public function setMyEmbedDocument(My\Namespace\MyEmbedDocument $embedDocument)
-    {
-        $this->myEmbedDocument = $embedDocument;
-    }
-
-    public function getMyEmbedCollection()
-    {
-        return $this->myEmbedCollection;
-    }
-
-    public function setMyEmbedCollection(array $embedCollection)
-    {
-        $this->myEmbedCollection = $embedCollection;
-    }
-}
-?>
-```
-
-Boomgo allows you to store it like this :
-
-```php
-<?php
-
-// Create your connection with the native mongoDB php driver
-$mongo = new \Mongo("mongodb://127.0.0.1:27017");
-
-// Create your object as your used to
-$myObject = new MyDocumentClass()
-
-// ... do some stuff with the object ...
-
-// The map definition for a PHP class will be builded only once, then cached to the disk.
-$cache = new FileCache('my/custom/path/to/cache/the/map-definition');
-
-// This formatter will convert CamelCase php attribute to lower underscore mongo key
-$formatter = new Underscore2CamelFormatter();
-
-// This parser will be responsible to build the map definition using annotation @Boomgo
-$parser = new AnnotationParser($formatter);
-
-// This mapper will build the map once, then reuse cached map
-$mapper = new StrictMapper($parser, $cache);
-
-$mongoableArray = $mapper->toArray($myObject);
-
-// Save with the native php driver
-$mongo->selectDB('my_db')
-    ->selectCollection('my_collection')
-    ->save($mongoableArray);
-?>
-```
-
-Of course, Boomgo is able to hydrate an object from a mongo result :
-
-```php
-<?php
-
-$result = $mongo->selectDB('my_db')
-    ->selectCollection('my_collection')
-    ->findOne(array('my_field' => 'my value'));
-
-$object = $mapper->hydrate('My\Namsespace\MyDocumentClass', $result);
-
-// or
-
-$object = new MyDocumentClass();
-$object = $mapper->hydrate($object, $result);
-?>
-```
-
-Boomgo handles hydration of embedded document, so with our previous example, we could do this :
-
-```php
-<?php
-
-$object->getMyEmbedDocument() // hydrated instance of My\Namespace\MyEmbedDocument
-?>
-```
 
 How to run unit tests
 ---------------------
 
-Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum) : atoum is distributed with a phar archive and is bundled by default within Boomgo.
+Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum), the dependency is not shipped by default in Boomgo, with composer you have to run the command
+```bash
+$ php composer.phar update --install-suggests
+```
 
 To run the complete test suite, open a shell and type :
 
 ``` bash
 $ cd path/to/Boomgo
-$ php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -d tests
+$ php vendor/bin/atoum -c .atoum.php -d tests
 ```
 
 Want to test on a single class while contributing ? Here is an example with _AnnotationParser_ class :
 
 ``` bash
-$ php vendor/mageekguy/atoum/bin/atoum -c .atoum.php -f tests/units/Parser/AnnotationParser.php
+$ php vendor/bin/atoum -c .atoum.php -f tests/units/Parser/AnnotationParser.php
 ```
