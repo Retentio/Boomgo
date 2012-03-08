@@ -46,7 +46,7 @@ use Boomgo\Mapper\MapperProvider,
      */
     public function serialize($object)
     {
-        if (!$object instanceof {{ map.getClassName }}) {
+        if (!$object instanceof {{ map.getClass }}) {
             throw new \InvalidArgumentException('Serialize expect an instance of "{{ map.getClass }}"');
         }
 
@@ -58,7 +58,7 @@ use Boomgo\Mapper\MapperProvider,
 
         {%- if definition.isUserMapped %}
 
-            $mapper = new {{ definition.getMappedNamespace }}\Mapper\{{ definition.getMappedClassName }}Mapper();
+            $mapper = new {{ definition.getMappedClass|replace({(modelsNamespace): mappersNamespace}) }}Mapper();
 
             {%- if definition.isDocumentMapped %}
 
@@ -94,7 +94,7 @@ use Boomgo\Mapper\MapperProvider,
      */
     public function hydrate($object, array $data)
     {
-        if (!$object instanceof {{ map.getClassName }}) {
+        if (!$object instanceof {{ map.getClass }}) {
             throw new \InvalidArgumentException('Serialize expect an instance of "{{ map.getClass }}"');
         }
         {% for definition in map.definitions %}
@@ -103,7 +103,7 @@ use Boomgo\Mapper\MapperProvider,
 
         {%- if definition.isUserMapped %}
 
-            $mapper = new {{ definition.getMappedNamespace }}\Mapper\{{ definition.getMappedClassName }}Mapper();
+            $mapper = new {{ definition.getMappedClass|replace({(modelsNamespace): mappersNamespace}) }}Mapper();
 
             {%- if definition.isDocumentMapped %}
 

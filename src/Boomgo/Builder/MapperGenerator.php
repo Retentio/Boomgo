@@ -71,14 +71,12 @@ class MapperGenerator
      * @param  string $namespace Base mappers namespace
      * @param  string $directory Base mappers directory
      */
-    public function generate($sources, $baseModelNamespace, $baseModelDirectory, $baseMapperNamespace = null, $baseMapperDirectory = null)
+    public function generate($sources, $baseModelsNamespace, $baseMappersNamespace, $baseModelsDirectory)
     {
-        if (null === $baseMapperNamespace) {
-            $baseMapperNamespace = str_replace(strrchr($baseModelNamespace, '\\'), '\\'.'Mapper', $baseModelNamespace);;
-        }
+        $part = str_replace('\\' , DIRECTORY_SEPARATOR, $baseModelsNamespace);
 
-        if (null === $baseMapperDirectory) {
-            $baseMapperDirectory = str_replace(strrchr($baseModelDirectory, DIRECTORY_SEPARATOR), DIRECTORY_SEPARATOR.'Mapper', $baseModelDirectory);
+        if (str_replace($part, '', $baseModelsDirectory).$part !== $baseModelsDirectory) {
+            throw new \InvalidArgumentException(sprintf('Boomgo support only PSR-O structure, your namespace "%s" doesn\'t reflect your directory structure "%s"', $baseModelsNamespace, $baseModelsDirectory));
         }
 
         $files = $this->load($sources, '.'.$this->getMapBuilder()->getParser()->getExtension());
@@ -87,21 +85,29 @@ class MapperGenerator
         foreach ($maps as $map) {
             $modelClassName = $map->getClassName();
             $modelNamespace = trim($map->getNamespace(), '\\');
-            $modelExtraNamespace = trim(str_replace($baseModelNamespace, '', $modelNamespace), '\\');
-            $modelExtraDirectory = str_replace('\\', DIRECTORY_SEPARATOR, $modelExtraNamespace);
 
-            $mapperNamespace = $baseMapperNamespace.'\\'.$modelExtraNamespace;
-            $mapperDirectory = $baseMapperDirectory.DIRECTORY_SEPARATOR.$modelExtraDirectory;
+            if (substr_count($modelNamespace, $baseModelsNamespace) == 0) {
+                throw new \RuntimeException(sprintf('The Document map "%s" doesn\'t include the document base namespace "%s"', $map->getClass(), $baseModelsNamespace));
+            }
+
+            $modelExtraNamespace = str_replace($baseModelsNamespace, '', strstr($modelNamespace, $baseModelsNamespace));
+
+            $mapperDirectory = str_replace('\\', DIRECTORY_SEPARATOR, str_replace($baseModelsNamespace, $baseMappersNamespace, $baseModelsDirectory.$modelExtraNamespace));
             $mapperClassName = $modelClassName.'Mapper';
             $mapperFileName = $mapperClassName.'.php';
 
-            $mapperBuilder = new MapperBuilder();
+            $mapperBuilder = new MapperBuilder($baseModelsNamespace, $baseMappersNamespace);
+
             $this->twigGenerator->addBuilder($mapperBuilder);
+
             $mapperBuilder->setOutputName($mapperFileName);
-            $mapperBuilder->setVariable('namespace', $mapperNamespace);
+            $mapperBuilder->setVariable('mappersNamespace', $baseMappersNamespace);
+            $mapperBuilder->setVariable('modelsNamespace', $baseModelsNamespace);
+            $mapperBuilder->setVariable('namespace', str_replace($baseModelsNamespace, $baseMappersNamespace, $modelNamespace));
             $mapperBuilder->setVariable('className', $mapperClassName);
             $mapperBuilder->setVariable('imports', array($modelNamespace));
             $mapperBuilder->setVariable('map', $map);
+
             $this->twigGenerator->writeOnDisk($mapperDirectory);
         }
     }

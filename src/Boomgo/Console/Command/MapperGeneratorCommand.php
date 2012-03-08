@@ -37,12 +37,11 @@ class MapperGeneratorCommand extends Command
         $this->setDescription('Mapper generator command');
         $this->setHelp('generate:mappers Generate mappers');
         $this->addArgument('mapping-directory', InputArgument::REQUIRED, 'Mapping sources absolute directory path');
-        $this->addArgument('models-namespace', InputArgument::REQUIRED, 'Base model/document namespace');
         $this->addArgument('models-directory', InputArgument::REQUIRED, 'Base model/document directory');
-        $this->addArgument('mappers-namespace', InputArgument::OPTIONAL, 'Base Mappers namespace', null);
-        $this->addArgument('mappers-directory', InputArgument::OPTIONAL, 'Base Mappers directory, default aside of the source directory', null);
-        $this->addOption('parser', 'p', InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
-        $this->addOption('formatter', 'f', InputOption::VALUE_OPTIONAL, 'Mapping formatter','Underscore2Camel');
+        $this->addOption('models-namespace', null, InputOption::VALUE_OPTIONAL, 'Model/document namespace (i.e Document or Model)', 'Document');
+        $this->addOption('mappers-namespace', null, InputOption::VALUE_OPTIONAL, 'Mappers namespace, default "Mapper"', 'Mapper');
+        $this->addOption('parser', null, InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
+        $this->addOption('formatter', null, InputOption::VALUE_OPTIONAL, 'Mapping formatter','Underscore2Camel');
     }
 
 
@@ -65,7 +64,7 @@ class MapperGeneratorCommand extends Command
         $twigGenerator = new Generator();
         $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
 
-        $mapperGenerator->generate($params['mapping-directory'], $params['models-namespace'], $params['models-directory'], $params['mappers-namespace'], $params['mappers-directory']);
+        $mapperGenerator->generate($params['mapping-directory'], $params['models-namespace'], $params['mappers-namespace'], $params['models-directory']);
     }
 
     private function isAbsolutePath($file)
