@@ -74,7 +74,7 @@ class MyPersistedClass
      */
     private $myField
 
-    public function $getMyField()
+    public function getMyField()
     {
         return $this->myField;
     }
