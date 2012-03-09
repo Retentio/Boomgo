@@ -91,10 +91,4 @@ class RepositoryProvider extends BaseProvider
 
         return $repository;
     }
-
-    protected function createInstance($fqdn)
-    {
-
-        return
-    }
 }

@@ -13,9 +13,16 @@ class MapperProvider extends BaseProvider
         $this->setCache($cache);
     }
 
-    protected function createInstance($fqdn)
+    public function get($fqdn)
     {
-        $mapperClass = str_replace($this->documentNamespace, $this->namespace, $fqdn).'Mapper';
-        return new $mapperClass($this);
+        if ($this->cache->has($fqdn)) {
+            $mapper = $this->cache->get($fqdn);
+        } else {
+            $mapperClass = str_replace($this->documentNamespace, $this->namespace, $fqdn).'Mapper';
+            $mapper = new $mapperClass($this);
+            $this->cache->add($fqdn, $mapper);
+        }
+
+        return $mapper;
     }
 }

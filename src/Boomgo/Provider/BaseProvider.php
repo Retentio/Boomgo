@@ -41,18 +41,4 @@ abstract class BaseProvider
     {
         return $this->cache;
     }
-
-    public function get($fqdn)
-    {
-        if ($this->cache->has($fqdn)) {
-            $item = $this->cache->get($fqdn);
-        } else {
-            $item = $this->createInstance($fqdn);
-            $this->cache->add($fqdn, $item);
-        }
-
-        return $item;
-    }
-
-    abstract protected function createInstance($fqdn);
 }
