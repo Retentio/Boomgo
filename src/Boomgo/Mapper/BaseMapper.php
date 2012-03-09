@@ -21,7 +21,7 @@ use Boomgo\Provider\MapperProvider;
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
  */
-abstract class MapperProvider
+abstract class BaseMapper
 {
     private $mapperProvider;
 

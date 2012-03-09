@@ -10,12 +10,13 @@ class RepositoryProvider extends BaseProvider
 
     private $mapperProvider;
 
-    public function __construct($namespace, $documentNamespace, CacheInterface $cache, \Mongo $connection, MapperProvider $mapperProvider);
+    public function __construct($namespace, $documentNamespace, CacheInterface $cache, \Mongo $connection, MapperProvider $mapperProvider)
     {
         $this->documentNamespace = $documentNamespace;
+        $this->connection = $connection;
         $this->namespace = $namespace;
         $this->setCache($cache);
-        $this->setMapperprovider($mapperProvider)
+        $this->setMapperprovider($mapperProvider);
     }
 
     public function setConnection(\Mongo $connection)
@@ -41,6 +42,6 @@ class RepositoryProvider extends BaseProvider
     protected function createInstance($fqdn)
     {
         $repositoryClass = str_replace($this->documentNamespace, $this->namespace, $fqdn).'Repository';
-        return new $repositoryClass($this->connection, $this->mapperProvider);
+        return new $repositoryClass($fqdn, $this->connection, $this->mapperProvider);
     }
 }

@@ -5,7 +5,7 @@ namespace {{ namespace ~ ";" }}
 {% for import in imports %}
 use {{  import }};
 {% endfor %}
-use Boomgo\Mapper\MapperProvider,
+use Boomgo\Mapper\BaseMapper,
     Boomgo\Mapper\MapperInterface;
 
 /**
@@ -58,7 +58,7 @@ use Boomgo\Mapper\MapperProvider,
 
         {%- if definition.isUserMapped %}
 
-            $mapper = $this->mapperProvider->get({{ definition.getMappedClass }};
+            $mapper = $this->mapperProvider->get('{{ definition.getMappedClass }}');
 
             {%- if definition.isDocumentMapped %}
 
@@ -103,7 +103,7 @@ use Boomgo\Mapper\MapperProvider,
 
         {%- if definition.isUserMapped %}
 
-            $mapper = $this->mapperProvider->get({{ definition.getMappedClass }};
+            $mapper = $this->mapperProvider->get('{{ definition.getMappedClass }}');
 
             {%- if definition.isDocumentMapped %}
 

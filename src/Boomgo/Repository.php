@@ -56,7 +56,6 @@ abstract class Repository
         if (!$this->mapper) {
             $this->mapper = $this->mapperProvider->get($this->documentClass);
         }
-
-        return $mapper;
+        return $this->mapper;
     }
 }

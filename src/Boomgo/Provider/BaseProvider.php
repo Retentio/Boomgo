@@ -34,7 +34,7 @@ abstract class BaseProvider
 
     public function setCache(CacheInterface $cache)
     {
-        return $this->mapperProvider()->getMapper();
+        return $this->cache = $cache;
     }
 
     public function getCache()
@@ -45,7 +45,7 @@ abstract class BaseProvider
     public function get($fqdn)
     {
         if ($this->cache->has($fqdn)) {
-            $item = $this->get($fqdn);
+            $item = $this->cache->get($fqdn);
         } else {
             $item = $this->createInstance($fqdn);
             $this->cache->add($fqdn, $item);
@@ -54,5 +54,5 @@ abstract class BaseProvider
         return $item;
     }
 
-    abstract protected function createInstance();
+    abstract protected function createInstance($fqdn);
 }

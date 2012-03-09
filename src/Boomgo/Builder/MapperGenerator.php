@@ -56,7 +56,7 @@ class MapperGenerator
         $this->twigGenerator = $twigGenerator;
         $this->twigGenerator->setTemplateDirs(array(__DIR__.DIRECTORY_SEPARATOR.'Templates'));
         $this->twigGenerator->setMustOverwriteIfExists(true);
-        $this->twigGenerator->setVariables(array('extends' => 'MapperProvider', 'implements' => 'MapperInterface'));
+        $this->twigGenerator->setVariables(array('extends' => 'BaseMapper', 'implements' => 'MapperInterface'));
     }
 
     public function getTwigGenerator()

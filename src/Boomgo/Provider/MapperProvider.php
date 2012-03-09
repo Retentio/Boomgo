@@ -6,7 +6,7 @@ use Boomgo\Cache\CacheInterface;
 
 class MapperProvider extends BaseProvider
 {
-    public function __construct($namespace, $documentNamespace, CacheInterface $cache);
+    public function __construct($namespace, $documentNamespace, CacheInterface $cache)
     {
         $this->documentNamespace = $documentNamespace;
         $this->namespace = $namespace;
