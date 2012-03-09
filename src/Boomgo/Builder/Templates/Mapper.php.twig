@@ -58,7 +58,7 @@ use Boomgo\Mapper\MapperProvider,
 
         {%- if definition.isUserMapped %}
 
-            $mapper = new {{ definition.getMappedClass|replace({(modelsNamespace): mappersNamespace}) }}Mapper();
+            $mapper = $this->mapperProvider->get({{ definition.getMappedClass }};
 
             {%- if definition.isDocumentMapped %}
 
@@ -103,7 +103,7 @@ use Boomgo\Mapper\MapperProvider,
 
         {%- if definition.isUserMapped %}
 
-            $mapper = new {{ definition.getMappedClass|replace({(modelsNamespace): mappersNamespace}) }}Mapper();
+            $mapper = $this->mapperProvider->get({{ definition.getMappedClass }};
 
             {%- if definition.isDocumentMapped %}
 

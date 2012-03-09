@@ -16,6 +16,6 @@ class MapperProvider extends BaseProvider
     protected function createInstance($fqdn)
     {
         $mapperClass = str_replace($this->documentNamespace, $this->namespace, $fqdn).'Mapper';
-        return new $mapperClass();
+        return new $mapperClass($this);
     }
 }

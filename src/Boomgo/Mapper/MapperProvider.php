@@ -14,6 +14,8 @@
 
 namespace Boomgo\Mapper;
 
+use Boomgo\Provider\MapperProvider;
+
 /**
  * MapperProvider
  *
@@ -21,6 +23,22 @@ namespace Boomgo\Mapper;
  */
 abstract class MapperProvider
 {
+    private $mapperProvider;
+
+    public function __construct(MapperProvider $mapperProvider)
+    {
+        $this->setMapperProvider($mapperProvider);
+    }
+
+    public function setMapperProvider(MapperProvider $mapperProvider)
+    {
+        $this->mapperProvider = $mapperProvider;
+    }
+    public function getMapperProvider()
+    {
+        return $this->mapperProvider;
+    }
+
     /**
      * Create an instance from a Reflected class
      *
