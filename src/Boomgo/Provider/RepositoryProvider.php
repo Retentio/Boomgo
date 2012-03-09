@@ -10,6 +10,8 @@ class RepositoryProvider extends BaseProvider
 
     private $mapperProvider;
 
+    private $baseNamespaces;
+
     public function __construct($namespace, $documentNamespace, CacheInterface $cache, \Mongo $connection, MapperProvider $mapperProvider)
     {
         $this->documentNamespace = $documentNamespace;
@@ -17,6 +19,7 @@ class RepositoryProvider extends BaseProvider
         $this->namespace = $namespace;
         $this->setCache($cache);
         $this->setMapperprovider($mapperProvider);
+        $this->baseNamespaces = array();
     }
 
     public function setConnection(\Mongo $connection)
@@ -39,9 +42,59 @@ class RepositoryProvider extends BaseProvider
         return $this->mapperProvider;
     }
 
+    public function setBaseNamespaces($baseNamespaces)
+    {
+        $this->baseNamespaces;
+    }
+
+    public function getBaseNamespace()
+    {
+        return $this->baseNamespaces;
+    }
+
+    public function addBaseNamespace($key, $namespace)
+    {
+        $namespace = trim($namespace, '\\').'\\';
+        $this->baseNamespaces[$key] = $namespace;
+    }
+
+    public function hasBaseNamespace($key)
+    {
+        return isset($this->baseNamespaces[$key]);
+    }
+
+    public function getBaseNamespace($key)
+    {
+        return ($this->hasBaseNamespace($key)) ? $this->baseNamespaces[$key] : null;
+    }
+
+    public function get($fqdn)
+    {
+        if (!strpos('\\', $fqdn)) {
+            $key = (strpos('.', $fqdn)) ? $fqdn : 'default';
+
+            if (!$this->hasBaseNamespace($key)) {
+                throw new \RuntimeException(sprintf('Unknown namespace identifier "%s"', $key));
+            }
+
+            $namespace = $this->getBaseNamespace($key);
+            $fqdn = $namespace.$fqdn;
+        }
+
+        if ($this->cache->has($fqdn)) {
+            $repository = $this->cache->get($fqdn);
+        } else {
+            $repositoryClass = str_replace($this->documentNamespace, $this->namespace, $fqdn).'Repository';
+            $repository = new $repositoryClass($fqdn, $this->connection, $this->mapperProvider);
+            $this->cache->add($fqdn, $repository);
+        }
+
+        return $repository;
+    }
+
     protected function createInstance($fqdn)
     {
-        $repositoryClass = str_replace($this->documentNamespace, $this->namespace, $fqdn).'Repository';
-        return new $repositoryClass($fqdn, $this->connection, $this->mapperProvider);
+
+        return
     }
 }
