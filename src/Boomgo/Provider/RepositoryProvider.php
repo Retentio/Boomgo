@@ -47,7 +47,7 @@ class RepositoryProvider extends BaseProvider
         $this->baseNamespaces;
     }
 
-    public function getBaseNamespace()
+    public function getBaseNamespaces()
     {
         return $this->baseNamespaces;
     }
