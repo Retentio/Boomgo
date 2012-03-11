@@ -23,7 +23,7 @@ use Boomgo\Provider\MapperProvider;
  */
 abstract class BaseMapper
 {
-    private $mapperProvider;
+    protected $mapperProvider;
 
     public function __construct(MapperProvider $mapperProvider)
     {
