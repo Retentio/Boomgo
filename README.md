@@ -300,5 +300,5 @@ Boomgo was built thanks to many open source projects & some awesome guys:
 * [Doctrine](http://www.doctrine-project.org/), [Mandango](http://mandango.org/): ORM/ODM inspiration.
 
 * [@willdurand](https://github.com/willdurand), helped me with a lot of tips.
-* [@sethpolma](https://twitter.com/Sethpolma), regex master.
+* [@jpetitcolas](https://github.com/jpetitcolas), regex master.
 * [@Palleas](https://github.com/Palleas), ninja supporter forever.
