@@ -7,22 +7,6 @@ use Boomgo\Builder;
 
 class MapperGenerator extends Test
 {
-    public function testGetMapBuilder()
-    {
-        $mapperGenerator = $this->MapperGeneratorProvider();
-        $this->assert
-            ->object($mapperGenerator->getMapBuilder())
-                ->isInstanceOf('Boomgo\\Builder\\MapBuilder');
-    }
-
-    public function testGetTwigGenerator()
-    {
-        $mapperGenerator = $this->MapperGeneratorProvider();
-        $this->assert
-            ->object($mapperGenerator->getTwigGenerator())
-                ->isInstanceOf('TwigGenerator\\Builder\\Generator');
-    }
-
     public function testLoad()
     {
         // Should throw an exception if argument is a string and not a valid file or directory
@@ -49,21 +33,21 @@ class MapperGenerator extends Test
         $this->assert
             ->array($mapperGenerator->load(__DIR__.'/../Fixture/Annoted/Document.php'))
                 ->hasSize(1)
-                ->isIdenticalTo(array(realpath(__DIR__.'/../Fixture/Annoted/Document.php')));
+                ->strictlyContainsValues(array(realpath(__DIR__.'/../Fixture/Annoted/Document.php')));
 
         // Should return an array containing many files realpath when providing a directory
         $mapperGenerator = $this->MapperGeneratorProvider();
         $this->assert
             ->array($mapperGenerator->load(__DIR__.'/../Fixture/Annoted'))
                 ->hasSize(2)
-                ->isIdenticalTo (array(realpath(__DIR__.'/../Fixture/Annoted/Document.php'), realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php')));
+                ->strictlyContainsValues(array(realpath(__DIR__.'/../Fixture/Annoted/Document.php'), realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php')));
 
         // Should return an array containing many files realpath when providing an array of directory
         $mapperGenerator = $this->MapperGeneratorProvider();
         $this->assert
             ->array($mapperGenerator->load(array(__DIR__.'/../Fixture/Annoted', __DIR__.'/../Fixture/AnotherAnnoted')))
                 ->hasSize(3)
-                ->isIdenticalTo(array(
+                ->strictlyContainsValues(array(
                     realpath(__DIR__.'/../Fixture/Annoted/Document.php'),
                     realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php'),
                     realpath(__DIR__.'/../Fixture/AnotherAnnoted/Document.php')));
@@ -73,7 +57,7 @@ class MapperGenerator extends Test
         $this->assert
             ->array($mapperGenerator->load(array(__DIR__.'/../Fixture/Annoted', __DIR__.'/../Fixture/AnotherAnnoted/Document.php')))
                 ->hasSize(3)
-                ->isIdenticalTo(array(
+                ->strictlyContainsValues(array(
                     realpath(__DIR__.'/../Fixture/Annoted/Document.php'),
                     realpath(__DIR__.'/../Fixture/Annoted/DocumentEmbed.php'),
                     realpath(__DIR__.'/../Fixture/AnotherAnnoted/Document.php')));
@@ -139,7 +123,11 @@ class MapperGenerator extends Test
         $mockParser = new \Mock\Parser\Parser();
         $mockFormatter = new \Mock\Formatter\Formatter();
         $mockMapBuilder = new \Mock\Builder\MapBuilder($mockParser, $mockFormatter);
-        $mockTwigGenerator = new \Mock\Builder\TwigGenerator();
+
+        // Avoid constructor call
+        $controller = new \mageekguy\atoum\mock\controller();
+        $controller->__construct = function() {};
+        $mockTwigGenerator = new \Mock\Builder\TwigGenerator($controller);
 
         return new Builder\MapperGenerator($mockMapBuilder, $mockTwigGenerator);
     }

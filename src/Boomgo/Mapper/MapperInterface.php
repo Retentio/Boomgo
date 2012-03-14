@@ -26,7 +26,8 @@ interface MapperInterface
     /**
      * Return an mongoable array from an object
      *
-     * @param  mixed $object
+     * @param mixed $object
+     *
      * @return array
      */
     public function serialize($object);
@@ -34,7 +35,8 @@ interface MapperInterface
     /**
      * Return an hydrated object from an MongoDB array
      *
-     * @param  array $array
+     * @param array $array
+     *
      * @return object
      */
     public function unserialize(array $array);
@@ -42,8 +44,9 @@ interface MapperInterface
     /**
      * Hydrate a PHP object from a MongoDB array
      *
-     * @param  mixed  $object
-     * @param  array  $array
+     * @param mixed  $object
+     * @param array  $array
+     *
      * @return object
      */
     public function hydrate($object, array $array);

@@ -57,14 +57,18 @@ class TransparentFormatter extends Test
     {
         $formatter = new Formatter\TransparentFormatter();
 
-        // Should always prefix the provided string with get
+        // Should always prefix the provided string with get or is
         $this->assert
             ->string($formatter->getPhpAccessor('FreeStyle MongoKey__'))
                 ->isEqualTo('getFreeStyle MongoKey__')
-            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', true))
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'mixed', true))
                 ->isEqualTo('getFreeStyle MongoKey__')
-            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', false))
-                ->isEqualTo('getFreeStyle MongoKey__');
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'mixed', false))
+                ->isEqualTo('getFreeStyle MongoKey__')
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'bool', false))
+                ->isEqualTo('isFreeStyle MongoKey__')
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'boolean', false))
+                ->isEqualTo('isFreeStyle MongoKey__');
 
     }
 
@@ -76,9 +80,9 @@ class TransparentFormatter extends Test
         $this->assert
             ->string($formatter->getPhpMutator('FreeStyle MongoKey__'))
                 ->isEqualTo('setFreeStyle MongoKey__')
-            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', true))
+            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', 'mixed', true))
                 ->isEqualTo('setFreeStyle MongoKey__')
-            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', false))
+            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', 'mixed', false))
                 ->isEqualTo('setFreeStyle MongoKey__');
     }
 }

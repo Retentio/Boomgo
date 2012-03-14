@@ -26,13 +26,20 @@ class ArrayCache implements CacheInterface
      */
     private $data;
 
+    /**
+     * Constructor initializes empty data array
+     */
     public function __construct()
     {
         $this->data = array();
     }
 
     /**
-     * {@inheritdoc}
+     * Check if a cached entry exists
+     *
+     * @param string $identifier Unique cache identifier
+     *
+     * @return boolean
      */
     public function has($identifier)
     {
@@ -40,7 +47,11 @@ class ArrayCache implements CacheInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Return a cached data
+     *
+     * @param string $identifier Unique cache identifier
+     *
+     * @return mixed
      */
     public function get($identifier)
     {
@@ -48,7 +59,11 @@ class ArrayCache implements CacheInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Cache data
+     *
+     * @param string  $identifier Unique cache identifier
+     * @param mixed   $data       Data to be cached
+     * @param integer $ttl        Time To Live in second
      */
     public function add($identifier, $data, $ttl = 0)
     {
@@ -56,15 +71,17 @@ class ArrayCache implements CacheInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Delete a cached entry
+     *
+     * @param string $identifier Unique cache identifier
      */
     public function remove($identifier)
     {
         unset($this->data[$identifier]);
     }
 
-    /**
-     * {@inheritdoc}
+   /**
+     * Clear all cache
      */
     public function clear()
     {

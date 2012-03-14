@@ -24,7 +24,8 @@ interface CacheInterface
     /**
      * Check if a cached entry exists
      *
-     * @param  string  $identifier Unique cache identifier
+     * @param string $identifier Unique cache identifier
+     *
      * @return boolean
      */
     public function has($identifier);
@@ -32,7 +33,8 @@ interface CacheInterface
     /**
      * Return a cached data
      *
-     * @param  string  $identifier Unique cache identifier
+     * @param string $identifier Unique cache identifier
+     *
      * @return mixed
      */
     public function get($identifier);
@@ -40,16 +42,16 @@ interface CacheInterface
     /**
      * Cache data
      *
-     * @param  string  $identifier Unique cache identifier
-     * @param  mixed   $data       Data to be cached
-     * @param  integer $ttl        Time To Live in second
+     * @param string  $identifier Unique cache identifier
+     * @param mixed   $data       Data to be cached
+     * @param integer $ttl        Time To Live in second
      */
     public function add($identifier, $data, $ttl = 0);
 
     /**
      * Delete a cached entry
      *
-     * @param  string  $identifier Unique cache identifier
+     * @param string $identifier Unique cache identifier
      */
     public function remove($identifier);
 
