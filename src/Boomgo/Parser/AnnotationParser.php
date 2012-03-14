@@ -24,17 +24,20 @@ use Boomgo\Formatter\FormatterInterface;
 class AnnotationParser implements ParserInterface
 {
     /**
-     * Boomgo global annotation tag
-     * @var string
+     * @var string Boomgo class annotation tag
      */
     private $globalAnnotation;
 
+    /**
+     * @var string Boomgo property annotation tag
+     */
     private $localAnnotation;
 
     /**
      * Constructor
      *
-     * @param string $annotation
+     * @param string $globalTag
+     * @param string $localTag
      */
     public function __construct($globalTag = '@Boomgo', $localTag = '@Persistent')
     {
@@ -93,7 +96,9 @@ class AnnotationParser implements ParserInterface
     /**
      * ParserInterface implementation
      *
-     * {@inheritdoc}
+     * @see ParserInterface::getExtension()
+     *
+     * @return string
      */
     public function getExtension()
     {
@@ -103,7 +108,12 @@ class AnnotationParser implements ParserInterface
     /**
      * ParserInterface implementation
      *
-     * {@inheritdoc}
+     * @param resource $resource
+     * @param string   $type
+     *
+     * @see ParserInterface::getExtension()
+     *
+     * @return boolean
      */
     public function supports($resource, $type = null)
     {
@@ -113,7 +123,11 @@ class AnnotationParser implements ParserInterface
     /**
      * ParserInterface implementation
      *
-     * {@inheritdoc}
+     * @param string $filepath
+     *
+     * @see ParserInterface::parse()
+     *
+     * @return array
      */
     public function parse($filepath)
     {
@@ -150,8 +164,10 @@ class AnnotationParser implements ParserInterface
     /**
      * Check if an object property has to be processed by Boomgo
      *
-     * @param  ReflectionProperty $property the property to check
+     * @param ReflectionProperty $property the property to check
+     *
      * @throws RuntimeException If annotation is malformed
+     *
      * @return Boolean True if the property should be stored
      */
     private function isBoomgoProperty(\ReflectionProperty $property)
@@ -176,7 +192,8 @@ class AnnotationParser implements ParserInterface
      *
      * Extract metadata from the optional var tag
      *
-     * @param  \ReflectionProperty $property
+     * @param \ReflectionProperty $property
+     *
      * @return array
      */
     private function parseMetadata(\ReflectionProperty $property)
@@ -184,7 +201,7 @@ class AnnotationParser implements ParserInterface
         $metadata = array();
         $tag = '@var';
         $docComment = $property->getDocComment();
-        $occurence = (int)substr_count($docComment, $tag);
+        $occurence = (int) substr_count($docComment, $tag);
 
         if (1 < $occurence) {
             throw new \RuntimeException(sprintf('"@var" tag is not unique for "%s->%s"', $property->getDeclaringClass()->getName(), $property->getName()));
@@ -208,6 +225,14 @@ class AnnotationParser implements ParserInterface
         return $metadata;
     }
 
+    /**
+     * Fallback autoloader
+     *
+     * @param string $fqcn
+     * @param string $path
+     *
+     * @return boolean True if the file has been loaded
+     */
     private function registerAutoload($fqcn, $path)
     {
         $namespace = str_replace(strrchr($fqcn, '\\'), '', $fqcn);
@@ -229,6 +254,7 @@ class AnnotationParser implements ParserInterface
                     return false;
                 }
                 require_once $path;
+
                 return true;
             }
         });

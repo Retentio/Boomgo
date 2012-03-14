@@ -24,8 +24,10 @@ abstract class MapperProvider
     /**
      * Create an instance from a Reflected class
      *
-     * @param  ReflectionClass $reflectedClass
+     * @param ReflectionClass $reflectedClass
+     *
      * @throws RuntimeException If constructor requires parameter
+     *
      * @return mixed
      */
     protected function createInstance(\ReflectionClass $reflectedClass)
@@ -35,6 +37,7 @@ abstract class MapperProvider
         if ($constructor && $constructor->getNumberOfRequiredParameters() > 0) {
             throw new \RuntimeException('Unable to hydrate an object requiring constructor param');
         }
+
         return $reflectedClass->newInstance();
     }
 
@@ -46,9 +49,10 @@ abstract class MapperProvider
      * at https://github.com/symfony/symfony
      *
      * (c) Fabien Potencier <fabien@symfony.com>
-     * @author Nils Adermann <naderman@naderman.de>
+     * Author Nils Adermann <naderman@naderman.de>
      *
-     * @param  mixed $data
+     * @param mixed $data
+     *
      * @return mixed
      */
     protected function normalize($data)
@@ -73,8 +77,9 @@ abstract class MapperProvider
      *
      * Return a collection of hydrated objects
      *
-     * @param  MapperInterface $mapper
-     * @param  array           $collection
+     * @param MapperInterface $mapper
+     * @param array           $collection
+     *
      * @return array
      */
     protected function serializeEmbeddedCollection(MapperInterface $mapper, array $collection)
@@ -92,8 +97,9 @@ abstract class MapperProvider
      *
      * Return a collection of serialized objects (arrays)
      *
-     * @param  MapperInterface $mapper
-     * @param  array           $data
+     * @param MapperInterface $mapper
+     * @param array           $data
+     *
      * @return array
      */
     protected function unserializeEmbeddedCollection(MapperInterface $mapper, array $data)

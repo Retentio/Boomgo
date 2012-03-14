@@ -35,7 +35,7 @@ class SimpleMapper extends MapperProvider
      * Constructor
      *
      * @param FormatterInterface $formatter  A formatter
-     * @param boolean            $schemaless True to enable schemaless
+     * @param boolean            $schemaLess True to enable schemaless
      */
     public function __construct(FormatterInterface $formatter, $schemaLess = true)
     {
@@ -86,7 +86,8 @@ class SimpleMapper extends MapperProvider
     /**
      * Convert an object to a mongoable array
      *
-     * @param  mixed $object
+     * @param mixed $object
+     *
      * @return array
      */
     public function serialize($object)
@@ -96,7 +97,7 @@ class SimpleMapper extends MapperProvider
         }
 
         $reflectedObject = new \ReflectionObject($object);
-        $reflectedProperties = $reflectecObject->getProperties();
+        $reflectedProperties = $reflectedObject->getProperties();
 
         $array = array();
 
@@ -111,6 +112,7 @@ class SimpleMapper extends MapperProvider
                 $array[$this->formatter->toMongoKey($property->getName())] = $value;
             }
         }
+
         return $array;
     }
 
@@ -120,8 +122,9 @@ class SimpleMapper extends MapperProvider
      * If schemaless is enabled, any data in the array
      * will be dynamically appended to the object
      *
-     * @param  mixed  $object
-     * @param  array  $array
+     * @param mixed $object
+     * @param array $array
+     *
      * @return mixed
      */
     public function hydrate($object, array $array)
@@ -131,8 +134,6 @@ class SimpleMapper extends MapperProvider
         if (is_string($object)) {
             $object = $this->createInstance($reflected);
         }
-
-        $reflectedProperties = $reflected->getProperties(\ReflectionProperty::IS_PUBLIC);
 
         foreach ($array as $key => $value) {
             $attributeName = $this->formatter->toPhpAttribute($key);
@@ -152,8 +153,9 @@ class SimpleMapper extends MapperProvider
     /**
      * Return a value for an object property
      *
-     * @param  mixed               $object
-     * @param  \ReflectionProperty $property
+     * @param mixed               $object
+     * @param \ReflectionProperty $property
+     *
      * @return mixed
      */
     private function getValue($object, \ReflectionProperty $property)
@@ -165,6 +167,7 @@ class SimpleMapper extends MapperProvider
         } else {
             // Try to use accessor if property is not public
             $accessorName = $this->formatter->getPhpAccessor($property->getName(), false);
+            $reflectedObject = new \ReflectionObject($object);
             $reflectedMethod = $reflectedObject->getMethod($accessorName);
 
             if (null !== $reflectedMethod) {
@@ -189,6 +192,7 @@ class SimpleMapper extends MapperProvider
         } else {
             // Try to use mutator if property is not public
             $mutatorName = $this->formatter->getPhpMutator($property->getName(), false);
+            $reflectedObject = new \ReflectionObject($object);
             $reflectedMethod = $reflectedObject->getMethod($mutatorName);
 
             if (null !== $reflectedMethod) {

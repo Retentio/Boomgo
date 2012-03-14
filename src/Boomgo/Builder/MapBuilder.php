@@ -35,10 +35,10 @@ class MapBuilder
     protected $formatter;
 
     /**
-     * Initialize
+     * Constructor defines the Parser & Formatter
      *
-     * @param FormmatterInterface $formatter
-     * @param string $annotation
+     * @param ParserInterface    $parser
+     * @param FormatterInterface $formatter
      */
     public function __construct(ParserInterface $parser, FormatterInterface $formatter)
     {
@@ -47,7 +47,7 @@ class MapBuilder
     }
 
     /**
-     * Define the parser
+     * Define the parser instance
      *
      * @param ParserInterface $parser [description]
      */
@@ -57,7 +57,7 @@ class MapBuilder
     }
 
     /**
-     * Return parser
+     * Return parser instance
      *
      * @return ParserInterface
      */
@@ -67,7 +67,7 @@ class MapBuilder
     }
 
     /**
-     * Define the key/attribute formatter
+     * Define the key/attribute formatter instance
      *
      * @param FormatterInterface $formatter
      */
@@ -77,7 +77,7 @@ class MapBuilder
     }
 
     /**
-     * Return the key/attribute formatter
+     * Return the key/attribute formatter instance
      *
      * @return FormatterInterface
      */
@@ -90,14 +90,15 @@ class MapBuilder
      * Build Map(s) for an array of file
      *
      * @param array $files
+     *
+     * @return array $processed
      */
-    public function build($files)
+    public function build(array $files)
     {
         $processed = array();
 
         foreach ($files as $file) {
-            if ($this->parser->supports($file))
-            {
+            if ($this->parser->supports($file)) {
                 $metadata = $this->parser->parse($file);
                 $map = $this->buildMap($metadata);
 
@@ -111,7 +112,8 @@ class MapBuilder
     /**
      * Build a Map
      *
-     * @param  array $metada
+     * @param array $metadata
+     *
      * @return Map
      */
     private function buildMap(array $metadata)
@@ -129,7 +131,8 @@ class MapBuilder
     /**
      * Build a Definition
      *
-     * @param  array  $metadata
+     * @param array $metadata
+     *
      * @return Definition
      */
     private function buildDefinition(array $metadata)

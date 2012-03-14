@@ -25,6 +25,8 @@ class MapperBuilder extends BaseBuilder
 {
     /**
      * {@inheritdoc}
+     *
+     * @return string
      */
     public function getDefaultTemplateName()
     {

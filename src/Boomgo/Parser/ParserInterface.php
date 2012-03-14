@@ -21,21 +21,28 @@ namespace Boomgo\Parser;
  */
 interface ParserInterface
 {
+    /**
+     * Return the extension supported without the prefixed dot
+     *
+     * @return string
+     */
     public function getExtension();
 
     /**
-     * Returns true if this class supports the given resource.
+     * Returns true if this class supports the given resource
      *
-     * @param  resource $resource
-     * @param  string   $type
+     * @param resource $resource
+     * @param string   $type
+     *
      * @return boolean
      */
-    public function supports($resource);
+    public function supports($resource, $type = null);
 
     /**
      * Extract and return an array of metadata from a resource
      *
-     * @param  string $filepath
+     * @param string $filepath
+     *
      * @return array
      */
     public function parse($filepath);
