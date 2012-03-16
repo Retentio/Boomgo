@@ -14,6 +14,10 @@ abstract class Repository
 
     protected $mapper;
 
+    abstract public function getDatabase();
+
+    abstract public function getCollection();
+
     public function __construct($documentClass, \Mongo $connection, MapperProvider $mapperProvider)
     {
         $this->setDocumentClass($documentClass);
@@ -57,5 +61,13 @@ abstract class Repository
             $this->mapper = $this->mapperProvider->get($this->documentClass);
         }
         return $this->mapper;
+    }
+
+    public function count(array $selector = array())
+    {
+        return $this->connection
+            ->selectDB($this->getDatabase())
+            ->selectCollection($this->getCollection())
+            ->count($selector);
     }
 }
