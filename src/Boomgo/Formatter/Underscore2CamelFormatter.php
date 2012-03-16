@@ -36,7 +36,7 @@ class Underscore2CamelFormatter implements FormatterInterface
     {
         $underscored =  $this->underscore($phpAttribute);
 
-        return ($phpAttribute == 'id') ? '_'.$underscored : $underscored ;
+        return ($phpAttribute == 'id') ? '_id' : $underscored ;
     }
 
     /**
@@ -48,36 +48,35 @@ class Underscore2CamelFormatter implements FormatterInterface
      */
     public function toPhpAttribute($mongoKey)
     {
-        return $this->camelize($mongoKey, true);
+        // will camelize in lower case (so it handles the _id exception)
+        return $this->camelize($mongoKey);
     }
 
     /**
-     * Return a php accessor for a mongo key or a php attribute
+     * Return a php accessor for a php attribute
      *
-     * @param string  $string    A mongo key or a php attribute
-     * @param string  $type      The php type
-     * @param boolean $fromMongo True if an underscored mongo key is provided, false: for a camelCase php attribute
+     * @param string  $string  A php attribute
+     * @param string  $type    The php type
      *
      * @return string
      */
-    public function getPhpAccessor($string, $type = 'mixed', $fromMongo = true)
+    public function getPhpAccessor($string, $type = 'mixed')
     {
         $prefix = (($type ==='bool' || $type === 'boolean') ? 'is' : 'get');
 
-        return $prefix.(($fromMongo === true) ? $this->camelize($string, false) : ucfirst($string));
+        return $prefix.ucfirst($string);
     }
 
     /**
-     * Return a php mutator for a mongo key or a php attribute
+     * Return a php mutator for a php attribute
      *
-     * @param string  $string    A mongo key or a php attribute
-     * @param boolean $fromMongo True if an underscored mongo key is provided, false: for a camelCase php attribute
+     * @param string  $string A php attribute
      *
      * @return string
      */
-    public function getPhpMutator($string, $fromMongo = true)
+    public function getPhpMutator($string)
     {
-        return 'set'.(($fromMongo === true) ? $this->camelize($string, false) : ucfirst($string));
+        return 'set'.ucfirst($string);
     }
 
     /**
@@ -90,7 +89,7 @@ class Underscore2CamelFormatter implements FormatterInterface
      *
      * @example my_great_key -> myGreatKey|MyGreatKey
      */
-    private function camelize($string, $lower = false)
+    private function camelize($string, $lower = true)
     {
         $words = explode('_', strtolower($string));
 
@@ -112,7 +111,7 @@ class Underscore2CamelFormatter implements FormatterInterface
      *
      * @return string
      *
-     * @example my_great_key -> myGreatKey
+     * @example myGreatKey|MyGreatKey -> my_great_key
      */
     private function underscore($string)
     {

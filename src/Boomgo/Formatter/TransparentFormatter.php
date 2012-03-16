@@ -52,11 +52,10 @@ class TransparentFormatter implements FormatterInterface
      *
      * @param string  $string
      * @param string  $type
-     * @param boolean $fromMongo
      *
      * @return string
      */
-    public function getPhpAccessor($string, $type = 'mixed', $fromMongo = true)
+    public function getPhpAccessor($string, $type = 'mixed')
     {
         $prefix = (($type === 'bool' || $type === 'boolean') ? 'is' : 'get');
 
@@ -67,11 +66,10 @@ class TransparentFormatter implements FormatterInterface
      * Return the php attribute always prefixed with set
      *
      * @param string  $string
-     * @param boolean $fromMongo
      *
      * @return string
      */
-    public function getPhpMutator($string, $fromMongo = true)
+    public function getPhpMutator($string)
     {
         return 'set'.$string;
     }

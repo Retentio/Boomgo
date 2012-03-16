@@ -42,23 +42,21 @@ interface FormatterInterface
     public function toMongoKey($phpAttribute);
 
     /**
-     * Get a php accessor name from a mongo key or a php attribute
+     * Get a php accessor name from a php attribute
      *
-     * @param string  $string    The php attribute or the mongo key
+     * @param string  $string    The php attribute
      * @param string  $type      The php type
-     * @param boolean $fromMongo True if you provided a mongo key string, false for a php attribute
      *
      * @return string
      */
-    public function getPhpAccessor($string, $type = 'mixed', $fromMongo = true);
+    public function getPhpAccessor($string, $type = 'mixed');
 
     /**
-     * Get a php mutator name from a mongo key or a php attribute
+     * Get a php mutator name a php attribute
      *
-     * @param string  $string    The php attribute or the mongo key
-     * @param boolean $fromMongo True if you provided a mongo key string, false for a php attribute
+     * @param string  $string    The php attribute
      *
      * @return string
      */
-    public function getPhpMutator($string, $fromMongo = true);
+    public function getPhpMutator($string);
 }

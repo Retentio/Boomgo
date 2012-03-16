@@ -61,13 +61,11 @@ class TransparentFormatter extends Test
         $this->assert
             ->string($formatter->getPhpAccessor('FreeStyle MongoKey__'))
                 ->isEqualTo('getFreeStyle MongoKey__')
-            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'mixed', true))
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'mixed'))
                 ->isEqualTo('getFreeStyle MongoKey__')
-            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'mixed', false))
-                ->isEqualTo('getFreeStyle MongoKey__')
-            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'bool', false))
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'bool'))
                 ->isEqualTo('isFreeStyle MongoKey__')
-            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'boolean', false))
+            ->string($formatter->getPhpAccessor('FreeStyle MongoKey__', 'boolean'))
                 ->isEqualTo('isFreeStyle MongoKey__');
 
     }
@@ -80,9 +78,7 @@ class TransparentFormatter extends Test
         $this->assert
             ->string($formatter->getPhpMutator('FreeStyle MongoKey__'))
                 ->isEqualTo('setFreeStyle MongoKey__')
-            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', 'mixed', true))
-                ->isEqualTo('setFreeStyle MongoKey__')
-            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', 'mixed', false))
+            ->string($formatter->getPhpMutator('FreeStyle MongoKey__', 'mixed'))
                 ->isEqualTo('setFreeStyle MongoKey__');
     }
 }
