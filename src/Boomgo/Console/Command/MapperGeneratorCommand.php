@@ -30,6 +30,11 @@ use TwigGenerator\Builder\Generator;
  */
 class MapperGeneratorCommand extends Command
 {
+    /**
+     * Constructor
+     *
+     * @param string $name Command name
+     */
     public function __construct($name = null)
     {
         parent::__construct($name);
@@ -41,10 +46,15 @@ class MapperGeneratorCommand extends Command
         $this->addOption('models-namespace', null, InputOption::VALUE_OPTIONAL, 'Model/document namespace (i.e Document or Model)', 'Document');
         $this->addOption('mappers-namespace', null, InputOption::VALUE_OPTIONAL, 'Mappers namespace, default "Mapper"', 'Mapper');
         $this->addOption('parser', null, InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
-        $this->addOption('formatter', null, InputOption::VALUE_OPTIONAL, 'Mapping formatter','Underscore2Camel');
+        $this->addOption('formatter', null, InputOption::VALUE_OPTIONAL, 'Mapping formatter', 'CamelCase');
     }
 
-
+    /**
+     * Execute the command
+     *
+     * @param InputInterface  $input
+     * @param OutputInterface $output
+     */
     protected function execute(InputInterface $input, OutputInterface $output)
     {
         $params = array();
@@ -71,6 +81,13 @@ class MapperGeneratorCommand extends Command
         $mapperGenerator->generate($params['mapping-directory'], $params['models-namespace'], $params['mappers-namespace'], $params['models-directory']);
     }
 
+    /**
+     * Check whether a path is an absolute path
+     *
+     * @param string  $file
+     *
+     * @return boolean
+     */
     private function isAbsolutePath($file)
     {
         if ($file[0] == '/' || $file[0] == '\\'

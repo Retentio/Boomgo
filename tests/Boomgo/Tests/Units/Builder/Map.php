@@ -41,8 +41,6 @@ class Map extends Test
             ->array($map->getMongoIndex())
                 ->isEmpty()
             ->array($map->getDefinitions())
-                ->isEmpty()
-            ->array($map->getDependencies())
                 ->isEmpty();
     }
 

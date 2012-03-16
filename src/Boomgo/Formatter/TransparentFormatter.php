@@ -24,7 +24,11 @@ namespace Boomgo\Formatter;
 class TransparentFormatter implements FormatterInterface
 {
     /**
-     * {@inheritdoc}
+     * Return the exact same php attribute
+     *
+     * @param string $phpAttribute
+     *
+     * @return string $mongoKey
      */
     public function toMongoKey($phpAttribute)
     {
@@ -32,7 +36,11 @@ class TransparentFormatter implements FormatterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Return the exact same mongo key
+     *
+     * @param string $mongoKey
+     *
+     * @return string $mongoKey
      */
     public function toPhpAttribute($mongoKey)
     {
@@ -40,17 +48,28 @@ class TransparentFormatter implements FormatterInterface
     }
 
     /**
-     * {@inheritdoc}
+     * Return the php attribute prefixed with get or is
+     *
+     * @param string  $string
+     * @param string  $type
+     *
+     * @return string
      */
-    public function getPhpAccessor($string, $type = 'mixed', $fromMongo = true)
+    public function getPhpAccessor($string, $type = 'mixed')
     {
-        return 'get'.$string;
+        $prefix = (($type === 'bool' || $type === 'boolean') ? 'is' : 'get');
+
+        return $prefix.$string;
     }
 
     /**
-     * {@inheritdoc}
+     * Return the php attribute always prefixed with set
+     *
+     * @param string  $string
+     *
+     * @return string
      */
-    public function getPhpMutator($string, $type ='mixed', $fromMongo = true)
+    public function getPhpMutator($string)
     {
         return 'set'.$string;
     }

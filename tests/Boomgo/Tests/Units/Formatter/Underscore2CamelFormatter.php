@@ -53,6 +53,11 @@ class Underscore2CamelFormatter extends Test
         $this->assert
             ->string($camelCase)
             ->isEqualTo('helloWorld');
+
+        // Should handle _id MongoDB exception and add the underscore
+        $this->assert
+            ->string($formatter->toPhpAttribute('_id'))
+                ->isEqualTo('id');
     }
 
     public function testToMongoAttribute()
@@ -83,24 +88,14 @@ class Underscore2CamelFormatter extends Test
     {
         $formatter = new Formatter\Underscore2CamelFormatter();
 
-        // Should return a camelCase php accessor when implicitly providing an underscored mongo key
-        $this->assert
-            ->string($formatter->getPhpAccessor('underscored_mongo_key'))
-            ->isEqualTo('getUnderscoredMongoKey');
-
-        // Should return a camelCase php accessor when explicitly providing an underscored mongo key
-        $this->assert
-            ->string($formatter->getPhpAccessor('underscored_mongo_key', 'mixed', true))
-            ->isEqualTo('getUnderscoredMongoKey');
-
         // Should return a camelCase php accessor when explicitly providing a lower camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpAccessor('underscoredMongoKey', 'mixed', false))
+            ->string($formatter->getPhpAccessor('underscoredMongoKey', 'mixed'))
             ->isEqualTo('getUnderscoredMongoKey');
 
         // Should return a camelCase php accessor when explicitly providing an upper camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpAccessor('UnderscoredMongoKey', 'mixed', false))
+            ->string($formatter->getPhpAccessor('UnderscoredMongoKey', 'mixed'))
             ->isEqualTo('getUnderscoredMongoKey');
     }
 
@@ -108,24 +103,14 @@ class Underscore2CamelFormatter extends Test
     {
         $formatter = new Formatter\Underscore2CamelFormatter();
 
-        // Should return a camelCase php mutator when implicitly providing an underscored mongo key
-        $this->assert
-            ->string($formatter->getPhpMutator('underscored_mongo_key'))
-            ->isEqualTo('setUnderscoredMongoKey');
-
-        // Should return a camelCase php mutator when explicitly providing an underscored mongo key
-        $this->assert
-            ->string($formatter->getPhpMutator('underscored_mongo_key', 'mixed', true))
-            ->isEqualTo('setUnderscoredMongoKey');
-
         // Should return a camelCase php mutator when explicitly providing a lower camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpMutator('underscoredMongoKey', 'mixed', false))
+            ->string($formatter->getPhpMutator('underscoredMongoKey'))
             ->isEqualTo('setUnderscoredMongoKey');
 
         // Should return a camelCase php mutator when explicitly providing an upper camelCase php attribute
         $this->assert
-            ->string($formatter->getPhpMutator('UnderscoredMongoKey', 'mixed', false))
+            ->string($formatter->getPhpMutator('UnderscoredMongoKey'))
             ->isEqualTo('setUnderscoredMongoKey');
     }
 }

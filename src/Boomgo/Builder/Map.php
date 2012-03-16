@@ -27,19 +27,14 @@ class Map
     private $class;
 
     /**
-     * @var array Indexed by "MongoDB keys" where are "PHP attributes"
+     * @var array Php attributes name indexed by MongoDB keys name
      */
     private $mongoIndex;
 
     /**
-     * @var array Indexed by "PHP attributes"
+     * @var array Definitions indexed by "PHP attributes"
      */
     private $definitions;
-
-    /**
-     * @var array Indexed by "PHP attributes"
-     */
-    private $dependencies;
 
     /**
      * Constructor
@@ -48,14 +43,14 @@ class Map
      */
     public function __construct($class)
     {
-        $this->class = (strpos($class,'\\') === 0) ? $class : '\\'.$class;
+        $this->class = (strpos($class, '\\') === 0) ? $class : '\\'.$class;
         $this->mongoIndex = array();
         $this->definitions = array();
         $this->dependencies = array();
     }
 
     /**
-     * Returns the FQDN of the mapped class
+     * Return the FQDN of the mapped class
      *
      * @return string
      */
@@ -64,26 +59,38 @@ class Map
         return $this->class;
     }
 
+    /**
+     * Return the mapped short class name
+     *
+     * @return string
+     */
     public function getClassName()
     {
         $array = explode('\\', $this->class);
+
         return $array[count($array)-1];
     }
 
+    /**
+     * Return the mapped namespace without the short class name
+     *
+     * @return string
+     */
     public function getNamespace()
     {
         $array = explode('\\', $this->class);
         unset($array[count($array)-1]);
+
         return implode('\\', $array);
     }
 
     /**
-     * Returns the mongo indexed map
+     * Return the mongo indexed map
      *
-     * Reversed index array (no need to flip it)
-     * Array keys are mongo keys & values are php attribute.
+     * Array keys are mongo keys & array values are php attributes
      *
      * @example array('mongoKey' => 'phpAttribute');
+     *
      * @return  array
      */
     public function getMongoIndex()
@@ -92,23 +99,13 @@ class Map
     }
 
     /**
-     * Returns a mongo key indexed array of embedded maps
+     * Return an array of definitions indexed by php attribute name
      *
      * @return array
      */
     public function getDefinitions()
     {
         return $this->definitions;
-    }
-
-    /**
-     * Returns a mongo key indexed array of embedded maps
-     *
-     * @return array
-     */
-    public function getDependencies()
-    {
-        return $this->dependencies;
     }
 
     /**
@@ -127,9 +124,10 @@ class Map
     }
 
     /**
-     * Check if a definition exists
+     * Check whether a definition exists
      *
-     * @param  string $identifier
+     * @param string $identifier Php attribute name or Document key name
+     *
      * @return boolean
      */
     public function hasDefinition($identifier)
@@ -140,7 +138,8 @@ class Map
     /**
      * Return a definition
      *
-     * @param  string $identifier
+     * @param string $identifier Php attribute name or Document key name
+     *
      * @return mixed  null|Definition
      */
     public function getDefinition($identifier)
