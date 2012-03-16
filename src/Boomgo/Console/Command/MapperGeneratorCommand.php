@@ -46,7 +46,7 @@ class MapperGeneratorCommand extends Command
         $this->addOption('models-namespace', null, InputOption::VALUE_OPTIONAL, 'Model/document namespace (i.e Document or Model)', 'Document');
         $this->addOption('mappers-namespace', null, InputOption::VALUE_OPTIONAL, 'Mappers namespace, default "Mapper"', 'Mapper');
         $this->addOption('parser', null, InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
-        $this->addOption('formatter', null, InputOption::VALUE_OPTIONAL, 'Mapping formatter', 'Underscore2Camel');
+        $this->addOption('formatter', null, InputOption::VALUE_OPTIONAL, 'Mapping formatter', 'CamelCase');
     }
 
     /**
