@@ -70,7 +70,7 @@ class RepositoryProvider extends BaseProvider
 
     public function get($fqdn)
     {
-        if (!strpos('\\', $fqdn)) {
+        if (false === strpos($fqdn, '\\')) {
             $key = (strpos('.', $fqdn)) ? $fqdn : 'default';
 
             if (!$this->hasBaseNamespace($key)) {
