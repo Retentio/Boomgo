@@ -20,8 +20,8 @@ use Symfony\Component\Console\Command\Command,
     Symfony\Component\Console\Input\InputOption,
     Symfony\Component\Console\Output\OutputInterface;
 use Boomgo\Builder\MapBuilder,
-    Boomgo\Builder\MapperGenerator;
-use TwigGenerator\Builder\Generator;
+    Boomgo\Builder\Generator\MapperGenerator;
+use TwigGenerator\Builder\Generator as TwigGenerator;
 
 /**
  * Mapper Generator Command
@@ -42,7 +42,7 @@ class MapperGeneratorCommand extends Command
         $this->setDescription('Mapper generator command');
         $this->setHelp('generate:mappers Generate mappers');
         $this->addArgument('mapping-directory', InputArgument::REQUIRED, 'Mapping sources absolute directory path');
-        $this->addArgument('models-directory', InputArgument::VALUE_OPTIONAL, 'Base model/document directory', null);
+        $this->addArgument('models-directory', InputArgument::OPTIONAL, 'Base model/document directory', null);
         $this->addOption('models-namespace', null, InputOption::VALUE_OPTIONAL, 'Model/document namespace (i.e Document or Model)', 'Document');
         $this->addOption('mappers-namespace', null, InputOption::VALUE_OPTIONAL, 'Mappers namespace, default "Mapper"', 'Mapper');
         $this->addOption('parser', null, InputOption::VALUE_OPTIONAL, 'Mapping parser', 'annotation');
@@ -75,7 +75,7 @@ class MapperGeneratorCommand extends Command
         $parser = new $parserClass;
 
         $mapBuilder = new MapBuilder($parser, $formatter);
-        $twigGenerator = new Generator();
+        $twigGenerator = new TwigGenerator();
         $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
 
         $mapperGenerator->generate($params['mapping-directory'], $params['models-namespace'], $params['mappers-namespace'], $params['models-directory']);

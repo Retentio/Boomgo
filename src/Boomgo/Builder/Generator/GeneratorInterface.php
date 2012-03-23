@@ -12,24 +12,19 @@
  * file that was distributed with this source code.
  */
 
-namespace Boomgo\Builder;
-
-use TwigGenerator\Builder\BaseBuilder;
+namespace Boomgo\Builder\Generator;
 
 /**
- * MapperBuilder
+ * GeneratorInterface
  *
- * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ * @author David Guyon <dguyon@gmail.com>
  */
-class MapperBuilder extends BaseBuilder
+interface GeneratorInterface
 {
     /**
-     * {@inheritdoc}
-     *
-     * @return string
+     * File generation process
+     * 
+     * @return bool
      */
-    public function getDefaultTemplateName()
-    {
-        return 'Mapper' . self::TWIG_EXTENSION;
-    }
+    public function generate($sources, $generatedNamespace, $mappersNamespace, $generatedDirectory);
 }
