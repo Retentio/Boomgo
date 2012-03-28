@@ -125,10 +125,11 @@ class Map extends Test
 
     private function mockDefinitionProvider()
     {
-        $this->mock('Boomgo\\Builder\\Definition', '\\Mock\\Map', 'Definition');
+        $this->mockClass('Boomgo\\Builder\\Definition', '\\Mock\\Map', 'Definition');
+
         $mockController = new \mageekguy\atoum\mock\controller();
         $mockController->__construct = function() {};
-        $mockController->injectInNextMockInstance();
+        $mockController->controlNextNewMock();
 
         $mockDefinition = new \Mock\Map\Definition(array());
         $mockDefinition->getMockController()->getAttribute = 'attribute';

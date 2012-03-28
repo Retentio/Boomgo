@@ -10,11 +10,11 @@ class AbstractGenerator extends Test
 
     public function beforeTestMethod($method)
     {
-        $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
-        $this->mock('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
-        $this->mock('Boomgo\\Builder\\MapBuilder', '\\Mock\\Builder', 'MapBuilder');
-        $this->mock('TwigGenerator\\Builder\\Generator', '\\Mock\\Builder', 'TwigGenerator');
-        $this->mock('Boomgo\\Builder\\Generator\\AbstractGenerator', '\\Mock\\Builder\\Generator', 'AbstractGenerator');
+        $this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
+        $this->mockClass('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
+        $this->mockClass('Boomgo\\Builder\\MapBuilder', '\\Mock\\Builder', 'MapBuilder');
+        $this->mockClass('TwigGenerator\\Builder\\Generator', '\\Mock\\Builder', 'TwigGenerator');
+        $this->mockClass('Boomgo\\Builder\\Generator\\AbstractGenerator', '\\Mock\\Builder\\Generator', 'AbstractGenerator');
 
         $mockMapBuilder = $this->getMockMapBuilder();
         $mockTwigGenerator = $this->getMockTwigGenerator();

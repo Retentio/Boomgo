@@ -12,11 +12,11 @@ class MapperGenerator extends Test
 
     public function beforeTestMethod($method)
     {
-        $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
-        $this->mock('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
-        $this->mock('Boomgo\\Builder\\Map', '\\Mock\\Builder', 'Map');
-        $this->mock('Boomgo\\Builder\\MapBuilder', '\\Mock\\Builder', 'MapBuilder');
-        $this->mock('TwigGenerator\\Builder\\Generator', '\\Mock\\Builder', 'TwigGenerator');
+        $this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
+        $this->mockClass('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
+        $this->mockClass('Boomgo\\Builder\\Map', '\\Mock\\Builder', 'Map');
+        $this->mockClass('Boomgo\\Builder\\MapBuilder', '\\Mock\\Builder', 'MapBuilder');
+        $this->mockClass('TwigGenerator\\Builder\\Generator', '\\Mock\\Builder', 'TwigGenerator');
 
         $mockParser = new \Mock\Parser\Parser();
         $mockFormatter = new \Mock\Formatter\Formatter();

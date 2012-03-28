@@ -76,7 +76,9 @@ class MapBuilder extends Test
                 ->hasKeys(array('string', 'array'));
 
         // Should throw exception on invalid metadata
-        $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'InvalidParser');
+        
+
+$this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'InvalidParser');
         $invalidMetadata =  array(
                 'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document',
                 'definitions' => array(
@@ -134,8 +136,8 @@ class MapBuilder extends Test
     private function builderprovider()
     {
         if (!class_exists('\\Mock\\Parser\\Parser') && !class_exists('\\Mock\\Formatter\\Formatter')) {
-            $this->mock('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
-            $this->mock('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
+            $this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
+            $this->mockClass('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
         }
 
         $fixtureMetadata = $this->metadataProvider();
