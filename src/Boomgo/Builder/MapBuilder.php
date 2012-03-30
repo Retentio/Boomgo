@@ -116,7 +116,7 @@ class MapBuilder
      *
      * @return Map
      */
-    private function buildMap(array $metadata)
+    protected function buildMap(array $metadata)
     {
         $map = new Map($metadata['class']);
 
@@ -135,7 +135,7 @@ class MapBuilder
      *
      * @return Definition
      */
-    private function buildDefinition(array $metadata)
+    protected function buildDefinition(array $metadata)
     {
         if (!isset($metadata['attribute']) && !isset($metadata['key'])) {
             throw new \RuntimeException('Invalid metadata should provide an attribute or a key');
