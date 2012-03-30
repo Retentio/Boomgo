@@ -122,6 +122,7 @@ class AnnotationParser implements ParserInterface
 
     /**
      * ParserInterface implementation
+     * Extract className and metadata properties
      *
      * @param string $filepath
      *
@@ -131,14 +132,32 @@ class AnnotationParser implements ParserInterface
      */
     public function parse($filepath)
     {
+        $metadata = array();
+
+        $reflectedClass = $this->getReflection($filepath);
+        $metadata['class'] = $reflectedClass->getName();
+
+        $propertiesMetadata = $this->processPropertiesParsing($reflectedClass);
+        $metadata = array_merge($metadata, $propertiesMetadata);
+        
+        return $metadata;
+    }
+
+    /**
+     * Extract the fully qualified namespace and return a ReflectionClass object
+     * 
+     * @param string $filepath Path to the file to parse
+     * 
+     * @return ReflectionClass
+     */    
+    protected function getReflection($filepath)
+    {
         // Regexp instead of tokenizer because of the bad perf @link > https://gist.github.com/1886076
         if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
             throw new \RuntimeException('Unable to find namespace or class declaration');
         }
 
         $fqcn = $captured[1].'\\'.$captured[2];
-
-        $metadata = array();
 
         try {
             $reflectedClass = new \ReflectionClass($fqcn);
@@ -147,13 +166,24 @@ class AnnotationParser implements ParserInterface
             $reflectedClass = new \ReflectionClass($fqcn);
         }
 
-        $metadata['class'] = $reflectedClass->getName();
+        return $reflectedClass;
+    }
+
+    /**
+     * Parse class properties for metadata extraction if valid contains valid annotation local tag
+     * 
+     * @param  \ReflectionClass $reflectedClass The document reflected object to parse
+     * @return array                            An array filled with Definition instance
+     */
+    protected function processPropertiesParsing(\ReflectionClass $reflectedClass)
+    {
+        $metadata = array();
 
         $reflectedProperties = $reflectedClass->getProperties();
-        foreach ($reflectedProperties as $reflectedProperty) {
 
+        foreach ($reflectedProperties as $reflectedProperty) {
             if ($this->isBoomgoProperty($reflectedProperty)) {
-                $propertyMetadata = $this->parseMetadata($reflectedProperty);
+                $propertyMetadata = $this->parseMetadataProperty($reflectedProperty);
                 $metadata['definitions'][$reflectedProperty->getName()] = $propertyMetadata;
             }
         }
@@ -196,7 +226,7 @@ class AnnotationParser implements ParserInterface
      *
      * @return array
      */
-    private function parseMetadata(\ReflectionProperty $property)
+    private function parseMetadataProperty(\ReflectionProperty $property)
     {
         $metadata = array();
         $tag = '@var';
