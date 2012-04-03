@@ -21,6 +21,7 @@ use Boomgo\Builder;
  * Builder tests
  *
  * @author Ludovic Fleury <ludo.fleury@gmail.com>
+ * @author David Guyon <dguyon@gmail.com>
  */
 class MapBuilder extends Test
 {
@@ -32,7 +33,11 @@ class MapBuilder extends Test
             ->object($builder->getParser())
                 ->isInstanceOf('\\Mock\\Parser\\Parser')
             ->object($builder->getFormatter())
-                ->isInstanceOf('\\Mock\\Formatter\\Formatter');
+                ->isInstanceOf('\\Mock\\Formatter\\Formatter')
+            ->string($builder->getMapClassName())
+                ->isEqualTo('Boomgo\\Builder\\Map')
+            ->string($builder->getDefinitionClassName())
+                ->isEqualTo('Boomgo\\Builder\\Definition');
     }
 
     public function testGetParser()
@@ -51,6 +56,21 @@ class MapBuilder extends Test
         $this->assert
             ->object($builder->getFormatter())
                 ->isInstanceOf('\\Mock\\Formatter\\Formatter');
+    }
+
+    public function testMutatorsAndAccessors()
+    {
+        $mapbuilder = $this->builderProvider();
+
+        $mapbuilder->setMapClassName('My\\New\\Map');
+        $this->assert()
+            ->string($mapbuilder->getMapClassName())
+                ->isEqualTo('My\\New\\Map');
+
+        $mapbuilder->setDefinitionClassName('My\\New\\Definition');
+        $this->assert()
+            ->string($mapbuilder->getDefinitionClassName())
+                ->isEqualTo('My\\New\\Definition');
     }
 
     public function testBuild()
@@ -76,9 +96,7 @@ class MapBuilder extends Test
                 ->hasKeys(array('string', 'array'));
 
         // Should throw exception on invalid metadata
-        
-
-$this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'InvalidParser');
+        $this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'InvalidParser');
         $invalidMetadata =  array(
                 'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document',
                 'definitions' => array(
