@@ -139,17 +139,17 @@ class AnnotationParser implements ParserInterface
 
         $propertiesMetadata = $this->processPropertiesParsing($reflectedClass);
         $metadata = array_merge($metadata, $propertiesMetadata);
-        
+
         return $metadata;
     }
 
     /**
      * Extract the fully qualified namespace and return a ReflectionClass object
-     * 
+     *
      * @param string $filepath Path to the file to parse
-     * 
+     *
      * @return ReflectionClass
-     */    
+     */
     protected function getReflection($filepath)
     {
         // Regexp instead of tokenizer because of the bad perf @link > https://gist.github.com/1886076
@@ -171,8 +171,9 @@ class AnnotationParser implements ParserInterface
 
     /**
      * Parse class properties for metadata extraction if valid contains valid annotation local tag
-     * 
-     * @param  \ReflectionClass $reflectedClass The document reflected object to parse
+     *
+     * @param ReflectionClass $reflectedClass The document reflected object to parse
+     *
      * @return array                            An array filled with Definition instance
      */
     protected function processPropertiesParsing(\ReflectionClass $reflectedClass)

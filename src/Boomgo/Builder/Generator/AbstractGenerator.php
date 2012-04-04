@@ -92,8 +92,8 @@ abstract class AbstractGenerator implements GeneratorInterface
     /**
      * Return a collection of files
      *
-     * @param mixed  $resources Absolute file or directory path or an array of both.
-     * @param string $extension File extension to load/filter with the prefixed dot (.php, .yml).
+     * @param mixed  $resources Absolute file or directory path or an array of both
+     * @param string $extension File extension to load/filter with the prefixed dot (.php, .yml)
      *
      * @throws InvalidArgumentException If resources aren't absolute dir or file path
      * 

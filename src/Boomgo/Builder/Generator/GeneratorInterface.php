@@ -24,6 +24,11 @@ interface GeneratorInterface
     /**
      * File generation process
      * 
+     * @param mixed  $sources              Mapping source(s) directory
+     * @param string $generatedNamespace   Namespace term for generated class (ex: Document, Model)
+     * @param string $mappersNamespace     Base mappers namespace (ex: Mapper, Mapping)
+     * @param string $generatedDirectory   Directory where classes are generated
+     *
      * @return bool
      */
     public function generate($sources, $generatedNamespace, $mappersNamespace, $generatedDirectory);

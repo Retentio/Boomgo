@@ -24,7 +24,8 @@ namespace Boomgo\Formatter;
 class CamelCaseFormatter implements FormatterInterface
 {
     /**
-     * Format a mongo key to a php attribute
+     * {@inheritdoc}
+     * Handle _id exception since mongoDB use underscored identifier
      *
      * @param string $string
      *
@@ -36,7 +37,8 @@ class CamelCaseFormatter implements FormatterInterface
     }
 
     /**
-     * Format a php attribute to a mongo key
+     * {@inheritdoc}
+     * Handle _id exception since mongoDB use underscored identifier
      *
      * @param string $string
      *
@@ -48,9 +50,10 @@ class CamelCaseFormatter implements FormatterInterface
     }
 
     /**
-     * Return a php accessor for a php attribute
+     * {@inheritdoc}
      *
      * @param string $string A mongo key or a php attribute
+     * @param string $type The php type
      *
      * @return string
      */
@@ -62,13 +65,13 @@ class CamelCaseFormatter implements FormatterInterface
     }
 
     /**
-     * Return a php mutator for a php attribute
+     * {@inheritdoc}
      *
      * @param string $string A mongo key or a php attribute
      *
      * @return string
      */
-    public function getPhpMutator($string, $type = 'mixed')
+    public function getPhpMutator($string)
     {
         return 'set'.ucfirst($string);
     }
