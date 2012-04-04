@@ -79,27 +79,7 @@ class MapperGeneratorCommand extends Command
         $mapperGenerator = new MapperGenerator($mapBuilder, $twigGenerator);
 
         $mapperGenerator->generate($params['mapping-directory'], $params['models-namespace'], $params['mappers-namespace'], $params['models-directory']);
-    }
 
-    /**
-     * Check whether a path is an absolute path
-     *
-     * @param string  $file
-     *
-     * @return boolean
-     */
-    private function isAbsolutePath($file)
-    {
-        if ($file[0] == '/' || $file[0] == '\\'
-            || (strlen($file) > 3 && ctype_alpha($file[0])
-                && $file[1] == ':'
-                && ($file[2] == '\\' || $file[2] == '/')
-            )
-            || null !== parse_url($file, PHP_URL_SCHEME)
-        ) {
-            return true;
-        }
-
-        return false;
+        $output->writeln('<info>Mappers have been generated</info>');
     }
 }

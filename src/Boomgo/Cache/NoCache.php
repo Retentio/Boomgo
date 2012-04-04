@@ -25,6 +25,10 @@ class NoCache implements CacheInterface
 {
     /**
      * {@inheritdoc}
+     *
+     * @param string $identifier Unique cache identifier
+     *
+     * @return boolean
      */
     public function has($identifier)
     {
@@ -33,6 +37,10 @@ class NoCache implements CacheInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $identifier Unique cache identifier
+     *
+     * @return mixed
      */
     public function get($identifier)
     {
@@ -41,6 +49,10 @@ class NoCache implements CacheInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @param string  $identifier Unique cache identifier
+     * @param mixed   $data       Data to be cached
+     * @param integer $ttl        Time To Live in second
      */
     public function add($identifier, $data, $ttl = 0)
     {
@@ -48,6 +60,8 @@ class NoCache implements CacheInterface
 
     /**
      * {@inheritdoc}
+     *
+     * @param string $identifier Unique cache identifier
      */
     public function remove($identifier)
     {

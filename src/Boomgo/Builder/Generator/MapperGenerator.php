@@ -39,22 +39,24 @@ class MapperGenerator extends AbstractGenerator
      * Generate mappers
      *
      * The base models & mappers namespace are just the "namespace fragment"
-     * not the full namespace part, i.e. "Document", "Mapper".
+     * not the full namespace part, i.e. "Document", "Mapper"
      * -"Document" & "Mapper": Project\Domain\Document => Project\Domain\Mapper
      * -"Document" & "Document\Mapper": Project\Domain\Document => Project\Domain\Document\Mapper
      *
      * The Base models directory & base models namespace must match PSR-O.
      * This means: base models namespace fragment must match the end of your base model directory.
-     * - "Document" => "/path/to/your/Project/Document".
-     * - "Domain\SubDomain\Model" => "/path/to/your/Domain/SubDomain/Model".
+     * - "Document" => "/path/to/your/Project/Document"
+     * - "Domain\SubDomain\Model" => "/path/to/your/Domain/SubDomain/Model"
      *
      * The generator will write aside of your Document folder/namespace. If you want to change this
-     * behavior, you just have to customize the base mapper namespace: "Document\Mapper".
+     * behavior, you just have to customize the base mapper namespace: "Document\Mapper"
      *
      * @param string $sources              Mapping source directory
      * @param string $baseModelsNamespace  Base models namespace (Document, Model)
      * @param string $baseMappersNamespace Base mappers namespace (Mapper, Mapping)
      * @param string $baseModelsDirectory  Base models directory
+     *
+     * @return bool
      */
     public function generate($sources, $baseModelsNamespace, $baseMappersNamespace, $baseModelsDirectory)
     {

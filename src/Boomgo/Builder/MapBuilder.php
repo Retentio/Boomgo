@@ -62,7 +62,7 @@ class MapBuilder
     /**
      * Define the parser instance
      *
-     * @param ParserInterface $parser [description]
+     * @param ParserInterface $parser
      */
     public function setParser(ParserInterface $parser)
     {
