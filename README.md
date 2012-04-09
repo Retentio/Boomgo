@@ -99,7 +99,7 @@ The mapper exposes 3 methods:
 
 * `->serialize($yourObject)`
 * `->unserialize($yourArray)`
-* ->hydrate($yourObject, $yourArray)`
+* `>hydrate($yourObject, $yourArray)`
 
 Then, the usage becomes really simple:
 
@@ -270,7 +270,8 @@ How to run unit tests
 ---------------------
 
 Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum), the dependency is not shipped by default, with composer you have to run the command
-```bash
+
+``` bash
 $ php composer.phar update --install-suggests
 ```
 
