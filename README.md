@@ -99,7 +99,7 @@ The mapper exposes 3 methods:
 
 * `->serialize($yourObject)`
 * `->unserialize($yourArray)`
-* `>hydrate($yourObject, $yourArray)`
+* `->hydrate($yourObject, $yourArray)`
 
 Then, the usage becomes really simple:
 
