@@ -1,9 +1,11 @@
-Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/) [![Build Status](https://secure.travis-ci.org/Retentio/Boomgo.png)](http://travis-ci.org/Retentio/Boomgo)
-=============================================================================================================================
+Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/)
+==============================================================
 
 _Boomgo still a work in progress and is initially developped for [Retentio](http://retent.io), it's also used by [Plemi](https://github.com/plemi)_
 
 Boomgo is a **light** and **simple** Object Document Mapper on top of the [MongoDB php native driver](http://php.net/mongo).
+
+[![Build Status](https://secure.travis-ci.org/Retentio/Boomgo.png)](http://travis-ci.org/Retentio/Boomgo)
 
 Philosophy
 -------------
@@ -35,10 +37,12 @@ Installation
 
 First, in your composer.json, add the requirement line for Boomgo.
 
-```javascript
+```json
+{
     "require": {
         "retentio/boomgo": "dev-master"
     }
+}
 ```
 
 Then get composer and run the install command.
@@ -271,22 +275,29 @@ How to run unit tests
 
 Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum), the dependency is not shipped by default, with composer you have to run the command
 
-``` bash
+```bash
 $ php composer.phar update --install-suggests
 ```
 
 To run the complete test suite, open a shell and type :
 
-``` bash
+```bash
 $ cd path/to/Boomgo
 $ php vendor/bin/atoum -c .atoum.php -d tests
 ```
 
 Want to test on a single class while contributing ? Here is an example with _AnnotationParser_ class :
 
-``` bash
+```bash
 $ php vendor/bin/atoum -c .atoum.php -f tests/Boomgo/Tests/Units/Parser/AnnotationParser.php
 ```
+
+Framework integration
+---------------------
+
+Boomgo already have integration for:
+
+* Symfony2 with [PlemiBoomgoBundle](https://github.com/Plemi/PlemiBoomgoBundle)
 
 Credits
 -------
@@ -297,9 +308,7 @@ Boomgo was built thanks to many open source projects & some awesome guys:
 * [Composer](http://getcomposer.org/): the awesome dependency manager.
 * [Symfony](http://symfony.com/): the components lib is a time-saver.
 * [Twig Generator](https://github.com/cedriclombardot/TwigGenerator): the cool tool for code generation with twig.
-
 * [Doctrine](http://www.doctrine-project.org/), [Mandango](http://mandango.org/): ORM/ODM inspiration.
-
 * [@willdurand](https://github.com/willdurand), helped me with a lot of tips.
 * [@jpetitcolas](https://github.com/jpetitcolas), regex master.
 * [@Palleas](https://github.com/Palleas), ninja supporter forever.
