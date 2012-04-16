@@ -276,7 +276,7 @@ How to run unit tests
 Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum), the dependency is not shipped by default, with composer you have to run the command
 
 ```bash
-$ php composer.phar update --install-suggests
+$ php composer.phar update --dev
 ```
 
 To run the complete test suite, open a shell and type :

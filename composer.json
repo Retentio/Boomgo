@@ -23,7 +23,7 @@
         "symfony/console": "2.1.*",
         "cedriclombardot/twig-generator": "dev-master"
     },
-    "suggest": {
+    "require-dev": {
         "mageekguy/atoum": "dev-master"
     },
     "autoload": {
