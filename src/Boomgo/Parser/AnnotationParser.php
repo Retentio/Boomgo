@@ -117,7 +117,10 @@ class AnnotationParser implements ParserInterface
      */
     public function supports($resource, $type = null)
     {
-        return is_string($resource) && 'php' === pathinfo($resource, PATHINFO_EXTENSION) && (!$type || 'annotation' === $type);
+        return is_string($resource)
+            && 'php' === pathinfo($resource, PATHINFO_EXTENSION)
+            && $this->isBoomgoDocument($this->reflectFromFile($resource))
+            && (!$type || 'annotation' === $type);
     }
 
     /**
@@ -131,22 +134,9 @@ class AnnotationParser implements ParserInterface
      */
     public function parse($filepath)
     {
-        // Regexp instead of tokenizer because of the bad perf @link > https://gist.github.com/1886076
-        if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
-            throw new \RuntimeException('Unable to find namespace or class declaration');
-        }
-
-        $fqcn = $captured[1].'\\'.$captured[2];
+        $reflectedClass = $this->reflectFromFile($filepath);
 
         $metadata = array();
-
-        try {
-            $reflectedClass = new \ReflectionClass($fqcn);
-        } catch (\ReflectionException $exception) {
-            $this->registerAutoload($fqcn, $filepath);
-            $reflectedClass = new \ReflectionClass($fqcn);
-        }
-
         $metadata['class'] = $reflectedClass->getName();
 
         $reflectedProperties = $reflectedClass->getProperties();
@@ -159,6 +149,40 @@ class AnnotationParser implements ParserInterface
         }
 
         return $metadata;
+    }
+
+    private function reflectFromFile($filepath)
+    {
+        // Regexp instead of tokenizer because of the bad perf @link > https://gist.github.com/1886076
+        if (!preg_match('#^namespace\s+(.+?);.*class\s+(\w+).+;$#sm', file_get_contents($filepath), $captured)) {
+            throw new \RuntimeException('Unable to find namespace or class declaration');
+        }
+
+        $fqcn = $captured[1].'\\'.$captured[2];
+
+
+        try {
+            $reflectedClass = new \ReflectionClass($fqcn);
+        } catch (\ReflectionException $exception) {
+            $this->registerAutoload($fqcn, $filepath);
+            $reflectedClass = new \ReflectionClass($fqcn);
+        }
+
+        return $reflectedClass;
+    }
+
+    private function isBoomgoDocument(\ReflectionClass $class)
+    {
+        $annotationTag = substr_count($class->getDocComment(), $this->getGlobalAnnotation());
+        if (0 < $annotationTag) {
+            if (1 === $annotationTag) {
+                return true;
+            }
+
+            throw new \RuntimeException(sprintf('Boomgo global annotation tag should occur only once for "%s"', $class));
+        }
+
+        return false;
     }
 
     /**
