@@ -48,7 +48,7 @@ First, in your composer.json, add the requirement line for Boomgo.
 Then get composer and run the install command.
 
 ```bash
-$ wget -nc http://getcomposer.org/composer.phar
+$ wget -nc -nv http://getcomposer.org/composer.phar
 $ php composer.phar install
 ```
 
@@ -276,7 +276,7 @@ How to run unit tests
 Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum), the dependency is not shipped by default, with composer you have to run the command
 
 ```bash
-$ php composer.phar update --dev
+$ php composer.phar install --dev
 ```
 
 To run the complete test suite, open a shell and type :

@@ -2,9 +2,11 @@ language: php
 phps:
   - 5.3
   - 5.4
+  - 5.5
 before_script:
-  - wget http://getcomposer.org/composer.phar
-  - php composer.phar update --dev
+  - wget -nc -nv http://getcomposer.org/composer.phar
+  - php composer.phar install --dev --prefer-source --no-progress
+  - php composer.phar dump-autoload --optimize
 script: php vendor/bin/atoum -c .atoum.php -d tests
 branches:
   only:
