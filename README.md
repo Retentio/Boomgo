@@ -1,7 +1,7 @@
 Boomgo, a micro PHP ODM for [MongoDB](http://www.mongodb.org/)
 ==============================================================
 
-_Boomgo still a work in progress and is initially developped for [Retentio](http://retent.io), it's also used by [Plemi](https://github.com/plemi)_
+_Boomgo still a work in progress and is initially developped for [Retentio](http://retent.io)_
 
 Boomgo is a **light** and **simple** Object Document Mapper on top of the [MongoDB php native driver](http://php.net/mongo).
 
@@ -48,7 +48,7 @@ First, in your composer.json, add the requirement line for Boomgo.
 Then get composer and run the install command.
 
 ```bash
-$ wget -nc http://getcomposer.org/composer.phar
+$ wget -nc -nv http://getcomposer.org/composer.phar
 $ php composer.phar install
 ```
 
@@ -111,7 +111,7 @@ Then, the usage becomes really simple:
 <?php
 
 // Create your connection with the native mongoDB php driver
-$mongo = new \Mongo("mongodb://127.0.0.1:27017");
+$mongo = new \MongoClient("mongodb://127.0.0.1:27017");
 
 // Create your object
 $object = new \VendorName\Project\Document\MyPersistedClass();
@@ -203,7 +203,7 @@ After mapper generation, usage is almost the same and stay explicit, Boomgo does
 <?php
 
 // Create your connection with the native mongoDB php driver
-$mongo = new \Mongo("mongodb://127.0.0.1:27017");
+$mongo = new \MongoClient("mongodb://127.0.0.1:27017");
 
 // Create your object
 $object = new \VendorName\Project\Document\DocumentClass();
@@ -276,7 +276,7 @@ How to run unit tests
 Boomgo is unit tested with [atoum](https://github.com/mageekguy/atoum), the dependency is not shipped by default, with composer you have to run the command
 
 ```bash
-$ php composer.phar update --dev
+$ php composer.phar install --dev --prefer-source
 ```
 
 To run the complete test suite, open a shell and type :

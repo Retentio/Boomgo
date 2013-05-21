@@ -31,9 +31,9 @@ class MapBuilder extends Test
         $builder = $this->builderProvider();
         $this->assert
             ->object($builder->getParser())
-                ->isInstanceOf('\\Mock\\Parser\\Parser')
+                ->isInstanceOf('\\Boomgo\\Parser\\ParserInterface')
             ->object($builder->getFormatter())
-                ->isInstanceOf('\\Mock\\Formatter\\Formatter')
+                ->isInstanceOf('\\Boomgo\\Formatter\\FormatterInterface')
             ->string($builder->getMapClassName())
                 ->isEqualTo('Boomgo\\Builder\\Map')
             ->string($builder->getDefinitionClassName())
@@ -46,7 +46,7 @@ class MapBuilder extends Test
         $builder = $this->builderProvider();
         $this->assert
             ->object($builder->getParser())
-                ->isInstanceOf('\\Mock\\Parser\\Parser');
+                ->isInstanceOf('\\Boomgo\\Parser\\ParserInterface');
     }
 
     public function testGetFormatter()
@@ -55,7 +55,7 @@ class MapBuilder extends Test
         $builder =  $this->builderProvider();
         $this->assert
             ->object($builder->getFormatter())
-                ->isInstanceOf('\\Mock\\Formatter\\Formatter');
+                ->isInstanceOf('\\Boomgo\\Formatter\\FormatterInterface');
     }
 
     public function testMutatorsAndAccessors()
@@ -96,19 +96,18 @@ class MapBuilder extends Test
                 ->hasKeys(array('string', 'array'));
 
         // Should throw exception on invalid metadata
-        $this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'InvalidParser');
         $invalidMetadata =  array(
                 'class' => '\\Boomgo\\Tests\\Units\\Fixture\\Annoted\\Document',
                 'definitions' => array(
                     array(),
                     array('attribute' => 'string', 'type' => 'string')));
 
-        $mockParser = new \Mock\Parser\InvalidParser;
+        $mockParser = new \mock\Boomgo\Parser\ParserInterface;
         $mockParser->getMockController()->supports = function() { return true; };
         $mockParser->getMockController()->getExtension = function() { return 'php'; };
         $mockParser->getMockController()->parse = function($file) use ($invalidMetadata) { return $invalidMetadata; };
 
-        $mockFormatter = new \Mock\Formatter\Formatter;
+        $mockFormatter = new \mock\Boomgo\Formatter\FormatterInterface;
 
         $builder = new Builder\MapBuilder($mockParser, $mockFormatter);
         $this->assert
@@ -124,12 +123,12 @@ class MapBuilder extends Test
                 'definitions' => array(
                     array('key' => 'STRING', 'type' => 'string')));
 
-        $mockParser = new \Mock\Parser\InvalidParser;
+        $mockParser = new \mock\Boomgo\Parser\ParserInterface;
         $mockParser->getMockController()->supports = function() { return true; };
         $mockParser->getMockController()->getExtension = function() { return 'php'; };
         $mockParser->getMockController()->parse = function($file) use ($keyMetadata) { return $keyMetadata; };
 
-        $mockFormatter = new \Mock\Formatter\Formatter;
+        $mockFormatter = new \mock\Boomgo\Formatter\FormatterInterface;
         $mockFormatter->getMockController()->toPhpAttribute = function($string) { return strtolower($string); };
         $mockFormatter->getMockController()->toMongoKey = function($string) { return strtoupper($string); };
         $mockFormatter->getMockController()->getPhpAccessor = function($string) { return 'get'.ucfirst($string); };
@@ -153,19 +152,14 @@ class MapBuilder extends Test
 
     private function builderprovider()
     {
-        if (!class_exists('\\Mock\\Parser\\Parser') && !class_exists('\\Mock\\Formatter\\Formatter')) {
-            $this->mockClass('Boomgo\\Parser\\ParserInterface', '\\Mock\\Parser', 'Parser');
-            $this->mockClass('Boomgo\\Formatter\\FormatterInterface', '\\Mock\\Formatter', 'Formatter');
-        }
-
         $fixtureMetadata = $this->metadataProvider();
 
-        $mockParser = new \Mock\Parser\Parser;
+        $mockParser = new \mock\Boomgo\Parser\ParserInterface;
         $mockParser->getMockController()->supports = function() { return true; };
         $mockParser->getMockController()->getExtension = function() { return 'php'; };
         $mockParser->getMockController()->parse = function($file) use ($fixtureMetadata) { return $fixtureMetadata[$file]; };
 
-        $mockFormatter = new \Mock\Formatter\Formatter;
+        $mockFormatter = new \mock\Boomgo\Formatter\FormatterInterface;
         $mockFormatter->getMockController()->toPhpAttribute = function($string) { return strtolower($string); };
         $mockFormatter->getMockController()->toMongoKey = function($string) { return strtoupper($string); };
         $mockFormatter->getMockController()->getPhpAccessor = function($string) { return 'get'.ucfirst($string); };
